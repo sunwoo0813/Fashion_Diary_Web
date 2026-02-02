@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}다이어리 - Fashion Diary{% endblock %}
+{% block content %}
+
+<div class="section-head">
+  <div>
+    <h2 class="m-0">코디 다이어리</h2>
+    <div class="ghost">달력에서 오늘의 코디를 기록하고 확인하세요.</div>
+  </div>
+</div>
+
+<div class="card-clean p-3 mb-3">
+  <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+    <div class="d-flex flex-wrap align-items-center gap-2">
+      <span class="chip">📍 {{ (weather.city if weather else city) }}</span>
+
+      {% if weather %}
+        <span class="chip">🌡️ {{ weather.t_min }}° ~ {{ weather.t_max }}°</span>
+        <span class="chip">💧 {{ weather.humidity }}%</span>
+        <span class="chip">{% if weather.rain %}☔ 비/눈 가능{% else %}🌤️ 강수 없음{% endif %}</span>
+        <span class="chip">{{ weather.desc }}</span>
+
+        {% if weather.icon %}
+          <img
+            alt="weather icon"
+            src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png"
+            style="width:42px;height:42px;opacity:.95"
+          >
+        {% endif %}
+      {% else %}
+        <span class="chip">날씨 정보를 불러오지 못했어요</span>
+      {% endif %}
+    </div>
+
+    <!-- ✅ 도시 변경 폼(선택) -->
+    <form class="d-flex gap-2" method="get" action="{{ url_for('diary') }}">
+      <input name="city" class="form-control form-control-sm" style="max-width:160px"
+             value="{{ city }}" placeholder="도시 (예: 서울)">
+      <input type="hidden" name="year" value="{{ year }}">
+      <input type="hidden" name="month" value="{{ month }}">
+      <button class="btn btn-soft btn-sm" type="submit">적용</button>
+    </form>
+  </div>
+</div>
+
+<div class="card-clean p-4">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <a href="{{ url_for('diary', year=year, month=month-1 if month>1 else 12) }}" class="btn btn-soft btn-sm">◀ 이전달</a>
+    <h4 class="m-0">{{ year }}년 {{ month }}월</h4>
+    <a href="{{ url_for('diary', year=year, month=month+1 if month<12 else 1) }}" class="btn btn-soft btn-sm">다음달 ▶</a>
+  </div>
+
+  <div class="calendar-grid">
+    {% for i in range(7) %}
+      <div class="day-name">{{ ['일','월','화','수','목','금','토'][i] }}</div>
+    {% endfor %}
+
+    {# 빈칸 offset (1일이 무슨 요일인지 계산) #}
+    {% set offset = (datetime(year, month, 1).weekday() + 1) % 7 %}
+    {% for i in range(offset) %}
+      <div class="day empty"></div>
+    {% endfor %}
+
+    {# 날짜 칸 #}
+    {% for d in days %}
+      {% set this_date = datetime(year, month, d) %}
+      {% set is_today = (today.year==year and today.month==month and today.day==d) %}
+      {% set has_record = d in recorded_days %}
+
+      <a href="{{ url_for('outfits_by_date', date_str='%04d-%02d-%02d' % (year, month, d)) }}"
+        class="day text-decoration-none
+          {% if is_today %}today{% elif has_record %}recorded{% else %}emptyday{% endif %}">
+        <div class="num">{{ d }}</div>
+      </a>
+
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+  .calendar-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 6px;
+    margin-top: 10px;
+  }
+  .day {
+    aspect-ratio: 1/1;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 500;
+    transition: all .15s ease;
+  }
+  .day-name {
+    text-align: center;
+    font-size: .9rem;
+    font-weight: 600;
+    color: var(--muted);
+  }
+  .day.today {
+    border: 2px solid #16a34a; /* 초록 테두리 */
+    background: #e7f9ec;
+  }
+  .day.recorded {
+    background: #e5e7eb; /* 회색 배경 */
+    color: #111827;
+  }
+  .day.emptyday {
+    background: #ffffff; /* 흰색 */
+    color: #9ca3af;
+  }
+  .day:hover {
+    transform: scale(1.05);
+  }
+  .num {font-size: 1.1rem;}
+</style>
+
+{% endblock %}

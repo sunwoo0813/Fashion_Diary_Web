@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block title %}{{ target_date }} 코디 - Fashion Diary{% endblock %}
+{% block content %}
+
+<div class="section-head mb-3">
+  <div>
+    <h2 class="m-0">{{ target_date.year }}년 {{ target_date.month }}월 {{ target_date.day }}일</h2>
+    <div class="ghost">이 날짜의 코디 기록을 확인하세요.</div>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn btn-soft" href="{{ url_for('diary', year=target_date.year, month=target_date.month) }}">달력으로</a>
+
+    {% if outfits|length == 0 %}
+      <a class="btn btn-solid" href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">+ 코디 기록</a>
+    {% endif %}
+  </div>
+</div>
+
+{% if outfits|length == 0 %}
+  <div class="card-clean p-4">
+    <div class="mb-2 fw-semibold">이 날 기록이 없어요.</div>
+    <div class="ghost">+ 코디 기록 버튼으로 추가해보세요.</div>
+  </div>
+{% else %}
+  <div class="row g-3">
+    {% for o in outfits %}
+      <div class="col-12">
+        <div class="card-clean p-4">
+          {% set photos = photo_map.get(o.id, []) %}
+          <div class="fd-slider" data-total="{{ photos|length }}">
+            <div class="fd-slider-frame">
+              {% if photos and photos|length > 0 %}
+                {% for p in photos %}
+                  <img
+                    class="fd-slide{% if loop.first %} is-active{% endif %}"
+                    data-photo-id="{{ p.id }}"
+                    data-idx="{{ loop.index0 }}"
+                    src="/{{ p.photo_path }}"
+                    alt="outfit"
+                  >
+                {% endfor %}
+                <button class="fd-nav prev" type="button">◀</button>
+                <button class="fd-nav next" type="button">▶</button>
+                <div class="fd-counter">1 / {{ photos|length }}</div>
+              {% else %}
+                <div class="fd-empty">사진이 없어요.</div>
+              {% endif %}
+            </div>
+
+            <div class="fd-meta">
+              <div class="fd-note">{{ o.note or '—' }}</div>
+              <div class="d-flex flex-wrap gap-2">
+                <span class="chip">🌡️ {{ (o.t_min or 0) }}° ~ {{ (o.t_max or 0) }}°</span>
+                <span class="chip">💧 {{ (o.humidity or 0) }}%</span>
+                <span class="chip">{% if o.rain %}☔ 비/눈{% else %}🌤️ 강수 없음{% endif %}</span>
+              </div>
+            </div>
+
+            <div class="fd-items">
+              <div class="fw-semibold mb-1">착용한 옷</div>
+              <div class="fd-photo-tags">
+                {% if photos and photos|length > 0 %}
+                  {% set first_pid = photos[0].id %}
+                  {% set tags = photo_tag_map.get(first_pid, []) %}
+                  {% if tags and tags|length > 0 %}
+                    <div class="d-flex flex-wrap gap-2">
+                      {% for it in tags %}
+                        <span class="chip">{{ it.name }}</span>
+                      {% endfor %}
+                    </div>
+                  {% else %}
+                    <div class="ghost">태그된 옷이 없어요.</div>
+                  {% endif %}
+                {% else %}
+                  <div class="ghost">태그된 옷이 없어요.</div>
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="d-flex gap-2 justify-content-end mt-3">
+              <a class="btn btn-outline-dark btn-sm" href="{{ url_for('outfit_edit', outfit_id=o.id) }}">수정</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .fd-slider {display:flex; flex-direction:column; gap:14px;}
+  .fd-slider-frame {
+    position:relative; border-radius:18px; overflow:hidden;
+    border:1px solid var(--border); background: var(--card);
+  }
+  .fd-slide {display:none; width:100%; height:520px; object-fit:cover;}
+  .fd-slide.is-active {display:block;}
+  .fd-nav {
+    position:absolute; top:50%; transform:translateY(-50%);
+    border:1px solid var(--border); background: color-mix(in oklab, var(--card) 85%, transparent);
+    border-radius:999px; padding:6px 10px; font-size:14px;
+  }
+  .fd-nav.prev {left:10px;}
+  .fd-nav.next {right:10px;}
+  .fd-counter {
+    position:absolute; right:12px; bottom:12px;
+    padding:6px 10px; border-radius:999px; font-size:14px;
+    background: color-mix(in oklab, var(--card) 85%, transparent);
+    border:1px solid var(--border);
+  }
+  .fd-meta {display:flex; flex-direction:column; gap:8px;}
+  .fd-note {font-weight:600;}
+  .fd-photo-tags {margin-top: 4px;}
+  .fd-empty {
+    padding:36px; text-align:center; color: var(--muted);
+  }
+  @media (max-width: 768px) {
+    .fd-slide {height:360px;}
+  }
+</style>
+
+<script>
+(function () {
+  const tagMap = {{ (photo_tag_map or {})|tojson }};
+  const sliders = document.querySelectorAll('.fd-slider');
+  sliders.forEach((slider) => {
+    const slides = slider.querySelectorAll('.fd-slide');
+    if (!slides.length) return;
+
+    const prev = slider.querySelector('.fd-nav.prev');
+    const next = slider.querySelector('.fd-nav.next');
+    const counter = slider.querySelector('.fd-counter');
+    let idx = 0;
+
+    function render() {
+      slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
+      if (counter) counter.textContent = `${idx + 1} / ${slides.length}`;
+      if (prev) prev.disabled = (idx === 0);
+      if (next) next.disabled = (idx === slides.length - 1);
+
+      const current = slides[idx];
+      const pid = current?.dataset?.photoId;
+      const card = slider.closest('.card-clean');
+      const tagWrap = card ? card.querySelector('.fd-photo-tags') : null;
+      if (tagWrap) {
+        const tags = (pid && tagMap[pid]) ? tagMap[pid] : [];
+        if (tags && tags.length) {
+          tagWrap.innerHTML = '<div class="d-flex flex-wrap gap-2">' +
+            tags.map(t => `<span class="chip">${t.name}</span>`).join('') +
+            '</div>';
+        } else {
+          tagWrap.innerHTML = '<div class="ghost">태그된 옷이 없어요.</div>';
+        }
+      }
+    }
+
+    if (prev) prev.addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+    if (next) next.addEventListener('click', () => { if (idx < slides.length - 1) { idx++; render(); } });
+
+    render();
+  });
+})();
+</script>
+{% endblock %}

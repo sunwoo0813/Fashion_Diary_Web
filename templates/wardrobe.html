@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block title %}옷장 - Fashion Diary{% endblock %}
+{% block content %}
+
+<div class="section-head">
+  <div>
+    <h2 class="m-0">내 옷장</h2>
+    <div class="ghost">가지고 있는 옷을 저장하고, 코디 기록 시 태그로 연결하세요.</div>
+  </div>
+  <div class="d-flex align-items-center gap-2">
+    <button id="deleteToggleBtn" type="button" class="btn btn-danger-outline btn-sm"
+            {% if items|length == 0 %}disabled{% endif %}>삭제</button>
+    <a class="btn btn-solid btn-sm" href="{{ url_for('items_create') }}">옷 추가</a>
+  </div>
+</div>
+
+<form class="card-clean p-3 mb-3" method="get" action="{{ url_for('wardrobe') }}">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-4">
+      <label class="form-label">검색</label>
+      <input name="q" class="form-control" value="{{ q or '' }}" placeholder="브랜드/제품명/색상">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">카테고리</label>
+      <select name="category" class="form-select">
+        <option value="">전체</option>
+        {% for c in categories %}
+          <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-3">
+      <label class="form-label">색상</label>
+      <input name="color" class="form-control" value="{{ color or '' }}" placeholder="예: 블랙">
+    </div>
+    <div class="col-md-2 d-grid">
+      <button class="btn btn-solid btn-sm" type="submit">필터</button>
+      <a class="btn btn-soft btn-sm mt-1" href="{{ url_for('wardrobe') }}">초기화</a>
+    </div>
+  </div>
+</form>
+
+{% if items|length == 0 %}
+  <div class="card-clean p-4 text-center">
+    {% if has_filters %}
+      조건에 맞는 옷이 없어요.
+    {% else %}
+      아직 옷이 없어요. 나만의 옷장을 만들어주세요!
+    {% endif %}
+  </div>
+{% else %}
+  <div id="deleteHint" class="text-muted small mb-2" style="display:none;">삭제할 옷을 선택하세요.</div>
+  <form id="itemDeleteForm" method="post" action="{{ url_for('items_delete') }}"></form>
+  <div class="row g-3">
+    {% for it in items %}
+    <div class="col-6 col-md-4 col-lg-3">
+      <a class="text-decoration-none wardrobe-item" data-item-id="{{ it.id }}"
+         href="{{ url_for('tag_page', item_id=it.id) }}">
+        <div class="card-clean h-100">
+          {% if it.image_path %}
+          <img class="card-media" src="/{{ it.image_path }}" alt="{{ it.name }}">
+          {% endif %}
+          <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+              <div class="fw-semibold">{{ it.name }}</div>
+              <small class="meta">{{ it.category or '기타' }}</small>
+            </div>
+            <div class="meta">{{ it.color }}</div>
+          </div>
+        </div>
+      </a>
+    </div>
+    {% endfor %}
+  </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+  .btn-danger-outline {
+    background: transparent;
+    color: #ef4444;
+    border: 1px solid #ef4444;
+    border-radius: 12px;
+  }
+  .wardrobe-item.selected .card-clean {
+    border: 2px solid #ef4444;
+    box-shadow: 0 0 0 2px rgba(239,68,68,.12);
+  }
+  .wardrobe-item.selected .card-media {
+    filter: saturate(0.95);
+  }
+</style>
+<script>
+(function () {
+  const toggleBtn = document.getElementById('deleteToggleBtn');
+  const hint = document.getElementById('deleteHint');
+  const form = document.getElementById('itemDeleteForm');
+  const items = Array.from(document.querySelectorAll('.wardrobe-item'));
+  if (!toggleBtn || !items.length || !form) return;
+
+  let deleteMode = false;
+
+  function selectedIds() {
+    return items.filter(i => i.classList.contains('selected')).map(i => i.dataset.itemId);
+  }
+
+  function updateUI() {
+    const count = selectedIds().length;
+    if (hint) hint.style.display = deleteMode ? 'block' : 'none';
+    if (!deleteMode) {
+      toggleBtn.textContent = '삭제';
+      return;
+    }
+    toggleBtn.textContent = count > 0 ? '선택 삭제' : '삭제 취소';
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    if (!deleteMode) {
+      deleteMode = true;
+      updateUI();
+      return;
+    }
+
+    const ids = selectedIds();
+    if (!ids.length) {
+      deleteMode = false;
+      items.forEach(i => i.classList.remove('selected'));
+      updateUI();
+      return;
+    }
+    if (!confirm(`선택한 옷 ${ids.length}개를 삭제할까요?`)) return;
+
+    form.innerHTML = '';
+    ids.forEach(id => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'item_ids';
+      input.value = id;
+      form.appendChild(input);
+    });
+    form.submit();
+  });
+
+  items.forEach((el) => {
+    el.addEventListener('click', (e) => {
+      if (!deleteMode) return;
+      e.preventDefault();
+      el.classList.toggle('selected');
+      updateUI();
+    });
+  });
+
+  updateUI();
+})();
+</script>
+{% endblock %}
