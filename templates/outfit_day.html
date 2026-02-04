@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block title %}{{ target_date }} 코디 - Fashion Diary{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/outfit_day.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="section-head mb-3">
@@ -90,78 +94,6 @@
 {% endblock %}
 
 {% block scripts %}
-<style>
-  .fd-slider {display:flex; flex-direction:column; gap:14px;}
-  .fd-slider-frame {
-    position:relative; border-radius:18px; overflow:hidden;
-    border:1px solid var(--border); background: var(--card);
-  }
-  .fd-slide {display:none; width:100%; height:520px; object-fit:cover;}
-  .fd-slide.is-active {display:block;}
-  .fd-nav {
-    position:absolute; top:50%; transform:translateY(-50%);
-    border:1px solid var(--border); background: color-mix(in oklab, var(--card) 85%, transparent);
-    border-radius:999px; padding:6px 10px; font-size:14px;
-  }
-  .fd-nav.prev {left:10px;}
-  .fd-nav.next {right:10px;}
-  .fd-counter {
-    position:absolute; right:12px; bottom:12px;
-    padding:6px 10px; border-radius:999px; font-size:14px;
-    background: color-mix(in oklab, var(--card) 85%, transparent);
-    border:1px solid var(--border);
-  }
-  .fd-meta {display:flex; flex-direction:column; gap:8px;}
-  .fd-note {font-weight:600;}
-  .fd-photo-tags {margin-top: 4px;}
-  .fd-empty {
-    padding:36px; text-align:center; color: var(--muted);
-  }
-  @media (max-width: 768px) {
-    .fd-slide {height:360px;}
-  }
-</style>
-
-<script>
-(function () {
-  const tagMap = {{ (photo_tag_map or {})|tojson }};
-  const sliders = document.querySelectorAll('.fd-slider');
-  sliders.forEach((slider) => {
-    const slides = slider.querySelectorAll('.fd-slide');
-    if (!slides.length) return;
-
-    const prev = slider.querySelector('.fd-nav.prev');
-    const next = slider.querySelector('.fd-nav.next');
-    const counter = slider.querySelector('.fd-counter');
-    let idx = 0;
-
-    function render() {
-      slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
-      if (counter) counter.textContent = `${idx + 1} / ${slides.length}`;
-      if (prev) prev.disabled = (idx === 0);
-      if (next) next.disabled = (idx === slides.length - 1);
-
-      const current = slides[idx];
-      const pid = current?.dataset?.photoId;
-      const card = slider.closest('.card-clean');
-      const tagWrap = card ? card.querySelector('.fd-photo-tags') : null;
-      if (tagWrap) {
-        const tags = (pid && tagMap[pid]) ? tagMap[pid] : [];
-        if (tags && tags.length) {
-          tagWrap.innerHTML = '<div class="d-flex flex-wrap gap-2">' +
-            tags.map(t => `<span class="chip">${t.name}</span>`).join('') +
-            '</div>';
-        } else {
-          tagWrap.innerHTML = '<div class="ghost">태그된 옷이 없어요.</div>';
-        }
-      }
-    }
-
-    if (prev) prev.addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
-    if (next) next.addEventListener('click', () => { if (idx < slides.length - 1) { idx++; render(); } });
-
-    render();
-  });
-})();
-</script>
+<script type="application/json" id="fdTagMapData">{{ (photo_tag_map or {})|tojson }}</script>
+<script src="{{ url_for('static', filename='js/outfit_day.js') }}"></script>
 {% endblock %}

@@ -1,5 +1,9 @@
 {% extends "base.html" %}
 {% block title %}옷장 - Fashion Diary{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/wardrobe.css') }}">
+{% endblock %}
+
 {% block content %}
 
 <div class="section-head">
@@ -76,82 +80,5 @@
 {% endblock %}
 
 {% block scripts %}
-<style>
-  .btn-danger-outline {
-    background: transparent;
-    color: #ef4444;
-    border: 1px solid #ef4444;
-    border-radius: 12px;
-  }
-  .wardrobe-item.selected .card-clean {
-    border: 2px solid #ef4444;
-    box-shadow: 0 0 0 2px rgba(239,68,68,.12);
-  }
-  .wardrobe-item.selected .card-media {
-    filter: saturate(0.95);
-  }
-</style>
-<script>
-(function () {
-  const toggleBtn = document.getElementById('deleteToggleBtn');
-  const hint = document.getElementById('deleteHint');
-  const form = document.getElementById('itemDeleteForm');
-  const items = Array.from(document.querySelectorAll('.wardrobe-item'));
-  if (!toggleBtn || !items.length || !form) return;
-
-  let deleteMode = false;
-
-  function selectedIds() {
-    return items.filter(i => i.classList.contains('selected')).map(i => i.dataset.itemId);
-  }
-
-  function updateUI() {
-    const count = selectedIds().length;
-    if (hint) hint.style.display = deleteMode ? 'block' : 'none';
-    if (!deleteMode) {
-      toggleBtn.textContent = '삭제';
-      return;
-    }
-    toggleBtn.textContent = count > 0 ? '선택 삭제' : '삭제 취소';
-  }
-
-  toggleBtn.addEventListener('click', () => {
-    if (!deleteMode) {
-      deleteMode = true;
-      updateUI();
-      return;
-    }
-
-    const ids = selectedIds();
-    if (!ids.length) {
-      deleteMode = false;
-      items.forEach(i => i.classList.remove('selected'));
-      updateUI();
-      return;
-    }
-    if (!confirm(`선택한 옷 ${ids.length}개를 삭제할까요?`)) return;
-
-    form.innerHTML = '';
-    ids.forEach(id => {
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'item_ids';
-      input.value = id;
-      form.appendChild(input);
-    });
-    form.submit();
-  });
-
-  items.forEach((el) => {
-    el.addEventListener('click', (e) => {
-      if (!deleteMode) return;
-      e.preventDefault();
-      el.classList.toggle('selected');
-      updateUI();
-    });
-  });
-
-  updateUI();
-})();
-</script>
+<script src="{{ url_for('static', filename='js/wardrobe.js') }}"></script>
 {% endblock %}

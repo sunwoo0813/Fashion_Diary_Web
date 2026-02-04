@@ -1,0 +1,61 @@
+(function () {
+  const toggleBtn = document.getElementById('deleteToggleBtn');
+  const hint = document.getElementById('deleteHint');
+  const form = document.getElementById('itemDeleteForm');
+  const items = Array.from(document.querySelectorAll('.wardrobe-item'));
+  if (!toggleBtn || !items.length || !form) return;
+
+  let deleteMode = false;
+
+  function selectedIds() {
+    return items.filter(i => i.classList.contains('selected')).map(i => i.dataset.itemId);
+  }
+
+  function updateUI() {
+    const count = selectedIds().length;
+    if (hint) hint.style.display = deleteMode ? 'block' : 'none';
+    if (!deleteMode) {
+      toggleBtn.textContent = '?? œ';
+      return;
+    }
+    toggleBtn.textContent = count > 0 ? '? íƒ ?? œ' : '?? œ ì·¨ì†Œ';
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    if (!deleteMode) {
+      deleteMode = true;
+      updateUI();
+      return;
+    }
+
+    const ids = selectedIds();
+    if (!ids.length) {
+      deleteMode = false;
+      items.forEach(i => i.classList.remove('selected'));
+      updateUI();
+      return;
+    }
+    if (!confirm(`? íƒ????${ids.length}ê°œë? ?? œ? ê¹Œ??`)) return;
+
+    form.innerHTML = '';
+    ids.forEach(id => {
+      const input = document.createElement('input');
+      input.type = 'hidden';
+      input.name = 'item_ids';
+      input.value = id;
+      form.appendChild(input);
+    });
+    form.submit();
+  });
+
+  items.forEach((el) => {
+    el.addEventListener('click', (e) => {
+      if (!deleteMode) return;
+      e.preventDefault();
+      el.classList.toggle('selected');
+      updateUI();
+    });
+  });
+
+  updateUI();
+})();
