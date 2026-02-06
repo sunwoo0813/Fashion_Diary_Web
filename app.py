@@ -10,17 +10,79 @@ import requests
 from urllib.parse import quote
 from datetime import timedelta
 from flask import jsonify
+from dotenv import load_dotenv
+from supabase import create_client, Client
+import uuid
 
 app = Flask(__name__)
+load_dotenv()
 API_KEY = "47afe938567d28eaa932281c49255b53"
 
 # DB 설정
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///app.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.csbvhoczfmdlelmfjqij:sunwoo0813%40@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-# 업로드 폴더
+# 업로드 폴더 (로컬 fallback)
 app.config['UPLOAD_FOLDER'] = os.path.join('static', 'uploads')
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
+
+# Supabase Storage 설정
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "uploads")
+_supabase: Client | None = None
+
+def get_supabase() -> Client:
+    global _supabase
+    if _supabase is None:
+        if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
+            raise RuntimeError("Supabase env vars are not set")
+        _supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    return _supabase
+
+def storage_public_url(object_path: str) -> str:
+    return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{object_path}"
+
+def upload_to_storage(file, prefix: str) -> str:
+    """
+    Upload file to Supabase Storage and return public URL.
+    """
+    ext = os.path.splitext(file.filename)[1] if file.filename else ""
+    safe_name = f"{uuid.uuid4().hex}{ext}"
+    object_path = f"{prefix}/{safe_name}"
+    content = file.stream.read()
+    if not content:
+        raise ValueError("empty file")
+    sb = get_supabase()
+    sb.storage.from_(SUPABASE_BUCKET).upload(
+        object_path,
+        content,
+        {"content-type": file.mimetype or "application/octet-stream"},
+    )
+    return storage_public_url(object_path)
+
+def delete_from_storage(public_url_or_path: str) -> None:
+    """
+    Delete from Supabase Storage if it looks like a public URL.
+    """
+    if not public_url_or_path:
+        return
+    if SUPABASE_URL and public_url_or_path.startswith(SUPABASE_URL):
+        prefix = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/"
+        if public_url_or_path.startswith(prefix):
+            object_path = public_url_or_path[len(prefix):]
+            sb = get_supabase()
+            sb.storage.from_(SUPABASE_BUCKET).remove([object_path])
+            return
+    # local fallback
+    local_path = public_url_or_path
+    if public_url_or_path.startswith("/static/"):
+        local_path = public_url_or_path.lstrip("/").replace("/", os.sep)
+    if os.path.exists(local_path):
+        try:
+            os.remove(local_path)
+        except Exception:
+            pass
 
 def get_coordinates(city_name: str):
     """
@@ -212,10 +274,14 @@ def items_create():
         f = request.files.get('image')
         image_path = None
         if f and f.filename:
-            fname = f"{datetime.utcnow().timestamp()}_{f.filename}"
-            save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-            f.save(save_path)
-            image_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+            try:
+                image_path = upload_to_storage(f, "items")
+            except Exception:
+                # fallback to local
+                fname = f"{datetime.utcnow().timestamp()}_{f.filename}"
+                save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+                f.save(save_path)
+                image_path = "/" + "/".join([app.config["UPLOAD_FOLDER"].replace("\\", "/"), fname])
 
         brand = (request.form.get('brand') or '').strip()
         product = (request.form.get('product') or '').strip()
@@ -260,9 +326,9 @@ def items_delete():
 
     # 아이템 이미지 파일 삭제 + 레코드 삭제
     for it in items:
-        if it.image_path and os.path.exists(it.image_path):
+        if it.image_path:
             try:
-                os.remove(it.image_path)
+                delete_from_storage(it.image_path)
             except Exception as e:
                 print("이미지 삭제 실패:", e)
         db.session.delete(it)
@@ -355,10 +421,13 @@ def outfits_create():
         files = request.files.getlist('photos')
         for idx, f in enumerate(files):
             if f and f.filename:
-                fname = f"{datetime.utcnow().timestamp()}_{f.filename}"
-                save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-                f.save(save_path)
-                photo_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+                try:
+                    photo_path = upload_to_storage(f, "outfits")
+                except Exception:
+                    fname = f"{datetime.utcnow().timestamp()}_{f.filename}"
+                    save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+                    f.save(save_path)
+                    photo_path = "/" + "/".join([app.config["UPLOAD_FOLDER"].replace("\\", "/"), fname])
                 photo = OutfitPhoto(outfit_id=outfit.id, photo_path=photo_path)
                 db.session.add(photo)
                 db.session.flush()
@@ -393,17 +462,17 @@ def outfit_delete(outfit_id):
     if photo_ids:
         OutfitPhotoItem.query.filter(OutfitPhotoItem.photo_id.in_(photo_ids)).delete(synchronize_session=False)
     for p in photos:
-        if p.photo_path and os.path.exists(p.photo_path):
+        if p.photo_path:
             try:
-                os.remove(p.photo_path)
+                delete_from_storage(p.photo_path)
             except Exception as e:
                 print("사진 삭제 실패:", e)
         db.session.delete(p)
 
     # (기존 단일 photo_path도 혹시 남아있으면 삭제)
-    if outfit.photo_path and os.path.exists(outfit.photo_path):
+    if outfit.photo_path:
         try:
-            os.remove(outfit.photo_path)
+            delete_from_storage(outfit.photo_path)
         except Exception as e:
             print("사진 삭제 실패:", e)
 
@@ -451,9 +520,9 @@ def outfit_edit(outfit_id):
             p = OutfitPhoto.query.get(int(pid))
             if p and p.outfit_id == outfit.id:
                 OutfitPhotoItem.query.filter_by(photo_id=p.id).delete()
-                if p.photo_path and os.path.exists(p.photo_path):
+                if p.photo_path:
                     try:
-                        os.remove(p.photo_path)
+                        delete_from_storage(p.photo_path)
                     except Exception as e:
                         print("사진 삭제 실패:", e)
                 db.session.delete(p)
@@ -493,10 +562,13 @@ def outfit_edit(outfit_id):
         files = request.files.getlist('photos')
         for idx, f in enumerate(files):
             if f and f.filename:
-                fname = f"{datetime.utcnow().timestamp()}_{f.filename}"
-                save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
-                f.save(save_path)
-                photo_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+                try:
+                    photo_path = upload_to_storage(f, "outfits")
+                except Exception:
+                    fname = f"{datetime.utcnow().timestamp()}_{f.filename}"
+                    save_path = os.path.join(app.config['UPLOAD_FOLDER'], fname)
+                    f.save(save_path)
+                    photo_path = "/" + "/".join([app.config["UPLOAD_FOLDER"].replace("\\", "/"), fname])
                 photo = OutfitPhoto(outfit_id=outfit.id, photo_path=photo_path)
                 db.session.add(photo)
                 db.session.flush()
