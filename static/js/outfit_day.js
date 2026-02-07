@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const dataEl = document.getElementById('fdTagMapData');
   let tagMap = {};
   if (dataEl && dataEl.textContent) {
@@ -22,27 +22,38 @@
     function render() {
       slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
       if (counter) counter.textContent = `${idx + 1} / ${slides.length}`;
-      if (prev) prev.disabled = (idx === 0);
-      if (next) next.disabled = (idx === slides.length - 1);
+      if (prev) prev.disabled = idx === 0;
+      if (next) next.disabled = idx === slides.length - 1;
 
       const current = slides[idx];
       const pid = current?.dataset?.photoId;
       const card = slider.closest('.card-clean');
       const tagWrap = card ? card.querySelector('.fd-photo-tags') : null;
       if (tagWrap) {
-        const tags = (pid && tagMap[pid]) ? tagMap[pid] : [];
+        const tags = pid && tagMap[pid] ? tagMap[pid] : [];
         if (tags && tags.length) {
-          tagWrap.innerHTML = '<div class="d-flex flex-wrap gap-2">' +
-            tags.map(t => `<span class="chip">${t.name}</span>`).join('') +
+          tagWrap.innerHTML =
+            '<div class="d-flex flex-wrap gap-2">' +
+            tags.map((t) => `<span class="chip">${t.name}</span>`).join('') +
             '</div>';
         } else {
-          tagWrap.innerHTML = '<div class="ghost">?�그???�이 ?�어??</div>';
+          tagWrap.innerHTML = '<div class="ghost">태그된 아이템이 없습니다.</div>';
         }
       }
     }
 
-    if (prev) prev.addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
-    if (next) next.addEventListener('click', () => { if (idx < slides.length - 1) { idx++; render(); } });
+    if (prev) prev.addEventListener('click', () => {
+      if (idx > 0) {
+        idx--;
+        render();
+      }
+    });
+    if (next) next.addEventListener('click', () => {
+      if (idx < slides.length - 1) {
+        idx++;
+        render();
+      }
+    });
 
     render();
   });

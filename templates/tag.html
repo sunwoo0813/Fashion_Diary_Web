@@ -6,11 +6,11 @@
       <h2 class="mb-1">#{{ item.name }}</h2>
       <div class="text-muted">{{ item.category or '기타' }} · {{ item.color }}</div>
     </div>
-    <a class="btn btn-outline-dark" href="{{ url_for('wardrobe') }}">← 옷장으로</a>
+    <a class="btn btn-outline-dark" href="{{ url_for('wardrobe') }}">옷장으로</a>
   </div>
 
   {% if outfits|length == 0 %}
-    <div class="glass p-4 text-center">이 아이템으로 기록된 코디가 아직 없어요.</div>
+    <div class="glass p-4 text-center">이 아이템으로 기록된 코디가 아직 없습니다.</div>
   {% else %}
     <div class="row g-3">
       {% for o in outfits %}
@@ -24,7 +24,7 @@
               <strong>{{ o.date.strftime("%Y-%m-%d") }}</strong>
               <small class="text-muted">
                 {% if o.t_min is not none and o.t_max is not none %}
-                  {{ o.t_min|round(0) }}° / {{ o.t_max|round(0) }}°
+                  {{ o.t_min|round(0) }}°C / {{ o.t_max|round(0) }}°C
                 {% endif %}
                 {% if o.rain %} · 비{% endif %}
               </small>

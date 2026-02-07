@@ -9,12 +9,12 @@
 <div class="section-head">
   <div>
     <h2 class="m-0">내 옷장</h2>
-    <div class="ghost">가지고 있는 옷을 저장하고, 코디 기록 시 태그로 연결하세요.</div>
+    <div class="ghost">보유 중인 아이템을 관리하고 코디 기록에 태그로 연결하세요.</div>
   </div>
   <div class="d-flex align-items-center gap-2">
     <button id="deleteToggleBtn" type="button" class="btn btn-danger-outline btn-sm"
             {% if items|length == 0 %}disabled{% endif %}>삭제</button>
-    <a class="btn btn-solid btn-sm" href="{{ url_for('items_create') }}">옷 추가</a>
+    <a class="btn btn-solid btn-sm" href="{{ url_for('items_create') }}">+ 추가</a>
   </div>
 </div>
 
@@ -22,7 +22,7 @@
   <div class="row g-2 align-items-end">
     <div class="col-md-4">
       <label class="form-label">검색</label>
-      <input name="q" class="form-control" value="{{ q or '' }}" placeholder="브랜드/제품명/색상">
+      <input name="q" class="form-control" value="{{ q or '' }}" placeholder="브랜드, 제품명, 색상">
     </div>
     <div class="col-md-3">
       <label class="form-label">카테고리</label>
@@ -47,13 +47,13 @@
 {% if items|length == 0 %}
   <div class="card-clean p-4 text-center">
     {% if has_filters %}
-      조건에 맞는 옷이 없어요.
+      조건에 맞는 아이템이 없습니다.
     {% else %}
-      아직 옷이 없어요. 나만의 옷장을 만들어주세요!
+      아직 아이템이 없습니다. 첫 아이템을 추가해보세요.
     {% endif %}
   </div>
 {% else %}
-  <div id="deleteHint" class="text-muted small mb-2" style="display:none;">삭제할 옷을 선택하세요.</div>
+  <div id="deleteHint" class="text-muted small mb-2" style="display:none;">삭제할 아이템을 선택하세요.</div>
   <form id="itemDeleteForm" method="post" action="{{ url_for('items_delete') }}"></form>
   <div class="row g-3">
     {% for it in items %}

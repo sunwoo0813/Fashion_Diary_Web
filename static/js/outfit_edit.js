@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const itemsEl = document.getElementById('fdWardrobeItemsData');
   const tagMapEl = document.getElementById('fdInitialTagMapData');
   let wardrobeItems = [];
@@ -22,7 +22,7 @@
   const slider = document.querySelector('.fd-slider');
   if (!slider) return;
 
-  const itemsById = new Map(wardrobeItems.map(i => [String(i.id), i]));
+  const itemsById = new Map(wardrobeItems.map((i) => [String(i.id), i]));
 
   const frame = slider.querySelector('.fd-slider-frame');
   const fileInput = document.querySelector('input[type="file"][name="photos"]');
@@ -42,7 +42,7 @@
   let tagsByLocalKey = {};
 
   Object.keys(initialTagMap || {}).forEach((k) => {
-    tagsByPhotoId[String(k)] = (initialTagMap[k] || []).map(x => parseInt(x, 10));
+    tagsByPhotoId[String(k)] = (initialTagMap[k] || []).map((x) => parseInt(x, 10));
   });
 
   function fileKey(file) {
@@ -58,17 +58,17 @@
     const cur = slides[idx];
     if (!cur) return null;
     if (cur.dataset.photoId) {
-      return { type: "existing", key: String(cur.dataset.photoId) };
+      return { type: 'existing', key: String(cur.dataset.photoId) };
     }
     if (cur.dataset.localKey) {
-      return { type: "local", key: cur.dataset.localKey };
+      return { type: 'local', key: cur.dataset.localKey };
     }
     return null;
   }
 
   function getTagArray(info) {
     if (!info) return [];
-    if (info.type === "existing") {
+    if (info.type === 'existing') {
       if (!tagsByPhotoId[info.key]) tagsByPhotoId[info.key] = [];
       return tagsByPhotoId[info.key];
     }
@@ -86,7 +86,7 @@
     if (hiddenExisting) hiddenExisting.value = JSON.stringify(tagsByPhotoId);
     if (hiddenNew) {
       const files = Array.from(fileInput.files || []);
-      const list = files.map(f => tagsByLocalKey[fileKey(f)] || []);
+      const list = files.map((f) => tagsByLocalKey[fileKey(f)] || []);
       hiddenNew.value = JSON.stringify(list);
     }
   }
@@ -95,19 +95,19 @@
     if (!tagChips) return;
     const info = currentInfo();
     const ids = getTagArray(info);
-    tagChips.innerHTML = "";
+    tagChips.innerHTML = '';
     ids.forEach((id) => {
       const item = itemsById.get(String(id));
       const label = item ? `${item.name} · ${item.category}` : `#${id}`;
-      const chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "chip";
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'chip';
       chip.textContent = label;
-      const x = document.createElement("span");
-      x.textContent = " ×";
-      x.style.opacity = "0.7";
+      const x = document.createElement('span');
+      x.textContent = ' ×';
+      x.style.opacity = '0.7';
       chip.appendChild(x);
-      chip.addEventListener("click", () => {
+      chip.addEventListener('click', () => {
         removeTag(id);
       });
       tagChips.appendChild(chip);
@@ -127,8 +127,8 @@
     const info = currentInfo();
     if (!info) return;
     const arr = getTagArray(info);
-    const filtered = arr.filter(x => String(x) !== String(id));
-    if (info.type === "existing") tagsByPhotoId[info.key] = filtered;
+    const filtered = arr.filter((x) => String(x) !== String(id));
+    if (info.type === 'existing') tagsByPhotoId[info.key] = filtered;
     else tagsByLocalKey[info.key] = filtered;
     renderTags();
   }
@@ -137,34 +137,34 @@
     if (!tagResults || !tagInput) return;
     const q = tagInput.value.trim().toLowerCase();
     if (!q) {
-      tagResults.style.display = "none";
-      tagResults.innerHTML = "";
+      tagResults.style.display = 'none';
+      tagResults.innerHTML = '';
       return;
     }
-    const results = wardrobeItems.filter(it =>
-      `${it.name} ${it.category}`.toLowerCase().includes(q)
-    ).slice(0, 8);
-    tagResults.innerHTML = "";
+    const results = wardrobeItems
+      .filter((it) => `${it.name} ${it.category}`.toLowerCase().includes(q))
+      .slice(0, 8);
+    tagResults.innerHTML = '';
     if (!results.length) {
-      const emptyEl = document.createElement("div");
-      emptyEl.className = "text-muted small";
-      emptyEl.textContent = "검??결과 ?�음";
+      const emptyEl = document.createElement('div');
+      emptyEl.className = 'text-muted small';
+      emptyEl.textContent = '검색 결과 없음';
       tagResults.appendChild(emptyEl);
     } else {
-      results.forEach(it => {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn btn-soft btn-sm w-100 text-start mb-1";
+      results.forEach((it) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'btn btn-soft btn-sm w-100 text-start mb-1';
         btn.textContent = `${it.name} · ${it.category}`;
-        btn.addEventListener("click", () => {
+        btn.addEventListener('click', () => {
           addTag(it.id);
-          tagInput.value = "";
+          tagInput.value = '';
           renderResults();
         });
         tagResults.appendChild(btn);
       });
     }
-    tagResults.style.display = "block";
+    tagResults.style.display = 'block';
   }
 
   function render() {
@@ -175,7 +175,7 @@
       if (prev) prev.style.display = 'none';
       if (next) next.style.display = 'none';
       if (delBtn) delBtn.style.display = 'none';
-      if (tagChips) tagChips.innerHTML = "";
+      if (tagChips) tagChips.innerHTML = '';
       return;
     }
 
@@ -188,8 +188,8 @@
     if (idx >= slides.length) idx = slides.length - 1;
     slides.forEach((s, i) => s.classList.toggle('is-active', i === idx));
     if (counter) counter.textContent = `${idx + 1} / ${slides.length}`;
-    if (prev) prev.disabled = (idx === 0);
-    if (next) next.disabled = (idx === slides.length - 1);
+    if (prev) prev.disabled = idx === 0;
+    if (next) next.disabled = idx === slides.length - 1;
     renderTags();
   }
 
@@ -219,17 +219,25 @@
     });
   }
 
-  if (prev) prev.addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+  if (prev) prev.addEventListener('click', () => {
+    if (idx > 0) {
+      idx--;
+      render();
+    }
+  });
   if (next) next.addEventListener('click', () => {
     const slides = allSlides();
-    if (idx < slides.length - 1) { idx++; render(); }
+    if (idx < slides.length - 1) {
+      idx++;
+      render();
+    }
   });
   if (delBtn) delBtn.addEventListener('click', () => {
     const slides = allSlides();
     if (!slides.length) return;
     const current = slides[idx];
     if (!current) return;
-    if (!confirm('???�진????��?�까??')) return;
+    if (!confirm('이 사진을 삭제할까요?')) return;
 
     const pid = current.dataset.photoId;
     const localKey = current.dataset.localKey;
@@ -256,7 +264,7 @@
         });
         fileInput.files = dt.files;
       } catch (e) {
-        console.warn('?�일 목록 갱신 ?�패', e);
+        console.warn('파일 목록 갱신 실패', e);
       }
       delete tagsByLocalKey[localKey];
     }
@@ -266,13 +274,13 @@
   });
 
   if (tagInput) {
-    tagInput.addEventListener("input", renderResults);
-    tagInput.addEventListener("focus", renderResults);
+    tagInput.addEventListener('input', renderResults);
+    tagInput.addEventListener('focus', renderResults);
   }
-  document.addEventListener("click", (e) => {
+  document.addEventListener('click', (e) => {
     if (!tagResults || !tagInput) return;
     if (e.target !== tagInput && !tagResults.contains(e.target)) {
-      tagResults.style.display = "none";
+      tagResults.style.display = 'none';
     }
   });
 

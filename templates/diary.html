@@ -9,19 +9,19 @@
 <div class="section-head">
   <div>
     <h2 class="m-0">코디 다이어리</h2>
-    <div class="ghost">달력에서 오늘의 코디를 기록하고 확인하세요.</div>
+    <div class="ghost">달력에서 코디 기록을 확인하고 날짜별로 관리하세요.</div>
   </div>
 </div>
 
 <div class="card-clean p-3 mb-3">
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <span class="chip">📍 {{ (weather.city if weather else city) }}</span>
+      <span class="chip">도시 {{ (weather.city if weather else city) }}</span>
 
       {% if weather %}
-        <span class="chip">🌡️ {{ weather.t_min }}° ~ {{ weather.t_max }}°</span>
-        <span class="chip">💧 {{ weather.humidity }}%</span>
-        <span class="chip">{% if weather.rain %}☔ 비/눈 가능{% else %}🌤️ 강수 없음{% endif %}</span>
+        <span class="chip">기온 {{ weather.t_min }}°C ~ {{ weather.t_max }}°C</span>
+        <span class="chip">습도 {{ weather.humidity }}%</span>
+        <span class="chip">{% if weather.rain %}강수 가능{% else %}강수 없음{% endif %}</span>
         <span class="chip">{{ weather.desc }}</span>
 
         {% if weather.icon %}
@@ -32,11 +32,10 @@
           >
         {% endif %}
       {% else %}
-        <span class="chip">날씨 정보를 불러오지 못했어요</span>
+        <span class="chip">날씨 정보를 불러오지 못했습니다</span>
       {% endif %}
     </div>
 
-    <!-- ✅ 도시 변경 폼(선택) -->
     <form class="d-flex gap-2" method="get" action="{{ url_for('diary') }}">
       <input name="city" class="form-control form-control-sm" style="max-width:160px"
              value="{{ city }}" placeholder="도시 (예: 서울)">
@@ -49,34 +48,29 @@
 
 <div class="card-clean p-4">
   <div class="d-flex justify-content-between align-items-center mb-3">
-    <a href="{{ url_for('diary', year=year, month=month-1 if month>1 else 12) }}" class="btn btn-soft btn-sm">◀ 이전달</a>
+    <a href="{{ url_for('diary', year=year, month=month-1 if month>1 else 12) }}" class="btn btn-soft btn-sm">이전 달</a>
     <h4 class="m-0">{{ year }}년 {{ month }}월</h4>
-    <a href="{{ url_for('diary', year=year, month=month+1 if month<12 else 1) }}" class="btn btn-soft btn-sm">다음달 ▶</a>
+    <a href="{{ url_for('diary', year=year, month=month+1 if month<12 else 1) }}" class="btn btn-soft btn-sm">다음 달</a>
   </div>
 
   <div class="calendar-grid">
     {% for i in range(7) %}
-      <div class="day-name">{{ ['일','월','화','수','목','금','토'][i] }}</div>
+      <div class="day-name">{{ ['일', '월', '화', '수', '목', '금', '토'][i] }}</div>
     {% endfor %}
 
-    {# 빈칸 offset (1일이 무슨 요일인지 계산) #}
     {% set offset = (datetime(year, month, 1).weekday() + 1) % 7 %}
     {% for i in range(offset) %}
       <div class="day empty"></div>
     {% endfor %}
 
-    {# 날짜 칸 #}
     {% for d in days %}
-      {% set this_date = datetime(year, month, d) %}
       {% set is_today = (today.year==year and today.month==month and today.day==d) %}
       {% set has_record = d in recorded_days %}
 
       <a href="{{ url_for('outfits_by_date', date_str='%04d-%02d-%02d' % (year, month, d)) }}"
-        class="day text-decoration-none
-          {% if is_today %}today{% elif has_record %}recorded{% else %}emptyday{% endif %}">
+         class="day text-decoration-none {% if is_today %}today{% elif has_record %}recorded{% else %}emptyday{% endif %}">
         <div class="num">{{ d }}</div>
       </a>
-
     {% endfor %}
   </div>
 </div>

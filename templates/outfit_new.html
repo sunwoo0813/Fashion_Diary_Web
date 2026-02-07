@@ -8,10 +8,9 @@
 
       <form method="post" enctype="multipart/form-data">
 
-        <!-- ✅ (추가) 지역 + 오늘 날씨 자동 불러오기 -->
         <div class="row g-2 mb-3">
           <div class="col-8">
-            <label class="form-label">지역(도시)</label>
+            <label class="form-label">도시</label>
             <input id="city" name="city" class="form-control" value="서울" placeholder="예: 서울, 부산, 제주">
           </div>
           <div class="col-4 d-flex align-items-end">
@@ -28,32 +27,40 @@
           <div id="photoPreviewWrap" class="mt-3" style="display:none;">
             <div class="card-clean p-2">
               <div style="position:relative; border-radius:14px; overflow:hidden; border:1px solid var(--border);">
-                <img id="photoPreviewImg"
-                      alt="preview"
-                      style="width:100%; height:360px; object-fit:cover; display:block;" />
+                <img
+                  id="photoPreviewImg"
+                  alt="preview"
+                  style="width:100%; height:360px; object-fit:cover; display:block;"
+                />
 
-                <button type="button" id="photoPrevBtn"
+                <button
+                  type="button"
+                  id="photoPrevBtn"
                   class="btn btn-soft btn-sm"
-                  style="position:absolute; left:10px; top:50%; transform:translateY(-50%);">
-                  ◀
+                  style="position:absolute; left:10px; top:50%; transform:translateY(-50%);"
+                >
+                  이전
                 </button>
 
-                <button type="button" id="photoNextBtn"
+                <button
+                  type="button"
+                  id="photoNextBtn"
                   class="btn btn-soft btn-sm"
-                  style="position:absolute; right:10px; top:50%; transform:translateY(-50%);">
-                  ▶
+                  style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"
+                >
+                  다음
                 </button>
 
-                <div id="photoCounter"
+                <div
+                  id="photoCounter"
                   style="position:absolute; right:12px; bottom:12px;
-                        padding:6px 10px; border-radius:999px; font-size:14px;
-                        background: color-mix(in oklab, var(--card) 85%, transparent);
-                        border:1px solid var(--border);">
-                </div>
+                         padding:6px 10px; border-radius:999px; font-size:14px;
+                         background: color-mix(in oklab, var(--card) 85%, transparent);
+                         border:1px solid var(--border);"
+                ></div>
               </div>
 
-              <div id="photoThumbs" class="mt-2"
-                    style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+              <div id="photoThumbs" class="mt-2" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
             </div>
           </div>
 
@@ -62,15 +69,17 @@
             <div id="photoTagChips" class="d-flex flex-wrap gap-2 mb-2"></div>
             <div class="position-relative">
               <input id="photoTagInput" class="form-control" placeholder="옷장 아이템 검색">
-              <div id="photoTagResults"
-                   class="card-clean p-2 mt-1"
-                   style="display:none; position:absolute; z-index:10; width:100%; max-height:240px; overflow:auto;"></div>
+              <div
+                id="photoTagResults"
+                class="card-clean p-2 mt-1"
+                style="display:none; position:absolute; z-index:10; width:100%; max-height:240px; overflow:auto;"
+              ></div>
             </div>
             <input type="hidden" name="photo_tags_json" id="photoTagsJson">
-            <div class="form-text mt-1">사진마다 옷장 아이템을 태그할 수 있어요.</div>
+            <div class="form-text mt-1">사진마다 착용 아이템을 태그할 수 있습니다.</div>
           </div>
 
-          <div class="form-text">여러 장 선택 가능</div>
+          <div class="form-text">여러 장 선택 가능합니다.</div>
         </div>
 
         <div class="row">
@@ -79,8 +88,8 @@
             <input type="date" name="date" class="form-control" value="{{ (now or '') }}">
           </div>
           <div class="col-6 mb-3">
-            <label class="form-label">오늘의 한줄</label>
-            <input name="note" class="form-control" placeholder="예: 닥터마틴 체리레드 맛있다...">
+            <label class="form-label">메모</label>
+            <input name="note" class="form-control" placeholder="오늘 코디에 대한 메모를 남겨보세요.">
           </div>
         </div>
 
@@ -97,7 +106,7 @@
             <label class="form-label">강수</label>
             <select id="rain" name="rain" class="form-select">
               <option value="0">없음</option>
-              <option value="1">비/눈</option>
+              <option value="1">비</option>
             </select>
           </div>
           <div class="col-3 mb-3">
@@ -109,7 +118,6 @@
         <div class="d-grid">
           <button class="btn btn-dark" type="submit">저장</button>
         </div>
-
       </form>
     </div>
   </div>

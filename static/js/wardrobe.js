@@ -1,4 +1,4 @@
-(function () {
+﻿(function () {
   const toggleBtn = document.getElementById('deleteToggleBtn');
   const hint = document.getElementById('deleteHint');
   const form = document.getElementById('itemDeleteForm');
@@ -8,17 +8,17 @@
   let deleteMode = false;
 
   function selectedIds() {
-    return items.filter(i => i.classList.contains('selected')).map(i => i.dataset.itemId);
+    return items.filter((i) => i.classList.contains('selected')).map((i) => i.dataset.itemId);
   }
 
   function updateUI() {
     const count = selectedIds().length;
     if (hint) hint.style.display = deleteMode ? 'block' : 'none';
     if (!deleteMode) {
-      toggleBtn.textContent = '??��';
+      toggleBtn.textContent = '삭제';
       return;
     }
-    toggleBtn.textContent = count > 0 ? '?�택 ??��' : '??�� 취소';
+    toggleBtn.textContent = count > 0 ? '선택 삭제' : '삭제 취소';
   }
 
   toggleBtn.addEventListener('click', () => {
@@ -31,14 +31,14 @@
     const ids = selectedIds();
     if (!ids.length) {
       deleteMode = false;
-      items.forEach(i => i.classList.remove('selected'));
+      items.forEach((i) => i.classList.remove('selected'));
       updateUI();
       return;
     }
-    if (!confirm(`?�택????${ids.length}개�? ??��?�까??`)) return;
+    if (!confirm(`선택한 ${ids.length}개를 삭제할까요?`)) return;
 
     form.innerHTML = '';
-    ids.forEach(id => {
+    ids.forEach((id) => {
       const input = document.createElement('input');
       input.type = 'hidden';
       input.name = 'item_ids';
