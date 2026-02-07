@@ -1,6 +1,6 @@
 from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from datetime import datetime
 import os
 import json
@@ -486,6 +486,36 @@ def wardrobe():
     ]
     has_filters = bool(q or category or color)
 
+    wear_counts = {}
+    if items:
+        wear_rows = db.session.query(
+            OutfitItem.item_id, func.count(OutfitItem.item_id)
+        ).join(
+            Outfit, OutfitItem.outfit_id == Outfit.id
+        ).filter(
+            Outfit.user_id == user_id
+        ).group_by(OutfitItem.item_id).all()
+        for iid, cnt in wear_rows:
+            wear_counts[iid] = int(cnt)
+
+        photo_rows = db.session.query(
+            OutfitPhotoItem.item_id, func.count(OutfitPhotoItem.item_id)
+        ).join(
+            OutfitPhoto, OutfitPhotoItem.photo_id == OutfitPhoto.id
+        ).join(
+            Outfit, OutfitPhoto.outfit_id == Outfit.id
+        ).filter(
+            Outfit.user_id == user_id
+        ).group_by(OutfitPhotoItem.item_id).all()
+        for iid, cnt in photo_rows:
+            wear_counts[iid] = wear_counts.get(iid, 0) + int(cnt)
+
+    fav_ids = {
+        iid for iid, cnt in sorted(
+            wear_counts.items(), key=lambda x: x[1], reverse=True
+        )[:3] if cnt > 0
+    }
+
     return render_template(
         'wardrobe.html',
         items=items,
@@ -493,7 +523,9 @@ def wardrobe():
         category=category,
         color=color,
         categories=categories,
-        has_filters=has_filters
+        has_filters=has_filters,
+        wear_counts=wear_counts,
+        fav_ids=fav_ids
     )
 
 # 옷 추가
@@ -566,9 +598,63 @@ def items_delete():
     return redirect(url_for('wardrobe'))
 
 # 다이어리
+def build_outfit_day_context(user_id: int, target_date: date):
+    outfits = Outfit.query.filter_by(
+        user_id=user_id,
+        date=target_date
+    ).order_by(Outfit.created_at.desc()).all()
+
+    item_map = {o.id: [] for o in outfits}
+    outfit_ids = [o.id for o in outfits]
+
+    if outfit_ids:
+        rows = db.session.query(OutfitItem.outfit_id, Item).join(
+            Item, Item.id == OutfitItem.item_id
+        ).filter(
+            OutfitItem.outfit_id.in_(outfit_ids),
+            Item.user_id == user_id
+        ).all()
+        for oid, item in rows:
+            item_map[oid].append(item)
+
+    photo_map = {o.id: [] for o in outfits}
+    photo_tag_map = {}
+    if outfit_ids:
+        photos = OutfitPhoto.query.filter(OutfitPhoto.outfit_id.in_(outfit_ids)) \
+                                  .order_by(OutfitPhoto.created_at.asc()) \
+                                  .all()
+        photo_ids = []
+        for p in photos:
+            photo_map[p.outfit_id].append(p)
+            photo_ids.append(p.id)
+
+        if photo_ids:
+            rows = db.session.query(OutfitPhotoItem.photo_id, Item) \
+                             .join(Item, Item.id == OutfitPhotoItem.item_id) \
+                             .filter(
+                                 OutfitPhotoItem.photo_id.in_(photo_ids),
+                                 Item.user_id == user_id
+                             ) \
+                             .all()
+            for pid, item in rows:
+                photo_tag_map.setdefault(pid, []).append({
+                    "id": item.id,
+                    "name": item.name
+                })
+
+    return outfits, item_map, photo_map, photo_tag_map
+
+
 @app.route('/diary')
 @login_required
 def diary():
+    today = date.today()
+    return redirect(url_for('diary_day', date_str=today.isoformat()))
+
+
+@app.route('/diary/month')
+@login_required
+def diary_month():
     user_id = get_current_user_id()
     today = date.today()
     year = int(request.args.get('year', today.year))
@@ -605,6 +691,56 @@ def diary():
         weather=weather
     )
 
+
+@app.route('/diary/date/<date_str>')
+@login_required
+def diary_day(date_str):
+    user_id = get_current_user_id()
+    try:
+        target_date = datetime.fromisoformat(date_str).date()
+    except ValueError:
+        return "Invalid date format. Use YYYY-MM-DD", 400
+
+    outfits, item_map, photo_map, photo_tag_map = build_outfit_day_context(
+        user_id, target_date
+    )
+
+    city = (request.args.get('city') or "서울").strip()
+    weather_live = None
+    if target_date == date.today():
+        weather_live = get_today_weather_summary(city)
+
+    weather_record = None
+    if outfits:
+        o0 = outfits[0]
+        has_record_weather = not (
+            (o0.t_min or 0) == 0 and (o0.t_max or 0) == 0 and (o0.humidity in (0, None)) and not o0.rain
+        )
+        if has_record_weather:
+            weather_record = {
+                "t_min": o0.t_min or 0,
+                "t_max": o0.t_max or 0,
+                "humidity": o0.humidity or 0,
+                "rain": bool(o0.rain)
+            }
+
+    prev_date = target_date - timedelta(days=1)
+    next_date = target_date + timedelta(days=1)
+
+    return render_template(
+        'diary_day.html',
+        target_date=target_date,
+        prev_date=prev_date,
+        next_date=next_date,
+        outfits=outfits,
+        item_map=item_map,
+        photo_map=photo_map,
+        photo_tag_map=photo_tag_map,
+        weather=weather_live,
+        weather_record=weather_record,
+        city=city
+    )
+
 # 통계
 @app.route('/stats')
 @login_required
@@ -638,6 +774,44 @@ def stats():
     for o in outfits:
         if o.date and o.date.year == current_year:
             month_counts[o.date.month] += 1
+    max_month_count = max(month_counts.values()) if month_counts else 0
+
+    weather_total = 0
+    rain_count = 0
+    clear_count = 0
+    temp_bucket_counts = {
+        "0~4℃": 0,
+        "5~13℃": 0,
+        "14~22℃": 0,
+        "23~28℃": 0,
+        "29℃+": 0,
+    }
+
+    for o in outfits:
+        if o.t_min is None or o.t_max is None:
+            continue
+        if o.t_min == 0 and o.t_max == 0 and (o.humidity in (0, None)):
+            continue
+        weather_total += 1
+        if o.rain:
+            rain_count += 1
+        else:
+            clear_count += 1
+
+        avg = (o.t_min + o.t_max) / 2
+        if avg <= 4:
+            temp_bucket_counts["0~4℃"] += 1
+        elif avg <= 13:
+            temp_bucket_counts["5~13℃"] += 1
+        elif avg <= 22:
+            temp_bucket_counts["14~22℃"] += 1
+        elif avg <= 28:
+            temp_bucket_counts["23~28℃"] += 1
+        else:
+            temp_bucket_counts["29℃+"] += 1
+
+    max_temp_count = max(temp_bucket_counts.values()) if temp_bucket_counts else 0
+    rain_ratio = round((rain_count / weather_total) * 100) if weather_total else 0
 
     category_sorted = sorted(category_counts.items(), key=lambda x: (-x[1], x[0]))
     season_sorted = sorted(season_counts.items(), key=lambda x: (-x[1], x[0]))
@@ -652,6 +826,13 @@ def stats():
         season_sorted=season_sorted,
         color_sorted=color_sorted,
         month_counts=month_counts,
+        max_month_count=max_month_count,
+        weather_total=weather_total,
+        rain_count=rain_count,
+        clear_count=clear_count,
+        rain_ratio=rain_ratio,
+        temp_buckets=list(temp_bucket_counts.items()),
+        max_temp_count=max_temp_count,
         current_year=current_year
     )
 
@@ -898,71 +1079,11 @@ def outfit_edit(outfit_id):
         photo_tag_map=photo_tag_map
     )
 
-# 날짜별 코디 보기 라우트
+# 날짜별 코디 보기 라우트 (신규 다이어리 화면으로 이동)
 @app.route('/outfits/date/<date_str>')
 @login_required
 def outfits_by_date(date_str):
-    user_id = get_current_user_id()
-    """
-    예: /outfits/date/2026-01-31
-    해당 날짜의 코디 기록(날짜당 1개만이면 0~1개)을 보여줌
-    """
-    try:
-        target_date = datetime.fromisoformat(date_str).date()
-    except ValueError:
-        return "Invalid date format. Use YYYY-MM-DD", 400
-
-    outfits = Outfit.query.filter_by(user_id=user_id, date=target_date).order_by(Outfit.created_at.desc()).all()
-
-    # outfit_id -> 착용 item 리스트 구성
-    item_map = {o.id: [] for o in outfits}
-    outfit_ids = [o.id for o in outfits]
-
-    if outfit_ids:
-        rows = db.session.query(OutfitItem.outfit_id, Item).join(
-            Item, Item.id == OutfitItem.item_id
-        ).filter(
-            OutfitItem.outfit_id.in_(outfit_ids),
-            Item.user_id == user_id
-        ).all()
-
-        for oid, item in rows:
-            item_map[oid].append(item)
-
-    # ✅ 여기서부터가 “사진 여러 장” 핵심: photo_map + photo_tag_map 만들기
-    photo_map = {o.id: [] for o in outfits}
-    photo_tag_map = {}
-    if outfit_ids:
-        photos = OutfitPhoto.query.filter(OutfitPhoto.outfit_id.in_(outfit_ids)) \
-                                  .order_by(OutfitPhoto.created_at.asc()) \
-                                  .all()
-        photo_ids = []
-        for p in photos:
-            photo_map[p.outfit_id].append(p)
-            photo_ids.append(p.id)
-
-        if photo_ids:
-            rows = db.session.query(OutfitPhotoItem.photo_id, Item) \
-                             .join(Item, Item.id == OutfitPhotoItem.item_id) \
-                             .filter(
-                                 OutfitPhotoItem.photo_id.in_(photo_ids),
-                                 Item.user_id == user_id
-                             ) \
-                             .all()
-            for pid, item in rows:
-                photo_tag_map.setdefault(pid, []).append({
-                    "id": item.id,
-                    "name": item.name
-                })
-
-    return render_template(
-        'outfit_day.html',
-        target_date=target_date,
-        outfits=outfits,
-        item_map=item_map,
-        photo_map=photo_map,
-        photo_tag_map=photo_tag_map
-    )
+    return redirect(url_for('diary_day', date_str=date_str))
 
 # 특정 옷의 코디 히스토리
 @app.route('/tag/<int:item_id>')

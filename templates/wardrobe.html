@@ -6,19 +6,23 @@
 
 {% block content %}
 
-<div class="section-head">
+<div class="page-hero">
   <div>
-    <h2 class="m-0">내 옷장</h2>
-    <div class="ghost">보유 중인 아이템을 관리하고 코디 기록에 태그로 연결하세요.</div>
+    <p class="eyebrow">My Closet</p>
+    <h1 class="hero-title">나의 옷장</h1>
+    <p class="hero-subtitle">
+      보유 중인 아이템을 기록하고, 코디 다이어리와 자연스럽게 연결해요.
+      <span class="badge-soft ms-2">총 {{ items|length }}개</span>
+    </p>
   </div>
-  <div class="d-flex align-items-center gap-2">
+  <div class="hero-actions">
     <button id="deleteToggleBtn" type="button" class="btn btn-danger-outline btn-sm"
             {% if items|length == 0 %}disabled{% endif %}>삭제</button>
     <a class="btn btn-solid btn-sm" href="{{ url_for('items_create') }}">+ 추가</a>
   </div>
 </div>
 
-<form class="card-clean p-3 mb-3" method="get" action="{{ url_for('wardrobe') }}">
+<form class="card-clean p-3 mb-3 filter-panel" method="get" action="{{ url_for('wardrobe') }}">
   <div class="row g-2 align-items-end">
     <div class="col-md-4">
       <label class="form-label">검색</label>
@@ -55,21 +59,37 @@
 {% else %}
   <div id="deleteHint" class="text-muted small mb-2" style="display:none;">삭제할 아이템을 선택하세요.</div>
   <form id="itemDeleteForm" method="post" action="{{ url_for('items_delete') }}"></form>
-  <div class="row g-3">
+  <div class="row g-3 wardrobe-grid">
     {% for it in items %}
     <div class="col-6 col-md-4 col-lg-3">
       <a class="text-decoration-none wardrobe-item" data-item-id="{{ it.id }}"
          href="{{ url_for('tag_page', item_id=it.id) }}">
-        <div class="card-clean h-100">
-          {% if it.image_path %}
-          <img class="card-media" src="{{ it.image_path }}" alt="{{ it.name }}">
-          {% endif %}
+        <div class="card-clean h-100 wardrobe-card">
+          <div class="media-frame">
+            {% if it.image_path %}
+              <img class="card-media" src="{{ it.image_path }}" alt="{{ it.name }}">
+            {% else %}
+              <div class="media-placeholder">이미지 없음</div>
+            {% endif %}
+            <span class="item-tag">{{ it.category or '기타' }}</span>
+          </div>
           <div class="card-body">
-            <div class="d-flex justify-content-between align-items-center">
-              <div class="fw-semibold">{{ it.name }}</div>
-              <small class="meta">{{ it.category or '기타' }}</small>
+            <div class="item-title">{{ it.name }}</div>
+            <div class="item-meta">
+              {% set wear = wear_counts.get(it.id, 0) %}
+              {% if it.id in fav_ids %}
+                <span class="badge-fav">즐겨찾기</span>
+              {% endif %}
+              {% if wear > 0 %}
+                <span class="badge-wear">착용 {{ wear }}회</span>
+              {% endif %}
+              {% if it.color %}
+                <span class="badge-soft">{{ it.color }}</span>
+              {% endif %}
+              {% if it.season %}
+                <span class="meta">{{ it.season }}</span>
+              {% endif %}
             </div>
-            <div class="meta">{{ it.color }}</div>
           </div>
         </div>
       </a>

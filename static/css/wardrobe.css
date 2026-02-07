@@ -1,13 +1,101 @@
 .btn-danger-outline {
   background: transparent;
-  color: #ef4444;
-  border: 1px solid #ef4444;
-  border-radius: 12px;
+  color: #b84a4a;
+  border: 1px solid #b84a4a;
+  border-radius: 999px;
+}
+
+.filter-panel {
+  background: color-mix(in oklab, var(--card) 85%, var(--bg));
+}
+
+.wardrobe-grid .card-clean {
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.wardrobe-item:hover .card-clean {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 40px rgba(34, 28, 22, 0.16);
 }
 .wardrobe-item.selected .card-clean {
-  border: 2px solid #ef4444;
-  box-shadow: 0 0 0 2px rgba(239,68,68,.12);
+  border: 2px solid #b84a4a;
+  box-shadow: 0 0 0 2px rgba(184,74,74,.12);
 }
 .wardrobe-item.selected .card-media {
   filter: saturate(0.95);
+}
+
+.wardrobe-card {
+  background: linear-gradient(180deg, #fffaf2 0%, #fffdf7 100%);
+}
+
+.media-frame {
+  position: relative;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(255, 251, 244, 0.9), rgba(255, 253, 247, 0.6));
+  border-bottom: 1px solid var(--border);
+}
+
+.media-frame img,
+.media-placeholder {
+  border-radius: 16px;
+  border: 1px solid var(--border);
+}
+
+.media-placeholder {
+  aspect-ratio: 4/5;
+  display: grid;
+  place-items: center;
+  color: var(--muted);
+  background: rgba(47, 62, 78, 0.04);
+  font-size: .9rem;
+  letter-spacing: .08em;
+}
+
+.item-tag {
+  position: absolute;
+  top: 18px;
+  left: 18px;
+  padding: .2rem .6rem;
+  border-radius: 999px;
+  background: rgba(255, 253, 247, 0.9);
+  border: 1px solid var(--border);
+  font-size: .75rem;
+  letter-spacing: .04em;
+}
+
+.item-title {
+  font-weight: 600;
+  letter-spacing: .2px;
+}
+
+.item-meta {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin-top: .35rem;
+  flex-wrap: wrap;
+}
+
+.badge-fav {
+  display: inline-flex;
+  align-items: center;
+  padding: .18rem .55rem;
+  border-radius: 999px;
+  background: rgba(199, 138, 93, 0.18);
+  color: #8a5c3b;
+  border: 1px solid rgba(199, 138, 93, 0.4);
+  font-size: .75rem;
+  font-weight: 600;
+}
+
+.badge-wear {
+  display: inline-flex;
+  align-items: center;
+  padding: .18rem .55rem;
+  border-radius: 999px;
+  background: rgba(47, 62, 78, 0.08);
+  color: var(--brand);
+  border: 1px solid rgba(47, 62, 78, 0.18);
+  font-size: .75rem;
+  font-weight: 600;
 }
