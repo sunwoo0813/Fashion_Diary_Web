@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
@@ -14,21 +14,19 @@
 <body>
   {% if not hide_nav %}
   <div class="nav-wrap">
-    <div class="container d-flex align-items-center justify-content-between py-2">
-      <a class="brand text-decoration-none" href="{{ url_for('diary') }}">Fashion Diary</a>
-      <div class="nav-gap d-flex align-items-center">
-        <a class="nav-btn text-decoration-none" href="{{ url_for('diary') }}">다이어리</a>
-        <a class="nav-btn text-decoration-none" href="{{ url_for('wardrobe') }}">옷장</a>
-        <a class="nav-btn text-decoration-none" href="{{ url_for('stats') }}">통계</a>
-        {% if session.get('user_email') %}
-          <a class="nav-btn text-decoration-none" href="{{ url_for('account') }}">설정</a>
-          <span class="nav-user">{{ session.get('user_email') }}</span>
-          <form method="post" action="{{ url_for('logout') }}" class="d-inline">
-            <button class="nav-btn nav-btn-primary" type="submit">로그아웃</button>
-          </form>
-        {% else %}
-          <a class="nav-btn nav-btn-primary text-decoration-none" href="{{ url_for('home') }}">로그인</a>
-        {% endif %}
+    <div class="container nav-stack">
+      <a class="profile-btn profile-floating" href="{{ url_for('account') }}" aria-label="Profile">
+        <svg class="profile-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <circle cx="12" cy="8" r="4"></circle>
+          <path d="M4 20c1.8-3.4 5.1-5.5 8-5.5s6.2 2.1 8 5.5"></path>
+        </svg>
+      </a>
+      <div class="nav-center">Fashion Diary</div>
+      <div class="nav-links-bar">
+        {% set ep = request.endpoint %}
+        <a class="nav-link text-decoration-none {% if ep in ['diary','diary_day','diary_month'] %}is-active{% endif %}" href="{{ url_for('diary') }}">다이어리</a>
+        <a class="nav-link text-decoration-none {% if ep == 'wardrobe' %}is-active{% endif %}" href="{{ url_for('wardrobe') }}">옷장</a>
+        <a class="nav-link text-decoration-none {% if ep == 'stats' %}is-active{% endif %}" href="{{ url_for('stats') }}">통계</a>
       </div>
     </div>
   </div>
