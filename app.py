@@ -605,6 +605,56 @@ def diary():
         weather=weather
     )
 
+# 통계
+@app.route('/stats')
+@login_required
+def stats():
+    user_id = get_current_user_id()
+    items = Item.query.filter(Item.user_id == user_id).all()
+    outfits = Outfit.query.filter(Outfit.user_id == user_id).all()
+    photos_count = OutfitPhoto.query.join(
+        Outfit, OutfitPhoto.outfit_id == Outfit.id
+    ).filter(Outfit.user_id == user_id).count()
+
+    category_counts = {}
+    season_counts = {}
+    color_counts = {}
+
+    for it in items:
+        cat = (it.category or "미분류").strip()
+        category_counts[cat] = category_counts.get(cat, 0) + 1
+
+        season = (it.season or "미분류").strip()
+        season_counts[season] = season_counts.get(season, 0) + 1
+
+        color = (it.color or "").strip()
+        if color:
+            color_key = color.lower()
+            color_counts[color_key] = color_counts.get(color_key, 0) + 1
+
+    # 월별 코디 수 (올해)
+    current_year = date.today().year
+    month_counts = {m: 0 for m in range(1, 13)}
+    for o in outfits:
+        if o.date and o.date.year == current_year:
+            month_counts[o.date.month] += 1
+
+    category_sorted = sorted(category_counts.items(), key=lambda x: (-x[1], x[0]))
+    season_sorted = sorted(season_counts.items(), key=lambda x: (-x[1], x[0]))
+    color_sorted = sorted(color_counts.items(), key=lambda x: (-x[1], x[0]))
+
+    return render_template(
+        'stats.html',
+        total_items=len(items),
+        total_outfits=len(outfits),
+        total_photos=photos_count,
+        category_sorted=category_sorted,
+        season_sorted=season_sorted,
+        color_sorted=color_sorted,
+        month_counts=month_counts,
+        current_year=current_year
+    )
+
 # 코디 기록 추가
 @app.route('/outfits', methods=['GET', 'POST'])
 @login_required

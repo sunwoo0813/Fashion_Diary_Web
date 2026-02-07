@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}통계 - Fashion Diary{% endblock %}
+
+{% block content %}
+<div class="section-head">
+  <div>
+    <h2 class="m-0">나의 기록 통계</h2>
+    <div class="ghost">개인 기록 요약과 패턴을 한눈에 확인하세요.</div>
+  </div>
+</div>
+
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card-clean p-3">
+      <div class="meta">총 아이템</div>
+      <h3 class="m-0">{{ total_items }}</h3>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card-clean p-3">
+      <div class="meta">총 코디</div>
+      <h3 class="m-0">{{ total_outfits }}</h3>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card-clean p-3">
+      <div class="meta">총 사진</div>
+      <h3 class="m-0">{{ total_photos }}</h3>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-lg-4">
+    <div class="card-clean p-3">
+      <h5 class="mb-2">카테고리</h5>
+      {% if category_sorted %}
+        <ul class="list-unstyled m-0">
+          {% for name, cnt in category_sorted %}
+            <li class="d-flex justify-content-between py-1">
+              <span>{{ name }}</span>
+              <span class="meta">{{ cnt }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="meta">데이터 없음</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-clean p-3">
+      <h5 class="mb-2">시즌</h5>
+      {% if season_sorted %}
+        <ul class="list-unstyled m-0">
+          {% for name, cnt in season_sorted %}
+            <li class="d-flex justify-content-between py-1">
+              <span>{{ name }}</span>
+              <span class="meta">{{ cnt }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="meta">데이터 없음</div>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="col-lg-4">
+    <div class="card-clean p-3">
+      <h5 class="mb-2">색상</h5>
+      {% if color_sorted %}
+        <ul class="list-unstyled m-0">
+          {% for name, cnt in color_sorted %}
+            <li class="d-flex justify-content-between py-1">
+              <span>{{ name }}</span>
+              <span class="meta">{{ cnt }}</span>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <div class="meta">데이터 없음</div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="card-clean p-3 mt-4">
+  <h5 class="mb-3">{{ current_year }}년 월별 코디 수</h5>
+  <div class="row g-2">
+    {% for m in range(1, 13) %}
+      <div class="col-6 col-md-3 col-lg-2">
+        <div class="d-flex justify-content-between py-1">
+          <span>{{ m }}월</span>
+          <span class="meta">{{ month_counts[m] }}</span>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}
