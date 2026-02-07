@@ -38,6 +38,7 @@ a {color: inherit}
 .nav-btn {border-radius: 12px; padding:.55rem .9rem; border:1px solid var(--border)}
 .nav-btn-primary {background: var(--brand); color: var(--brand-contrast); border:none}
 .nav-gap > * + * {margin-left:.5rem}
+.nav-user {font-size: .9rem; color: var(--muted)}
 
 /* ====== Cards ====== */
 .card-clean {

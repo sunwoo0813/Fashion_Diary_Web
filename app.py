@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, session, flash
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 from datetime import datetime
@@ -13,10 +13,13 @@ from flask import jsonify
 from dotenv import load_dotenv
 from supabase import create_client, Client
 import uuid
+from functools import wraps
+from supabase_auth.errors import AuthApiError
 
 app = Flask(__name__)
 load_dotenv()
 API_KEY = "47afe938567d28eaa932281c49255b53"
+app.secret_key = os.getenv("FLASK_SECRET_KEY") or os.getenv("SECRET_KEY") or "dev-secret"
 
 # DB 설정
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.csbvhoczfmdlelmfjqij:sunwoo0813%40@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres'
@@ -25,16 +28,29 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # Supabase Storage 설정
 SUPABASE_URL = os.getenv("SUPABASE_URL")
 SUPABASE_SERVICE_ROLE_KEY = os.getenv("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_ANON_KEY = os.getenv("SUPABASE_ANON_KEY")
 SUPABASE_BUCKET = os.getenv("SUPABASE_BUCKET", "uploads")
-_supabase: Client | None = None
+AUTH_DISABLE_EMAIL_CONFIRM = (os.getenv("AUTH_DISABLE_EMAIL_CONFIRM") or "").lower() in (
+    "1", "true", "yes", "on"
+)
+_supabase_admin: Client | None = None
+_supabase_auth: Client | None = None
 
-def get_supabase() -> Client:
-    global _supabase
-    if _supabase is None:
+def get_supabase_admin() -> Client:
+    global _supabase_admin
+    if _supabase_admin is None:
         if not SUPABASE_URL or not SUPABASE_SERVICE_ROLE_KEY:
             raise RuntimeError("Supabase env vars are not set")
-        _supabase = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
-    return _supabase
+        _supabase_admin = create_client(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+    return _supabase_admin
+
+def get_supabase_auth() -> Client:
+    global _supabase_auth
+    if _supabase_auth is None:
+        if not SUPABASE_URL or not SUPABASE_ANON_KEY:
+            raise RuntimeError("Supabase auth env vars are not set")
+        _supabase_auth = create_client(SUPABASE_URL, SUPABASE_ANON_KEY)
+    return _supabase_auth
 
 def storage_public_url(object_path: str) -> str:
     return f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/{object_path}"
@@ -49,7 +65,7 @@ def upload_to_storage(file, prefix: str) -> str:
     content = file.stream.read()
     if not content:
         raise ValueError("empty file")
-    sb = get_supabase()
+    sb = get_supabase_admin()
     sb.storage.from_(SUPABASE_BUCKET).upload(
         object_path,
         content,
@@ -67,9 +83,47 @@ def delete_from_storage(public_url_or_path: str) -> None:
         prefix = f"{SUPABASE_URL}/storage/v1/object/public/{SUPABASE_BUCKET}/"
         if public_url_or_path.startswith(prefix):
             object_path = public_url_or_path[len(prefix):]
-            sb = get_supabase()
+            sb = get_supabase_admin()
             sb.storage.from_(SUPABASE_BUCKET).remove([object_path])
             return
+
+def get_current_user_id() -> int | None:
+    uid = session.get("user_id")
+    try:
+        return int(uid) if uid is not None else None
+    except Exception:
+        return None
+
+def login_required(fn):
+    @wraps(fn)
+    def wrapper(*args, **kwargs):
+        if not get_current_user_id():
+            return redirect(url_for('home'))
+        return fn(*args, **kwargs)
+    return wrapper
+
+def get_or_create_user(email: str) -> "User":
+    user = User.query.filter_by(email=email).first()
+    if user:
+        return user
+    user = User(email=email)
+    db.session.add(user)
+    db.session.commit()
+    return user
+
+def find_supabase_uid_by_email(email: str) -> str | None:
+    if not email:
+        return None
+    sb = get_supabase_admin()
+    page = 1
+    while True:
+        users = sb.auth.admin.list_users(page=page, per_page=1000)
+        if not users:
+            return None
+        for u in users:
+            if (u.email or "").lower() == email.lower():
+                return u.id
+        page += 1
 
 def get_coordinates(city_name: str):
     """
@@ -216,18 +270,200 @@ class OutfitPhotoItem(db.Model):  # OutfitPhoto ↔ Item 연결 (M:N)
     item_id = db.Column(db.Integer, db.ForeignKey('item.id'), primary_key=True)
 
 # -------------------- 라우트 --------------------
-@app.route('/')
+@app.route('/', methods=['GET'])
 def home():
-    return redirect(url_for('diary'))
+    if get_current_user_id():
+        return redirect(url_for('diary'))
+    return render_template('login.html', hide_nav=True)
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'GET':
+        return redirect(url_for('home'))
+
+    email = (request.form.get('email') or '').strip().lower()
+    password = request.form.get('password') or ''
+    if not email or not password:
+        flash("이메일과 비밀번호를 입력하세요.", "danger")
+        return redirect(url_for('home'))
+
+    try:
+        resp = get_supabase_auth().auth.sign_in_with_password({
+            "email": email,
+            "password": password,
+        })
+        if not resp or not resp.user or not (resp.user.email or email):
+            flash("로그인에 실패했습니다. 입력값을 확인하세요.", "danger")
+            return redirect(url_for('home'))
+
+        user = get_or_create_user(resp.user.email or email)
+        session["user_id"] = user.id
+        session["user_email"] = user.email
+        session["supabase_uid"] = resp.user.id
+        return redirect(url_for('diary'))
+    except AuthApiError as e:
+        flash(f"로그인 실패: {e.message}", "danger")
+        return redirect(url_for('home'))
+    except Exception as e:
+        flash(f"로그인 실패: {str(e)}", "danger")
+        return redirect(url_for('home'))
+
+@app.route('/signup', methods=['GET', 'POST'])
+def signup():
+    if request.method == 'GET':
+        if get_current_user_id():
+            return redirect(url_for('diary'))
+        return render_template('signup.html', hide_nav=True)
+
+    email = (request.form.get('email') or '').strip().lower()
+    password = request.form.get('password') or ''
+    if not email or not password:
+        flash("이메일과 비밀번호를 입력하세요.", "danger")
+        return redirect(url_for('signup'))
+
+    try:
+        app_base_url = (os.getenv("APP_BASE_URL") or request.host_url).rstrip("/")
+        if AUTH_DISABLE_EMAIL_CONFIRM:
+            try:
+                get_supabase_admin().auth.admin.create_user({
+                    "email": email,
+                    "password": password,
+                    "email_confirm": True
+                })
+            except AuthApiError as e:
+                if e.code not in ("user_already_exists", "email_exists"):
+                    raise
+
+            resp = get_supabase_auth().auth.sign_in_with_password({
+                "email": email,
+                "password": password,
+            })
+        else:
+            resp = get_supabase_auth().auth.sign_up({
+                "email": email,
+                "password": password,
+                "options": {
+                    "email_redirect_to": app_base_url
+                }
+            })
+        if resp.session and resp.user and (resp.user.email or email):
+            user = get_or_create_user(resp.user.email or email)
+            session["user_id"] = user.id
+            session["user_email"] = user.email
+            session["supabase_uid"] = resp.user.id
+            return redirect(url_for('diary'))
+
+        flash("회원가입 완료. 이메일 인증 후 로그인하세요.", "success")
+        return redirect(url_for('home'))
+    except AuthApiError as e:
+        flash(f"회원가입 실패: {e.message}", "danger")
+        return redirect(url_for('signup'))
+    except Exception as e:
+        flash(f"회원가입 실패: {str(e)}", "danger")
+        return redirect(url_for('signup'))
+
+@app.route('/logout', methods=['POST'])
+def logout():
+    session.clear()
+    return redirect(url_for('home'))
+
+@app.route('/account')
+@login_required
+def account():
+    return render_template('account.html')
+
+@app.route('/account/delete', methods=['POST'])
+@login_required
+def account_delete():
+    if (request.form.get("confirm") or "").strip().upper() != "DELETE":
+        flash("탈퇴하려면 DELETE 를 입력하세요.", "danger")
+        return redirect(url_for('account'))
+
+    user_id = get_current_user_id()
+    user_email = session.get("user_email")
+    supa_uid = session.get("supabase_uid")
+
+    items = Item.query.filter(Item.user_id == user_id).all()
+    item_ids = [it.id for it in items]
+
+    outfits = Outfit.query.filter(Outfit.user_id == user_id).all()
+    outfit_ids = [o.id for o in outfits]
+
+    photos = []
+    photo_ids = []
+    if outfit_ids:
+        photos = OutfitPhoto.query.filter(OutfitPhoto.outfit_id.in_(outfit_ids)).all()
+        photo_ids = [p.id for p in photos]
+
+    # storage cleanup
+    for it in items:
+        if it.image_path:
+            try:
+                delete_from_storage(it.image_path)
+            except Exception:
+                pass
+    for p in photos:
+        if p.photo_path:
+            try:
+                delete_from_storage(p.photo_path)
+            except Exception:
+                pass
+    for o in outfits:
+        if o.photo_path:
+            try:
+                delete_from_storage(o.photo_path)
+            except Exception:
+                pass
+
+    # relations cleanup
+    if photo_ids:
+        OutfitPhotoItem.query.filter(OutfitPhotoItem.photo_id.in_(photo_ids)) \
+            .delete(synchronize_session=False)
+    if item_ids:
+        OutfitItem.query.filter(OutfitItem.item_id.in_(item_ids)) \
+            .delete(synchronize_session=False)
+    if outfit_ids:
+        OutfitItem.query.filter(OutfitItem.outfit_id.in_(outfit_ids)) \
+            .delete(synchronize_session=False)
+
+    if outfit_ids:
+        OutfitPhoto.query.filter(OutfitPhoto.outfit_id.in_(outfit_ids)) \
+            .delete(synchronize_session=False)
+        Outfit.query.filter(Outfit.id.in_(outfit_ids)) \
+            .delete(synchronize_session=False)
+    if item_ids:
+        Item.query.filter(Item.id.in_(item_ids)) \
+            .delete(synchronize_session=False)
+
+    user = User.query.filter_by(id=user_id).first()
+    if user:
+        db.session.delete(user)
+
+    db.session.commit()
+
+    # supabase auth delete
+    try:
+        if not supa_uid and user_email:
+            supa_uid = find_supabase_uid_by_email(user_email)
+        if supa_uid:
+            get_supabase_admin().auth.admin.delete_user(supa_uid)
+    except Exception:
+        pass
+
+    session.clear()
+    flash("회원탈퇴가 완료되었습니다.", "success")
+    return redirect(url_for('home'))
 
 # 옷장
 @app.route('/wardrobe')
+@login_required
 def wardrobe():
+    user_id = get_current_user_id()
     q = (request.args.get('q') or '').strip()
     category = (request.args.get('category') or '').strip()
     color = (request.args.get('color') or '').strip()
 
-    query = Item.query
+    query = Item.query.filter(Item.user_id == user_id)
     if q:
         like_q = f"%{q}%"
         query = query.filter(or_(
@@ -241,7 +477,13 @@ def wardrobe():
         query = query.filter(Item.color.ilike(f"%{color}%"))
 
     items = query.order_by(Item.created_at.desc()).all()
-    categories = [c[0] for c in Item.query.with_entities(Item.category).distinct().all() if c[0]]
+    categories = [
+        c[0] for c in Item.query.with_entities(Item.category)
+        .filter(Item.user_id == user_id)
+        .distinct()
+        .all()
+        if c[0]
+    ]
     has_filters = bool(q or category or color)
 
     return render_template(
@@ -256,7 +498,9 @@ def wardrobe():
 
 # 옷 추가
 @app.route('/items', methods=['GET', 'POST'])
+@login_required
 def items_create():
+    user_id = get_current_user_id()
     if request.method == 'POST':
         f = request.files.get('image')
         image_path = None
@@ -270,7 +514,7 @@ def items_create():
             display_name = "이름 없음"
 
         item = Item(
-            user_id=1,  # 로그인 기능 없으니 임시
+            user_id=user_id,
             name=display_name,
             category=request.form.get('category'),
             color=request.form.get('color'),
@@ -284,7 +528,9 @@ def items_create():
 
 # 옷 삭제 (다중 선택)
 @app.route('/items/delete', methods=['POST'])
+@login_required
 def items_delete():
+    user_id = get_current_user_id()
     raw_ids = request.form.getlist('item_ids')
     if not raw_ids:
         return redirect(url_for('wardrobe'))
@@ -298,7 +544,10 @@ def items_delete():
     if not ids:
         return redirect(url_for('wardrobe'))
 
-    items = Item.query.filter(Item.id.in_(ids)).all()
+    items = Item.query.filter(Item.id.in_(ids), Item.user_id == user_id).all()
+    ids = [it.id for it in items]
+    if not ids:
+        return redirect(url_for('wardrobe'))
 
     # 연결된 태그/관계 삭제
     OutfitItem.query.filter(OutfitItem.item_id.in_(ids)).delete(synchronize_session=False)
@@ -318,7 +567,9 @@ def items_delete():
 
 # 다이어리
 @app.route('/diary')
+@login_required
 def diary():
+    user_id = get_current_user_id()
     today = date.today()
     year = int(request.args.get('year', today.year))
     month = int(request.args.get('month', today.month))
@@ -334,6 +585,7 @@ def diary():
     days = list(range(1, last_day + 1))
 
     outfits = Outfit.query.filter(
+        Outfit.user_id == user_id,
         db.extract('year', Outfit.date) == year,
         db.extract('month', Outfit.date) == month
     ).all()
@@ -355,13 +607,15 @@ def diary():
 
 # 코디 기록 추가
 @app.route('/outfits', methods=['GET', 'POST'])
+@login_required
 def outfits_create():
+    user_id = get_current_user_id()
     if request.method == 'POST':
         date_val = request.form.get('date') or datetime.utcnow().date().isoformat()
         target_date = datetime.fromisoformat(date_val).date()
 
         # ✅ 날짜당 1개만: 이미 있으면 "수정"으로 보내기
-        existing = Outfit.query.filter_by(user_id=1, date=target_date).first()
+        existing = Outfit.query.filter_by(user_id=user_id, date=target_date).first()
         if existing:
             return redirect(url_for('outfit_edit', outfit_id=existing.id))
 
@@ -377,7 +631,7 @@ def outfits_create():
         rain_val = bool(int(rain_raw)) if rain_raw not in (None, "") else False
 
         outfit = Outfit(
-            user_id=1,
+            user_id=user_id,
             date=target_date,
             note=request.form.get('note'),
             # photo_path는 이제 안 씀(기존 호환을 위해 남겨두는 건 OK)
@@ -398,6 +652,11 @@ def outfits_create():
         if not isinstance(photo_tags_list, list):
             photo_tags_list = []
 
+        allowed_item_ids = {
+            r[0] for r in Item.query.with_entities(Item.id)
+            .filter(Item.user_id == user_id).all()
+        }
+
         files = request.files.getlist('photos')
         for idx, f in enumerate(files):
             if f and f.filename:
@@ -409,7 +668,9 @@ def outfits_create():
                 tag_ids = photo_tags_list[idx] if idx < len(photo_tags_list) else []
                 for iid in tag_ids:
                     try:
-                        db.session.add(OutfitPhotoItem(photo_id=photo.id, item_id=int(iid)))
+                        iid_int = int(iid)
+                        if iid_int in allowed_item_ids:
+                            db.session.add(OutfitPhotoItem(photo_id=photo.id, item_id=iid_int))
                     except Exception:
                         pass
 
@@ -417,15 +678,17 @@ def outfits_create():
         return redirect(url_for('outfits_by_date', date_str=target_date.isoformat()))
 
     # GET
-    items = Item.query.order_by(Item.created_at.desc()).all()
+    items = Item.query.filter(Item.user_id == user_id).order_by(Item.created_at.desc()).all()
     now = request.args.get("date") or datetime.utcnow().date().isoformat()  # ✅ 날짜 자동 채움
     return render_template('outfit_new.html', items=items, now=now)
 
 
 # 코디 삭제 라우트
 @app.route('/outfits/<int:outfit_id>/delete', methods=['POST'])
+@login_required
 def outfit_delete(outfit_id):
-    outfit = Outfit.query.get_or_404(outfit_id)
+    user_id = get_current_user_id()
+    outfit = Outfit.query.filter_by(id=outfit_id, user_id=user_id).first_or_404()
 
     # 연결된 OutfitItem 관계도 같이 삭제
     OutfitItem.query.filter_by(outfit_id=outfit.id).delete()
@@ -458,8 +721,10 @@ def outfit_delete(outfit_id):
 
 # 코디 수정 라우트
 @app.route('/outfits/<int:outfit_id>/edit', methods=['GET', 'POST'])
+@login_required
 def outfit_edit(outfit_id):
-    outfit = Outfit.query.get_or_404(outfit_id)
+    user_id = get_current_user_id()
+    outfit = Outfit.query.filter_by(id=outfit_id, user_id=user_id).first_or_404()
 
     if request.method == 'POST':
         date_val = request.form.get('date') or outfit.date.isoformat()
@@ -467,7 +732,7 @@ def outfit_edit(outfit_id):
 
         # ✅ 날짜 바꾸려는데 그 날짜에 이미 다른 기록 있으면 막기
         clash = Outfit.query.filter(
-            Outfit.user_id == 1,
+            Outfit.user_id == user_id,
             Outfit.date == new_date,
             Outfit.id != outfit.id
         ).first()
@@ -510,6 +775,11 @@ def outfit_edit(outfit_id):
         if not isinstance(existing_tags_map, dict):
             existing_tags_map = {}
 
+        allowed_item_ids = {
+            r[0] for r in Item.query.with_entities(Item.id)
+            .filter(Item.user_id == user_id).all()
+        }
+
         remaining_photos = OutfitPhoto.query.filter_by(outfit_id=outfit.id).all()
         remaining_photo_ids = [p.id for p in remaining_photos]
         if remaining_photo_ids:
@@ -520,7 +790,9 @@ def outfit_edit(outfit_id):
                 tag_ids = existing_tags_map.get(key) or existing_tags_map.get(pid) or []
                 for iid in tag_ids:
                     try:
-                        db.session.add(OutfitPhotoItem(photo_id=pid, item_id=int(iid)))
+                        iid_int = int(iid)
+                        if iid_int in allowed_item_ids:
+                            db.session.add(OutfitPhotoItem(photo_id=pid, item_id=iid_int))
                     except Exception:
                         pass
 
@@ -544,7 +816,9 @@ def outfit_edit(outfit_id):
                 tag_ids = new_tags_list[idx] if idx < len(new_tags_list) else []
                 for iid in tag_ids:
                     try:
-                        db.session.add(OutfitPhotoItem(photo_id=photo.id, item_id=int(iid)))
+                        iid_int = int(iid)
+                        if iid_int in allowed_item_ids:
+                            db.session.add(OutfitPhotoItem(photo_id=photo.id, item_id=iid_int))
                     except Exception:
                         pass
 
@@ -552,7 +826,7 @@ def outfit_edit(outfit_id):
         return redirect(url_for('outfits_by_date', date_str=outfit.date.isoformat()))
 
     # GET: 선택 아이템/사진 로드
-    items = Item.query.order_by(Item.created_at.desc()).all()
+    items = Item.query.filter(Item.user_id == user_id).order_by(Item.created_at.desc()).all()
     photos = OutfitPhoto.query.filter_by(outfit_id=outfit.id).order_by(OutfitPhoto.created_at.asc()).all()
     photo_ids = [p.id for p in photos]
     photo_tag_map = {pid: [] for pid in photo_ids}
@@ -561,7 +835,7 @@ def outfit_edit(outfit_id):
             Item, Item.id == OutfitPhotoItem.item_id
         ).filter(
             OutfitPhotoItem.photo_id.in_(photo_ids),
-            Item.user_id == 1
+            Item.user_id == user_id
         ).all()
         for pid, item in rows:
             photo_tag_map[pid].append(item.id)
@@ -576,7 +850,9 @@ def outfit_edit(outfit_id):
 
 # 날짜별 코디 보기 라우트
 @app.route('/outfits/date/<date_str>')
+@login_required
 def outfits_by_date(date_str):
+    user_id = get_current_user_id()
     """
     예: /outfits/date/2026-01-31
     해당 날짜의 코디 기록(날짜당 1개만이면 0~1개)을 보여줌
@@ -586,8 +862,7 @@ def outfits_by_date(date_str):
     except ValueError:
         return "Invalid date format. Use YYYY-MM-DD", 400
 
-    # user_id=1 고정(로그인 붙이면 바꾸면 됨)
-    outfits = Outfit.query.filter_by(user_id=1, date=target_date).order_by(Outfit.created_at.desc()).all()
+    outfits = Outfit.query.filter_by(user_id=user_id, date=target_date).order_by(Outfit.created_at.desc()).all()
 
     # outfit_id -> 착용 item 리스트 구성
     item_map = {o.id: [] for o in outfits}
@@ -598,7 +873,7 @@ def outfits_by_date(date_str):
             Item, Item.id == OutfitItem.item_id
         ).filter(
             OutfitItem.outfit_id.in_(outfit_ids),
-            Item.user_id == 1
+            Item.user_id == user_id
         ).all()
 
         for oid, item in rows:
@@ -619,7 +894,10 @@ def outfits_by_date(date_str):
         if photo_ids:
             rows = db.session.query(OutfitPhotoItem.photo_id, Item) \
                              .join(Item, Item.id == OutfitPhotoItem.item_id) \
-                             .filter(OutfitPhotoItem.photo_id.in_(photo_ids)) \
+                             .filter(
+                                 OutfitPhotoItem.photo_id.in_(photo_ids),
+                                 Item.user_id == user_id
+                             ) \
                              .all()
             for pid, item in rows:
                 photo_tag_map.setdefault(pid, []).append({
@@ -638,14 +916,20 @@ def outfits_by_date(date_str):
 
 # 특정 옷의 코디 히스토리
 @app.route('/tag/<int:item_id>')
+@login_required
 def tag_page(item_id):
-    outfit_ids = [r.outfit_id for r in OutfitItem.query.filter_by(item_id=item_id).all()]
-    outfits = Outfit.query.filter(Outfit.id.in_(outfit_ids)).order_by(Outfit.date.desc()).all()
-    item = Item.query.get_or_404(item_id)
+    user_id = get_current_user_id()
+    item = Item.query.filter_by(id=item_id, user_id=user_id).first_or_404()
+    outfit_ids = [r.outfit_id for r in OutfitItem.query.filter_by(item_id=item.id).all()]
+    outfits = Outfit.query.filter(
+        Outfit.id.in_(outfit_ids),
+        Outfit.user_id == user_id
+    ).order_by(Outfit.date.desc()).all()
     return render_template('tag.html', item=item, outfits=outfits)
 
 # -------------------- 날씨 API --------------------
 @app.route("/api/weather")
+@login_required
 def api_weather():
     city = (request.args.get("city") or "서울").strip()
     w = get_today_weather_summary(city)
