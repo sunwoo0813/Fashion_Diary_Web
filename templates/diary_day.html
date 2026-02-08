@@ -1,118 +1,135 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}{{ target_date }} - Fashion Diary{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/diary_day.css') }}">
 {% endblock %}
 
 {% block content %}
-<div class="diary-day" data-prev="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" data-next="{{ url_for('diary_day', date_str=next_date.isoformat()) }}">
-  <div class="day-top">
-    <a class="month-chip" href="{{ url_for('diary_month', year=target_date.year, month=target_date.month) }}">{{ target_date.month }}월</a>
-    <div class="day-title-wrap">
-      <a class="day-arrow" href="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" aria-label="이전날">‹</a>
-      <div class="day-title">{{ target_date.year }}년 {{ target_date.month }}월 {{ target_date.day }}일</div>
-      <a class="day-arrow" href="{{ url_for('diary_day', date_str=next_date.isoformat()) }}" aria-label="다음날">›</a>
+<section class="diary-day" data-prev="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" data-next="{{ url_for('diary_day', date_str=next_date.isoformat()) }}">
+  <aside class="dash-side">
+    <div class="side-panel">
+      <div class="profile-block">
+        <div class="avatar">{{ initials }}</div>
+        <h1 class="profile-name">{{ display_name }}</h1>
+        <p class="profile-meta">{{ session.get('user_email') }}</p>
+      </div>
+
+      <div class="side-stats">
+        <div class="stat">
+          <span class="stat-value">{{ total_outfits }}</span>
+          <span class="stat-label">Archive</span>
+        </div>
+        <div class="stat">
+          <span class="stat-value">{{ total_items }}</span>
+          <span class="stat-label">Closet</span>
+        </div>
+      </div>
+
+      <nav class="side-nav">
+        <a class="nav-item is-active" href="{{ url_for('diary') }}">The Diary</a>
+        <a class="nav-item" href="{{ url_for('wardrobe') }}">Digital Closet</a>
+        <a class="nav-item" href="{{ url_for('stats') }}">Statistics</a>
+      </nav>
+
+      <div class="side-calendar">
+        <div class="calendar-head">
+          <span class="calendar-title">{{ month_label }}</span>
+          <div class="calendar-controls">
+            <a href="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" aria-label="Previous day">‹</a>
+            <a href="{{ url_for('diary_day', date_str=next_date.isoformat()) }}" aria-label="Next day">›</a>
+          </div>
+        </div>
+        <div class="calendar-grid">
+          {% for name in ['S','M','T','W','T','F','S'] %}
+            <span class="day-name">{{ name }}</span>
+          {% endfor %}
+          {% for d in week_days %}
+            <a class="day-pill {% if d == target_date %}is-today{% endif %}" href="{{ url_for('diary_day', date_str=d.isoformat()) }}">{{ d.day }}</a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <a class="new-entry" href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">New Entry</a>
     </div>
-  </div>
+  </aside>
 
-  <div class="weather-slab card-clean">
-    {% if weather %}
-      <div class="weather-left">
-        {% if weather.icon %}
-          <img alt="weather icon" src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png">
-        {% endif %}
-        <div>
-          <div class="weather-title">{{ weather.desc }}</div>
-          <div class="weather-sub">오늘 날씨</div>
-        </div>
+  <main class="dash-main">
+    <header class="dash-header">
+      <div class="header-left">
+        <div class="header-kicker">Today&#39;s Look</div>
+        <h2 class="header-title">{{ target_date.strftime('%B %d, %Y') }} <span>{{ target_date.strftime('%A') }}</span></h2>
       </div>
-      <div class="weather-right">
-        <div class="weather-stat">
-          <span class="label">기온</span>
-          <span class="value">{{ weather.t_min }}℃ ~ {{ weather.t_max }}℃</span>
-        </div>
-        <div class="weather-stat">
-          <span class="label">습도</span>
-          <span class="value">{{ weather.humidity }}%</span>
-        </div>
-        <div class="weather-stat">
-          <span class="label">강수</span>
-          <span class="value">{% if weather.rain %}있음{% else %}없음{% endif %}</span>
-        </div>
+      <div class="header-actions">
+        <a class="icon-btn" href="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" aria-label="Previous day">‹</a>
+        <a class="icon-btn" href="{{ url_for('diary_day', date_str=next_date.isoformat()) }}" aria-label="Next day">›</a>
+        <a class="icon-btn" href="{{ url_for('diary_month', year=target_date.year, month=target_date.month) }}" aria-label="Monthly view">◎</a>
       </div>
-    {% elif weather_record %}
-      <div class="weather-left">
-        <div class="weather-title">기록된 날씨</div>
-        <div class="weather-sub">해당 날짜 기록 기준</div>
-      </div>
-      <div class="weather-right">
-        <div class="weather-stat">
-          <span class="label">기온</span>
-          <span class="value">{{ weather_record.t_min }}℃ ~ {{ weather_record.t_max }}℃</span>
-        </div>
-        <div class="weather-stat">
-          <span class="label">습도</span>
-          <span class="value">{{ weather_record.humidity }}%</span>
-        </div>
-        <div class="weather-stat">
-          <span class="label">강수</span>
-          <span class="value">{% if weather_record.rain %}있음{% else %}없음{% endif %}</span>
-        </div>
-      </div>
-    {% else %}
-      <div class="weather-empty">날씨 정보를 찾을 수 없습니다.</div>
-    {% endif %}
-  </div>
+    </header>
 
-  <div class="card-clean p-4 look-card">
-    <div class="look-head">Today&#39;s Look</div>
+    <div class="dash-content">
+      {% if outfits|length == 0 %}
+        <a class="empty-card" href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">
+          <div class="empty-title">Start a new entry</div>
+          <div class="empty-sub">Click to record today&#39;s outfit and notes.</div>
+        </a>
+      {% else %}
+        {% for o in outfits %}
+          {% set photos = photo_map.get(o.id, []) %}
+          <article class="entry-card">
+            <div class="entry-media">
+              {% if photos and photos|length > 0 %}
+                <div class="media-img" style="background-image:url('{{ photos[0].photo_path }}')"></div>
+              {% else %}
+                <div class="media-empty">No photo</div>
+              {% endif %}
 
-    {% if outfits|length == 0 %}
-      <a class="empty-look" href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">
-        <div class="empty-title">오늘의 코디를 기록하세요</div>
-        <div class="empty-sub">클릭하면 바로 기록 페이지로 이동합니다.</div>
-      </a>
-    {% else %}
-      {% for o in outfits %}
-        {% set photos = photo_map.get(o.id, []) %}
-        <div class="look-block">
-          <div class="photo-grid">
-            {% if photos and photos|length > 0 %}
-              {% for p in photos %}
-                <img src="{{ p.photo_path }}" alt="outfit photo">
-              {% endfor %}
-            {% else %}
-              <div class="photo-empty">사진 없음</div>
-            {% endif %}
-          </div>
-
-          <div class="look-note">
-            <div class="meta">Style Notes</div>
-            <div class="note-text">{{ o.note or '메모 없음' }}</div>
-          </div>
-
-          <div class="look-items">
-            <div class="meta">착용 아이템</div>
-            {% set items = item_map.get(o.id, []) %}
-            {% if items and items|length > 0 %}
-              <div class="d-flex flex-wrap gap-2 mt-1">
-                {% for it in items %}
-                  <span class="chip">{{ it.name }}</span>
-                {% endfor %}
+              <div class="media-pill">
+                {% if weather %}
+                  {{ weather.desc }} · {{ weather.t_min }}°C ~ {{ weather.t_max }}°C
+                {% elif weather_record %}
+                  Recorded · {{ weather_record.t_min }}°C ~ {{ weather_record.t_max }}°C
+                {% else %}
+                  Weather unavailable
+                {% endif %}
               </div>
-            {% else %}
-              <div class="ghost mt-1">연결된 아이템이 없습니다.</div>
-            {% endif %}
-          </div>
+              <div class="media-location">{{ city }}</div>
+            </div>
 
-          <div class="look-actions">
-            <a class="btn btn-soft btn-sm" href="{{ url_for('outfit_edit', outfit_id=o.id) }}">수정</a>
-          </div>
-        </div>
-      {% endfor %}
-    {% endif %}
-  </div>
-</div>
+            <div class="entry-body">
+              <div class="entry-head">
+                <span class="entry-tag">Outfit</span>
+                <h3 class="entry-title">Outfit Entry</h3>
+                <p class="entry-time">{{ o.created_at.strftime('%I:%M %p') if o.created_at else '' }}</p>
+              </div>
+
+              <div class="entry-note">
+                <p>{{ o.note or 'No notes yet.' }}</p>
+              </div>
+
+              <div class="entry-items">
+                <div class="items-head">Tagged Items</div>
+                {% set items = item_map.get(o.id, []) %}
+                {% if items and items|length > 0 %}
+                  <div class="item-row">
+                    {% for it in items %}
+                      <span class="item-chip">{{ it.name }}</span>
+                    {% endfor %}
+                  </div>
+                {% else %}
+                  <div class="item-empty">No tagged items.</div>
+                {% endif %}
+              </div>
+
+              <div class="entry-actions">
+                <a class="btn-edit" href="{{ url_for('outfit_edit', outfit_id=o.id) }}">Edit</a>
+              </div>
+            </div>
+          </article>
+        {% endfor %}
+      {% endif %}
+    </div>
+  </main>
+</section>
 {% endblock %}
 
 {% block scripts %}

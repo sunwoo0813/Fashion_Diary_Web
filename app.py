@@ -726,9 +726,20 @@ def diary_day(date_str):
 
     prev_date = target_date - timedelta(days=1)
     next_date = target_date + timedelta(days=1)
+    email = session.get("user_email") or ""
+    display_name = email.split("@")[0] if email else "User"
+    initials = (display_name[:2] if display_name else "U").upper()
+
+    total_outfits = Outfit.query.filter(Outfit.user_id == user_id).count()
+    total_items = Item.query.filter(Item.user_id == user_id).count()
+
+    week_start = target_date - timedelta(days=(target_date.weekday() + 1) % 7)
+    week_days = [week_start + timedelta(days=i) for i in range(7)]
+    month_label = target_date.strftime("%B %Y")
 
     return render_template(
         'diary_day.html',
+        hide_nav=True,
         target_date=target_date,
         prev_date=prev_date,
         next_date=next_date,
@@ -738,7 +749,13 @@ def diary_day(date_str):
         photo_tag_map=photo_tag_map,
         weather=weather_live,
         weather_record=weather_record,
-        city=city
+        city=city,
+        display_name=display_name,
+        initials=initials,
+        total_outfits=total_outfits,
+        total_items=total_items,
+        week_days=week_days,
+        month_label=month_label
     )
 
 # 통계
