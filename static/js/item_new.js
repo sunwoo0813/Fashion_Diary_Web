@@ -15,6 +15,25 @@
     }
     url = URL.createObjectURL(file);
     img.src = url;
-    wrap.style.display = 'block';
+    wrap.style.display = 'flex';
+  });
+})();
+
+(function () {
+  const colorInput = document.getElementById('colorInput');
+  const swatches = document.querySelectorAll('[data-color]');
+  if (!colorInput || !swatches.length) return;
+
+  const active = document.querySelector('[data-color].is-active');
+  if (active && !colorInput.value) {
+    colorInput.value = active.dataset.color || '';
+  }
+
+  swatches.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      swatches.forEach((el) => el.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      colorInput.value = btn.dataset.color || '';
+    });
   });
 })();

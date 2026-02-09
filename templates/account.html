@@ -1,31 +1,103 @@
 ﻿{% extends "base.html" %}
-{% block title %}계정 설정 - Fashion Diary{% endblock %}
+{% block title %}Account - Fashion Diary{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/account.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
+{% endblock %}
+
 {% block content %}
-<div class="card-clean p-4">
-  <h3 class="mb-2">계정 설정</h3>
-  <p class="meta">현재 로그인: {{ session.get('user_email') }}</p>
-  <form method="post" action="{{ url_for('logout') }}" class="mt-3">
-    <button class="btn btn-soft" type="submit">로그아웃</button>
-  </form>
+{% set email = session.get('user_email') or '' %}
+{% set display_name = email.split('@')[0] if email else 'User' %}
+{% set initials = (display_name[:1] if display_name else 'F')|upper %}
+<section class="account-page">
+  <aside class="account-rail app-rail">
+    <nav class="rail-nav">
+      <a class="rail-item" href="{{ url_for('diary') }}" aria-label="Diary">
+        <span class="material-symbols-outlined">stylus</span>
+        <span class="rail-tooltip">Looks</span>
+      </a>
+      <a class="rail-item" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+        <span class="rail-tooltip">Closet</span>
+      </a>
+      <a class="rail-item" href="{{ url_for('stats') }}" aria-label="Insights">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="rail-tooltip">Insights</span>
+      </a>
+    </nav>
+    <div class="rail-footer"></div>
+  </aside>
 
-  {% with messages = get_flashed_messages(with_categories=True) %}
-    {% if messages %}
-      <div class="alert-wrap">
-        {% for category, message in messages %}
-          <div class="alert alert-{{ category }} py-2 mb-2">{{ message }}</div>
-        {% endfor %}
+  <main class="account-main">
+    <header class="account-header">
+      <div class="header-title">
+        <p class="kicker">Account</p>
+        <h1>Edit Profile</h1>
+        <p class="subtitle">Keep your login details and data preferences updated.</p>
       </div>
-    {% endif %}
-  {% endwith %}
+      <div class="header-actions">
+        <form method="post" action="{{ url_for('logout') }}">
+          <button class="btn-pill" type="submit">Log out</button>
+        </form>
+      </div>
+    </header>
 
-  <div class="mt-4">
-    <h5 class="mb-2">회원 탈퇴</h5>
-    <p class="meta">탈퇴하면 모든 코디/아이템/사진이 삭제됩니다. 복구할 수 없습니다.</p>
-    <form method="post" action="{{ url_for('account_delete') }}" class="mt-3">
-      <label class="form-label" for="confirm">확인 문구 입력</label>
-      <input class="form-control" id="confirm" name="confirm" placeholder="DELETE" required>
-      <button class="btn btn-danger mt-3" type="submit">회원 탈퇴</button>
-    </form>
-  </div>
-</div>
+    {% with messages = get_flashed_messages(with_categories=True) %}
+      {% if messages %}
+        <div class="alert-wrap">
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} py-2 mb-2">{{ message }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endwith %}
+
+    <section class="account-grid">
+      <article class="account-card profile-card">
+        <div class="profile-visual">
+          <div class="profile-circle">{{ initials }}</div>
+          <div>
+            <p class="profile-label">Signed in as</p>
+            <p class="profile-value">{{ email or 'No email on file' }}</p>
+          </div>
+        </div>
+        <p class="profile-note">This is the account currently active on your device.</p>
+      </article>
+
+      <article class="account-card settings-card">
+        <div class="card-head">
+          <div>
+            <h2>Account Settings</h2>
+            <p>Basic details and security.</p>
+          </div>
+          <span class="material-symbols-outlined">lock</span>
+        </div>
+        <div class="setting-row">
+          <label>Email</label>
+          <div class="setting-value">{{ email or 'Not available' }}</div>
+        </div>
+        <div class="setting-row">
+          <label>Display name</label>
+          <div class="setting-value">{{ display_name }}</div>
+        </div>
+      </article>
+
+      <article class="account-card danger-card">
+        <div class="card-head">
+          <div>
+            <h2>Delete Account</h2>
+            <p>Removing your account deletes all outfits, items, and photos.</p>
+          </div>
+          <span class="material-symbols-outlined">warning</span>
+        </div>
+        <form method="post" action="{{ url_for('account_delete') }}">
+          <label class="danger-label" for="confirm">Confirm text</label>
+          <input class="danger-input" id="confirm" name="confirm" placeholder="DELETE" required>
+          <button class="btn-danger" type="submit">Delete account</button>
+        </form>
+      </article>
+    </section>
+  </main>
+</section>
 {% endblock %}

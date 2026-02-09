@@ -370,7 +370,7 @@ def logout():
 @app.route('/account')
 @login_required
 def account():
-    return render_template('account.html')
+    return render_template('account.html', hide_nav=True)
 
 @app.route('/account/delete', methods=['POST'])
 @login_required
@@ -472,7 +472,17 @@ def wardrobe():
             Item.color.ilike(like_q),
         ))
     if category:
-        query = query.filter(Item.category == category)
+        category_map = {
+            "Top": ["Top", "Tops"],
+            "Bottom": ["Bottom", "Bottoms"],
+            "Outerwear": ["Outerwear"],
+            "Footwear": ["Footwear", "Shoes"],
+            "Accessories": ["Accessories", "Accessory"]
+        }
+        if category in category_map:
+            query = query.filter(Item.category.in_(category_map[category]))
+        else:
+            query = query.filter(Item.category == category)
     if color:
         query = query.filter(Item.color.ilike(f"%{color}%"))
 
@@ -516,8 +526,12 @@ def wardrobe():
         )[:3] if cnt > 0
     }
 
+    email = session.get("user_email") or ""
+    initials = (email.split("@")[0][:2] if email else "U").upper()
+
     return render_template(
         'wardrobe.html',
+        hide_nav=True,
         items=items,
         q=q,
         category=category,
@@ -525,7 +539,9 @@ def wardrobe():
         categories=categories,
         has_filters=has_filters,
         wear_counts=wear_counts,
-        fav_ids=fav_ids
+        fav_ids=fav_ids,
+        initials=initials,
+        now=date.today()
     )
 
 # 옷 추가
@@ -763,6 +779,12 @@ def diary_day(date_str):
 @login_required
 def stats():
     user_id = get_current_user_id()
+    email = session.get("user_email") or ""
+    display_name = email.split("@")[0] if email else "User"
+    initials = (display_name[:2] if display_name else "U").upper()
+    today = date.today()
+    stats_start = today - timedelta(days=2)
+    stats_days = [stats_start + timedelta(days=i) for i in range(5)]
     items = Item.query.filter(Item.user_id == user_id).all()
     outfits = Outfit.query.filter(Outfit.user_id == user_id).all()
     photos_count = OutfitPhoto.query.join(
@@ -834,8 +856,76 @@ def stats():
     season_sorted = sorted(season_counts.items(), key=lambda x: (-x[1], x[0]))
     color_sorted = sorted(color_counts.items(), key=lambda x: (-x[1], x[0]))
 
+    cutoff = today - timedelta(days=30)
+    wear_counts = (
+        db.session.query(
+            OutfitItem.item_id,
+            func.count(OutfitItem.outfit_id).label("cnt")
+        )
+        .join(Outfit, OutfitItem.outfit_id == Outfit.id)
+        .join(Item, Item.id == OutfitItem.item_id)
+        .filter(Item.user_id == user_id, Outfit.date >= cutoff)
+        .group_by(OutfitItem.item_id)
+        .order_by(func.count(OutfitItem.outfit_id).desc())
+        .limit(5)
+        .all()
+    )
+    item_ids = [row.item_id for row in wear_counts]
+    item_map = {}
+    if item_ids:
+        for it in Item.query.filter(Item.id.in_(item_ids)).all():
+            item_map[it.id] = it
+    top_items = []
+    for row in wear_counts:
+        it = item_map.get(row.item_id)
+        if it:
+            top_items.append({"item": it, "count": int(row.cnt)})
+
+    color_total = sum(color_counts.values())
+    palette_colors = ["#A89F91", "#D2B48C", "#9CAF88", "#E5D3B3"]
+    palette = []
+    if color_total:
+        for idx, (name, cnt) in enumerate(color_sorted[:4]):
+            percent = round((cnt / color_total) * 100)
+            palette.append({
+                "name": name.title(),
+                "count": cnt,
+                "percent": percent,
+                "color": palette_colors[idx],
+            })
+    palette_center_percent = palette[0]["percent"] if palette else 0
+    palette_center_label = palette[0]["name"] if palette else "Neutral"
+    palette_remainder = max(0, 100 - sum(p["percent"] for p in palette))
+
+    month_labels = [
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    ]
+    month_pairs = [(month_labels[m - 1], month_counts[m]) for m in range(1, 13)]
+    efficiency_rate = 0
+    if len(items) > 0:
+        efficiency_rate = min(100, round((len(outfits) / len(items)) * 100))
+    curation_percent = min(100, round(60 + efficiency_rate * 0.4)) if len(items) > 0 else 0
+    top_season = season_sorted[0][0] if season_sorted else "—"
+    top_category = category_sorted[0][0] if category_sorted else "—"
+
     return render_template(
         'stats.html',
+        hide_nav=True,
+        display_name=display_name,
+        initials=initials,
+        today=today,
+        stats_days=stats_days,
+        top_items=top_items,
+        palette=palette,
+        palette_center_label=palette_center_label,
+        palette_center_percent=palette_center_percent,
+        palette_remainder=palette_remainder,
+        month_pairs=month_pairs,
+        efficiency_rate=efficiency_rate,
+        curation_percent=curation_percent,
+        top_season=top_season,
+        top_category=top_category,
         total_items=len(items),
         total_outfits=len(outfits),
         total_photos=photos_count,

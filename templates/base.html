@@ -1,4 +1,4 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
@@ -11,23 +11,33 @@
   <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
   {% block styles %}{% endblock %}
 </head>
-<body>
-  {% if not hide_nav %}
+<body class="{% if session.get('user_id') %}has-topbar{% endif %}{% if session.get('user_id') and not hide_nav %} has-mainnav{% endif %}">
+  {% if session.get('user_id') %}
   <div class="nav-wrap">
     <div class="container nav-stack">
-      <a class="profile-btn profile-floating" href="{{ url_for('account') }}" aria-label="Profile">
-        <svg class="profile-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-          <circle cx="12" cy="8" r="4"></circle>
-          <path d="M4 20c1.8-3.4 5.1-5.5 8-5.5s6.2 2.1 8 5.5"></path>
-        </svg>
-      </a>
-      <div class="nav-center">Fashion Diary</div>
-      <div class="nav-links-bar">
-        {% set ep = request.endpoint %}
-        <a class="nav-link text-decoration-none {% if ep in ['diary','diary_day','diary_month'] %}is-active{% endif %}" href="{{ url_for('diary') }}">다이어리</a>
-        <a class="nav-link text-decoration-none {% if ep == 'wardrobe' %}is-active{% endif %}" href="{{ url_for('wardrobe') }}">옷장</a>
-        <a class="nav-link text-decoration-none {% if ep == 'stats' %}is-active{% endif %}" href="{{ url_for('stats') }}">통계</a>
+      {% set email = session.get('user_email') or '' %}
+      {% set display_name = email.split('@')[0] if email else 'User' %}
+      {% set initials = (display_name[:1] if display_name else 'F')|upper %}
+      <div class="nav-utility">
+        <div class="nav-left">
+          <a class="top-initials" href="{{ url_for('account') }}" aria-label="Account">
+            {{ initials }}
+          </a>
+          <div class="nav-site">Fashion Diary</div>
+        </div>
+        <div class="lang-toggle" aria-label="Language toggle">
+          <button class="lang-btn is-active" type="button">KR</button>
+          <button class="lang-btn" type="button">EN</button>
+        </div>
       </div>
+      {% if not hide_nav %}
+        <a class="profile-btn profile-floating" href="{{ url_for('account') }}" aria-label="Profile">
+          <svg class="profile-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+            <circle cx="12" cy="8" r="4"></circle>
+            <path d="M4 20c1.8-3.4 5.1-5.5 8-5.5s6.2 2.1 8 5.5"></path>
+          </svg>
+        </a>
+      {% endif %}
     </div>
   </div>
   {% endif %}
@@ -40,3 +50,4 @@
   {% block scripts %}{% endblock %}
 </body>
 </html>
+

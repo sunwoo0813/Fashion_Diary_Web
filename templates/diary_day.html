@@ -2,132 +2,215 @@
 {% block title %}{{ target_date }} - Fashion Diary{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/diary_day.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
 {% endblock %}
 
 {% block content %}
 <section class="diary-day" data-prev="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" data-next="{{ url_for('diary_day', date_str=next_date.isoformat()) }}">
-  <aside class="dash-side">
-    <div class="side-panel">
-      <div class="profile-block">
-        <div class="avatar">{{ initials }}</div>
-        <h1 class="profile-name">{{ display_name }}</h1>
-        <p class="profile-meta">{{ session.get('user_email') }}</p>
-      </div>
-
-      <div class="side-stats">
-        <div class="stat">
-          <span class="stat-value">{{ total_outfits }}</span>
-          <span class="stat-label">Archive</span>
-        </div>
-        <div class="stat">
-          <span class="stat-value">{{ total_items }}</span>
-          <span class="stat-label">Closet</span>
-        </div>
-      </div>
-
-      <nav class="side-nav">
-        <a class="nav-item is-active" href="{{ url_for('diary') }}">The Diary</a>
-        <a class="nav-item" href="{{ url_for('wardrobe') }}">Digital Closet</a>
-        <a class="nav-item" href="{{ url_for('stats') }}">Statistics</a>
-      </nav>
-
-      <div class="side-calendar">
-        <div class="calendar-head">
-          <span class="calendar-title">{{ month_label }}</span>
-          <div class="calendar-controls">
-            <a href="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" aria-label="Previous day">‹</a>
-            <a href="{{ url_for('diary_day', date_str=next_date.isoformat()) }}" aria-label="Next day">›</a>
-          </div>
-        </div>
-        <div class="calendar-grid">
-          {% for name in ['S','M','T','W','T','F','S'] %}
-            <span class="day-name">{{ name }}</span>
-          {% endfor %}
-          {% for d in week_days %}
-            <a class="day-pill {% if d == target_date %}is-today{% endif %}" href="{{ url_for('diary_day', date_str=d.isoformat()) }}">{{ d.day }}</a>
-          {% endfor %}
-        </div>
-      </div>
-
-      <a class="new-entry" href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">New Entry</a>
-    </div>
+  <aside class="side-rail app-rail">
+    <nav class="rail-nav">
+      <a class="rail-item is-active" href="{{ url_for('diary') }}" aria-label="Diary">
+        <span class="material-symbols-outlined">stylus</span>
+        <span class="rail-tooltip">Looks</span>
+      </a>
+      <a class="rail-item" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+        <span class="rail-tooltip">Closet</span>
+      </a>
+      <a class="rail-item" href="{{ url_for('stats') }}" aria-label="Insights">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="rail-tooltip">Insights</span>
+      </a>
+    </nav>
+    <div class="rail-footer"></div>
   </aside>
 
   <main class="dash-main">
     <header class="dash-header">
-      <div class="header-left">
-        <div class="header-kicker">Today&#39;s Look</div>
-        <h2 class="header-title">{{ target_date.strftime('%B %d, %Y') }} <span>{{ target_date.strftime('%A') }}</span></h2>
+      <div>
+        <p class="header-kicker">Style Archivist</p>
+        <h1 class="header-title">{{ display_name }}&#39;s Edit</h1>
       </div>
       <div class="header-actions">
-        <a class="icon-btn" href="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" aria-label="Previous day">‹</a>
-        <a class="icon-btn" href="{{ url_for('diary_day', date_str=next_date.isoformat()) }}" aria-label="Next day">›</a>
-        <a class="icon-btn" href="{{ url_for('diary_month', year=target_date.year, month=target_date.month) }}" aria-label="Monthly view">◎</a>
+        <div class="date-pill">
+          <a class="date-arrow" href="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" aria-label="Previous day">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </a>
+          <div class="date-days">
+            {% for d in week_days[:4] %}
+              <a class="date-day {% if d == target_date %}is-active{% endif %}" href="{{ url_for('diary_day', date_str=d.isoformat()) }}">
+                <span class="day-name">{{ d.strftime('%a') }}</span>
+                <span class="day-num">{{ '%02d'|format(d.day) }}</span>
+              </a>
+            {% endfor %}
+          </div>
+          <a class="date-arrow" href="{{ url_for('diary_day', date_str=next_date.isoformat()) }}" aria-label="Next day">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </a>
+        </div>
       </div>
     </header>
 
-    <div class="dash-content">
+    <section class="bento-grid">
+      {% set progress = 0 if total_items == 0 else (total_outfits * 100 / total_items) %}
+      {% if progress > 100 %}{% set progress = 100 %}{% endif %}
       {% if outfits|length == 0 %}
-        <a class="empty-card" href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">
-          <div class="empty-title">Start a new entry</div>
-          <div class="empty-sub">Click to record today&#39;s outfit and notes.</div>
-        </a>
+        <article class="glass-card empty-card col-12">
+          <h2>No entries yet</h2>
+          <p>Start recording today&#39;s outfit and notes.</p>
+          <a class="add-inline" href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">Create Entry</a>
+        </article>
       {% else %}
-        {% for o in outfits %}
-          {% set photos = photo_map.get(o.id, []) %}
-          <article class="entry-card">
-            <div class="entry-media">
-              {% if photos and photos|length > 0 %}
-                <div class="media-img" style="background-image:url('{{ photos[0].photo_path }}')"></div>
-              {% else %}
-                <div class="media-empty">No photo</div>
-              {% endif %}
+        {% set first = outfits[0] %}
+        {% set hero_photos = photo_map.get(first.id, []) %}
+        {% set hero_photo = hero_photos[0].photo_path if hero_photos and hero_photos|length > 0 else '' %}
 
-              <div class="media-pill">
+        <article class="glass-card stat-card col-3">
+          <div class="stat-shape"></div>
+          <div class="stat-top">
+            <div class="stat-thumb {% if not hero_photo %}is-empty{% endif %}" {% if hero_photo %}style="background-image:url('{{ hero_photo }}')"{% endif %}></div>
+            <div class="stat-count">
+              <div class="stat-number">{{ total_items }}</div>
+              <div class="stat-label">Items</div>
+            </div>
+          </div>
+          <div class="stat-body">
+            <h3>Wardrobe Status</h3>
+            <p>Your digital archive is growing. You&#39;ve worn {{ progress|round(0) }}% of your wardrobe this month.</p>
+          </div>
+          <div class="stat-bar">
+            <span style="width: {{ progress|round(0) }}%"></span>
+          </div>
+        </article>
+
+        <article class="glass-card hero-card col-6">
+          <div class="hero-media" {% if hero_photo %}style="background-image:url('{{ hero_photo }}')"{% endif %}>
+            <div class="hero-overlay"></div>
+            <div class="hero-meta">
+              <span class="weather-pill">
                 {% if weather %}
-                  {{ weather.desc }} · {{ weather.t_min }}°C ~ {{ weather.t_max }}°C
+                  {{ weather.desc }} · {{ weather.t_min }}°C
                 {% elif weather_record %}
-                  Recorded · {{ weather_record.t_min }}°C ~ {{ weather_record.t_max }}°C
+                  Recorded · {{ weather_record.t_min }}°C
                 {% else %}
-                  Weather unavailable
+                  Weather
+                {% endif %}
+                · {{ city }}
+              </span>
+              <h2 class="hero-title">{{ first.note or 'Outfit Entry' }}</h2>
+              <p class="hero-note">{{ first.note or 'No notes yet.' }}</p>
+            </div>
+            <a class="hero-action" href="{{ url_for('outfit_edit', outfit_id=first.id) }}" aria-label="Edit entry">
+              <span class="material-symbols-outlined">arrow_outward</span>
+            </a>
+          </div>
+        </article>
+
+        <article class="glass-card weather-card col-3">
+          <span class="material-symbols-outlined weather-symbol">
+            {% if weather and 'sun' in weather.desc|lower %}
+              sunny
+            {% elif weather and 'rain' in weather.desc|lower %}
+              rainy
+            {% else %}
+              partly_cloudy_day
+            {% endif %}
+          </span>
+          <h3>{{ weather.t_max if weather else (weather_record.t_max if weather_record else '-') }}°C</h3>
+          <p class="weather-label">Forecast</p>
+          <div class="weather-bars">
+            <span></span><span></span><span class="is-strong"></span><span></span><span></span>
+          </div>
+          <p class="weather-note">Perfect for layers</p>
+        </article>
+
+        {% set secondary = outfits[1] if outfits|length > 1 else None %}
+        <article class="glass-card entry-card col-3">
+          {% if secondary %}
+            {% set secondary_photos = photo_map.get(secondary.id, []) %}
+            {% set secondary_photo = secondary_photos[0].photo_path if secondary_photos and secondary_photos|length > 0 else '' %}
+            <div class="entry-photo {% if not secondary_photo %}is-empty{% endif %}" {% if secondary_photo %}style="background-image:url('{{ secondary_photo }}')"{% endif %}>
+              <span class="entry-date">{{ secondary.date.strftime('%b %d') if secondary.date else target_date.strftime('%b %d') }}</span>
+            </div>
+            <h3 class="entry-title">{{ secondary.note or 'Outfit Entry' }}</h3>
+            <p class="entry-note">{{ secondary.note or 'No notes yet.' }}</p>
+            <div class="entry-footer">
+              {% set entry_items = item_map.get(secondary.id, []) %}
+              <div class="avatar-stack">
+                {% if entry_items and entry_items|length > 0 %}
+                  {% for it in entry_items[:2] %}
+                    <span class="stack-avatar {% if not it.image_path %}is-empty{% endif %}" {% if it.image_path %}style="background-image:url('{{ it.image_path }}')"{% endif %}></span>
+                  {% endfor %}
+                  {% if entry_items|length > 2 %}
+                    <span class="stack-more">+{{ entry_items|length - 2 }}</span>
+                  {% endif %}
+                {% else %}
+                  <span class="stack-avatar is-empty"></span>
+                  <span class="stack-avatar is-empty"></span>
                 {% endif %}
               </div>
-              <div class="media-location">{{ city }}</div>
+              <a class="entry-fav" href="{{ url_for('outfit_edit', outfit_id=secondary.id) }}" aria-label="Edit entry">
+                <span class="material-symbols-outlined">favorite</span>
+              </a>
             </div>
-
-            <div class="entry-body">
-              <div class="entry-head">
-                <span class="entry-tag">Outfit</span>
-                <h3 class="entry-title">Outfit Entry</h3>
-                <p class="entry-time">{{ o.created_at.strftime('%I:%M %p') if o.created_at else '' }}</p>
-              </div>
-
-              <div class="entry-note">
-                <p>{{ o.note or 'No notes yet.' }}</p>
-              </div>
-
-              <div class="entry-items">
-                <div class="items-head">Tagged Items</div>
-                {% set items = item_map.get(o.id, []) %}
-                {% if items and items|length > 0 %}
-                  <div class="item-row">
-                    {% for it in items %}
-                      <span class="item-chip">{{ it.name }}</span>
-                    {% endfor %}
-                  </div>
-                {% else %}
-                  <div class="item-empty">No tagged items.</div>
-                {% endif %}
-              </div>
-
-              <div class="entry-actions">
-                <a class="btn-edit" href="{{ url_for('outfit_edit', outfit_id=o.id) }}">Edit</a>
-              </div>
+          {% else %}
+            <div class="entry-empty">
+              <p>No entry yet.</p>
+              <a href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">Create Entry</a>
             </div>
+          {% endif %}
+        </article>
+
+        <article class="glass-card list-card col-5">
+          <div class="list-head">
+            <h3>Recently Worn</h3>
+            <a class="list-link" href="{{ url_for('wardrobe') }}">View All</a>
+          </div>
+          {% set list_items = item_map.get(first.id, []) %}
+          {% if list_items and list_items|length > 0 %}
+            <div class="list-body">
+              {% for it in list_items[:3] %}
+                <a class="list-row" href="{{ url_for('tag_page', item_id=it.id) }}">
+                  {% if it.image_path %}
+                    <span class="list-thumb" style="background-image:url('{{ it.image_path }}')"></span>
+                  {% else %}
+                    <span class="list-thumb placeholder"></span>
+                  {% endif %}
+                  <span class="list-text">
+                    <span class="list-title">{{ it.name }}</span>
+                    <span class="list-sub">{{ it.category or 'Item' }}</span>
+                  </span>
+                  <span class="material-symbols-outlined list-arrow">arrow_forward</span>
+                </a>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="card-sub">No items tagged yet.</p>
+          {% endif %}
+        </article>
+
+        <article class="glass-card quote-card col-4">
+          <div class="quote-bg">"</div>
+          <h3 class="quote-kicker">Quote of the day</h3>
+          <blockquote>
+            "Fashion is the armor to survive the reality of everyday life."
+          </blockquote>
+          <cite>— Bill Cunningham</cite>
+        </article>
+
+        {% for o in outfits[2:] %}
+          {% set p = photo_map.get(o.id, []) %}
+          {% set extra_photo = p[0].photo_path if p and p|length > 0 else '' %}
+          <article class="glass-card entry-card col-3 mini-entry">
+            <div class="entry-photo {% if not extra_photo %}is-empty{% endif %}" {% if extra_photo %}style="background-image:url('{{ extra_photo }}')"{% endif %}></div>
+            <h3 class="entry-title">{{ o.note or 'Outfit Entry' }}</h3>
+            <p class="entry-note">{{ o.note or 'No notes yet.' }}</p>
+            <a class="entry-link" href="{{ url_for('outfit_edit', outfit_id=o.id) }}">Edit</a>
           </article>
         {% endfor %}
       {% endif %}
-    </div>
+    </section>
   </main>
 </section>
 {% endblock %}

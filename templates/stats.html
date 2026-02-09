@@ -1,200 +1,211 @@
-{% extends "base.html" %}
-{% block title %}통계 - Fashion Diary{% endblock %}
+﻿{% extends "base.html" %}
+{% block title %}Stats - Fashion Diary{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
 {% endblock %}
 
 {% block content %}
-{% set total = total_items if total_items else 1 %}
-{% set c1 = category_sorted[0] if category_sorted|length > 0 else None %}
-{% set c2 = category_sorted[1] if category_sorted|length > 1 else None %}
-{% set c3 = category_sorted[2] if category_sorted|length > 2 else None %}
-{% set c4 = category_sorted[3] if category_sorted|length > 3 else None %}
-{% set p1 = ((c1[1] / total) * 100) if c1 else 0 %}
-{% set p2 = ((c2[1] / total) * 100) if c2 else 0 %}
-{% set p3 = ((c3[1] / total) * 100) if c3 else 0 %}
-{% set p4 = ((c4[1] / total) * 100) if c4 else 0 %}
-{% set p5 = (100 - p1 - p2 - p3 - p4) if total_items else 0 %}
+<section class="stats-page">
+  <aside class="stats-rail app-rail">
+    <nav class="rail-nav">
+      <a class="rail-item" href="{{ url_for('diary') }}" aria-label="Diary">
+        <span class="material-symbols-outlined">stylus</span>
+        <span class="rail-tooltip">Looks</span>
+      </a>
+      <a class="rail-item" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+        <span class="rail-tooltip">Closet</span>
+      </a>
+      <a class="rail-item is-active" href="{{ url_for('stats') }}" aria-label="Insights">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="rail-tooltip">Insights</span>
+      </a>
+    </nav>
+    <div class="rail-footer"></div>
+  </aside>
 
-<div class="page-hero">
-  <div>
-    <p class="eyebrow">Style Insights</p>
-    <h1 class="hero-title">나의 기록 통계</h1>
-    <p class="hero-subtitle">개인 기록 요약과 패턴을 한눈에 확인하세요.</p>
-  </div>
-</div>
-
-<div class="row g-3 mb-4">
-  <div class="col-md-4">
-    <div class="card-clean p-3 stat-card">
-      <div class="meta">총 아이템</div>
-      <h3 class="m-0">{{ total_items }}</h3>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card-clean p-3 stat-card">
-      <div class="meta">총 코디</div>
-      <h3 class="m-0">{{ total_outfits }}</h3>
-    </div>
-  </div>
-  <div class="col-md-4">
-    <div class="card-clean p-3 stat-card">
-      <div class="meta">총 사진</div>
-      <h3 class="m-0">{{ total_photos }}</h3>
-    </div>
-  </div>
-</div>
-
-<div class="row g-3 mb-4">
-  <div class="col-lg-5">
-    <div class="card-clean p-3 insight-card">
-      <h5 class="mb-3">카테고리 믹스</h5>
-      <div class="donut-wrap">
-        <div class="donut" style="--p1: {{ p1|round(1) }}; --p2: {{ p2|round(1) }}; --p3: {{ p3|round(1) }}; --p4: {{ p4|round(1) }}; --p5: {{ p5|round(1) }};"></div>
-        <div class="donut-center">
-          <div class="donut-label">Items</div>
-          <div class="donut-value">{{ total_items }}</div>
+  <main class="stats-main">
+    <header class="stats-header">
+      <div class="header-title">
+        <p class="kicker">Analytics &amp; Trends</p>
+        <h1>Wardrobe Insights</h1>
+      </div>
+      <div class="header-tools">
+        <div class="date-strip" aria-label="Date range">
+          <button class="strip-btn" type="button" aria-label="Previous days">
+            <span class="material-symbols-outlined">chevron_left</span>
+          </button>
+          <div class="strip-days">
+            {% for d in stats_days %}
+              <div class="strip-day {% if d == today %}is-active{% endif %}">
+                <span class="strip-date">{{ d.strftime('%b %d') }}</span>
+                <span class="strip-dow">{{ d.strftime('%a') }}</span>
+              </div>
+            {% endfor %}
+          </div>
+          <button class="strip-btn" type="button" aria-label="Next days">
+            <span class="material-symbols-outlined">chevron_right</span>
+          </button>
+        </div>
+        <div class="profile-pill">
+          <span class="profile-avatar">{{ initials[:1] if initials else 'F' }}</span>
+          <span class="profile-name">{{ display_name }}</span>
         </div>
       </div>
-      <ul class="list-unstyled donut-legend">
-        {% if c1 %}<li><span class="legend-swatch tone-1"></span>{{ c1[0] }} <span class="meta">{{ c1[1] }}</span></li>{% endif %}
-        {% if c2 %}<li><span class="legend-swatch tone-2"></span>{{ c2[0] }} <span class="meta">{{ c2[1] }}</span></li>{% endif %}
-        {% if c3 %}<li><span class="legend-swatch tone-3"></span>{{ c3[0] }} <span class="meta">{{ c3[1] }}</span></li>{% endif %}
-        {% if c4 %}<li><span class="legend-swatch tone-4"></span>{{ c4[0] }} <span class="meta">{{ c4[1] }}</span></li>{% endif %}
-        {% if p5 > 0 %}<li><span class="legend-swatch tone-5"></span>기타 <span class="meta">{{ (total_items - (c1[1] if c1 else 0) - (c2[1] if c2 else 0) - (c3[1] if c3 else 0) - (c4[1] if c4 else 0)) }}</span></li>{% endif %}
-      </ul>
-    </div>
-  </div>
-  <div class="col-lg-7">
-    <div class="card-clean p-3 insight-card">
-      <h5 class="mb-3">요약</h5>
-      <div class="insight-grid">
-        <div>
-          <div class="meta">가장 많은 카테고리</div>
-          <div class="insight-value">{{ c1[0] if c1 else "없음" }}</div>
-        </div>
-        <div>
-          <div class="meta">가장 많은 시즌</div>
-          <div class="insight-value">{{ season_sorted[0][0] if season_sorted else "없음" }}</div>
-        </div>
-        <div>
-          <div class="meta">가장 많은 색상</div>
-          <div class="insight-value">{{ color_sorted[0][0] if color_sorted else "없음" }}</div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+    </header>
 
-<div class="row g-3 mb-4">
-  <div class="col-lg-6">
-    <div class="card-clean p-3 insight-card">
-      <h5 class="mb-3">날씨와 코디</h5>
-      <div class="weather-split">
-        <div class="weather-chip rain">비 오는 날 {{ rain_count }}회 ({{ rain_ratio }}%)</div>
-        <div class="weather-chip clear">맑은 날 {{ clear_count }}회</div>
-        <div class="meta">날씨 데이터가 있는 기록 {{ weather_total }}회</div>
-      </div>
-    </div>
-  </div>
-  <div class="col-lg-6">
-    <div class="card-clean p-3 insight-card">
-      <h5 class="mb-3">기온대별 코디</h5>
-      <ul class="list-unstyled m-0 list-compact stat-list">
-        {% for label, cnt in temp_buckets %}
-          <li class="stat-row">
-            <span class="stat-label">{{ label }}</span>
-            <div class="stat-bar">
-              <span style="width: {{ (cnt / max_temp_count * 100) if max_temp_count else 0 }}%"></span>
+    <section class="stats-grid">
+      <article class="stats-card stats-card--wide">
+        <div class="card-head">
+          <h2>Top 5 Most Worn</h2>
+          <span>Past 30 Days</span>
+        </div>
+        {% if top_items %}
+          <div class="top-worn-grid">
+            {% for entry in top_items %}
+              {% set it = entry.item %}
+              <div class="top-item">
+                <div class="top-photo{% if not it or not it.image_path %} is-empty{% endif %}"{% if it and it.image_path %} style="background-image:url('{{ it.image_path }}')"{% endif %}></div>
+                <div class="top-meta">
+                  <p class="top-name">{{ it.name if it else 'Item' }}</p>
+                  <span class="top-count">{{ entry.count }}</span>
+                </div>
+                <p class="top-sub">Times Worn</p>
+              </div>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="top-empty">
+            <p>No wear data yet.</p>
+            <a href="{{ url_for('wardrobe') }}">Add items to your closet</a>
+          </div>
+        {% endif %}
+      </article>
+
+      <article class="stats-card stats-card--palette">
+        <div class="card-head">
+          <h2>Color Palette</h2>
+          <span>Tonal Balance</span>
+        </div>
+        <div
+          class="palette-ring"
+          style="
+            --p1: {{ palette[0].percent if palette|length > 0 else 0 }};
+            --p2: {{ palette[1].percent if palette|length > 1 else 0 }};
+            --p3: {{ palette[2].percent if palette|length > 2 else 0 }};
+            --p4: {{ palette[3].percent if palette|length > 3 else 0 }};
+            --c1: {{ palette[0].color if palette|length > 0 else '#A89F91' }};
+            --c2: {{ palette[1].color if palette|length > 1 else '#D2B48C' }};
+            --c3: {{ palette[2].color if palette|length > 2 else '#9CAF88' }};
+            --c4: {{ palette[3].color if palette|length > 3 else '#E5D3B3' }};
+          "
+        >
+          <div class="palette-center">
+            <span class="center-value">{{ palette_center_percent }}%</span>
+            <span class="center-label">{{ palette_center_label }}</span>
+          </div>
+        </div>
+        <div class="palette-legend">
+          {% if palette %}
+            {% for entry in palette %}
+              <div class="legend-row">
+                <span class="legend-swatch" style="background: {{ entry.color }}"></span>
+                <span class="legend-name">{{ entry.name }}</span>
+                <span class="legend-value">{{ entry.percent }}%</span>
+              </div>
+            {% endfor %}
+          {% else %}
+            <div class="legend-empty">No color data yet.</div>
+          {% endif %}
+        </div>
+      </article>
+
+      <article class="stats-card stats-card--trend">
+        <div class="trend-head">
+          <div>
+            <h2>Monthly Style Trend</h2>
+            <p>Wardrobe Utility</p>
+          </div>
+          <div class="trend-tabs">
+            <button class="is-active" type="button">Activity</button>
+            <button type="button" disabled>Cost per Wear</button>
+          </div>
+        </div>
+        <div class="trend-chart">
+          {% for label, cnt in month_pairs %}
+            <div class="trend-column">
+              <div class="trend-bar">
+                <span style="height: {{ (cnt / max_month_count * 100) if max_month_count else 0 }}%"></span>
+              </div>
+              <span class="trend-label">{{ label }}</span>
             </div>
-            <span class="stat-count">{{ cnt }}</span>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-  </div>
-</div>
-
-<div class="row g-3">
-  <div class="col-lg-4">
-    <div class="card-clean p-3">
-      <h5 class="mb-2">카테고리</h5>
-      {% if category_sorted %}
-        {% set max_cat = category_sorted[0][1] %}
-        <ul class="list-unstyled m-0 list-compact stat-list">
-          {% for name, cnt in category_sorted %}
-            <li class="stat-row">
-              <span class="stat-label">{{ name }}</span>
-              <div class="stat-bar">
-                <span style="width: {{ (cnt / max_cat * 100) if max_cat else 0 }}%"></span>
-              </div>
-              <span class="stat-count">{{ cnt }}</span>
-            </li>
           {% endfor %}
-        </ul>
-      {% else %}
-        <div class="meta">데이터 없음</div>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="col-lg-4">
-    <div class="card-clean p-3">
-      <h5 class="mb-2">시즌</h5>
-      {% if season_sorted %}
-        {% set max_season = season_sorted[0][1] %}
-        <ul class="list-unstyled m-0 list-compact stat-list">
-          {% for name, cnt in season_sorted %}
-            <li class="stat-row">
-              <span class="stat-label">{{ name }}</span>
-              <div class="stat-bar">
-                <span style="width: {{ (cnt / max_season * 100) if max_season else 0 }}%"></span>
-              </div>
-              <span class="stat-count">{{ cnt }}</span>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <div class="meta">데이터 없음</div>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="col-lg-4">
-    <div class="card-clean p-3">
-      <h5 class="mb-2">색상</h5>
-      {% if color_sorted %}
-        {% set max_color = color_sorted[0][1] %}
-        <ul class="list-unstyled m-0 list-compact stat-list">
-          {% for name, cnt in color_sorted %}
-            <li class="stat-row">
-              <span class="stat-label">{{ name }}</span>
-              <div class="stat-bar">
-                <span style="width: {{ (cnt / max_color * 100) if max_color else 0 }}%"></span>
-              </div>
-              <span class="stat-count">{{ cnt }}</span>
-            </li>
-          {% endfor %}
-        </ul>
-      {% else %}
-        <div class="meta">데이터 없음</div>
-      {% endif %}
-    </div>
-  </div>
-</div>
-
-<div class="card-clean p-3 mt-4">
-  <h5 class="mb-3">{{ current_year }}년 월별 코디 수</h5>
-  <div class="month-grid">
-    {% for m in range(1, 13) %}
-      <div class="month-row">
-        <div class="month-label">{{ m }}월</div>
-        <div class="month-bar">
-          <span style="width: {{ (month_counts[m] / max_month_count * 100) if max_month_count else 0 }}%"></span>
         </div>
-        <div class="month-count">{{ month_counts[m] }}</div>
-      </div>
-    {% endfor %}
-  </div>
-</div>
+        <div class="trend-footer">
+          <div class="trend-summary">
+            <div>
+              <span class="summary-value">{{ total_outfits }}</span>
+              <span class="summary-label">Logged Outfits</span>
+            </div>
+            <div>
+              <span class="summary-value">{{ efficiency_rate }}%</span>
+              <span class="summary-label">Efficiency Rate</span>
+            </div>
+          </div>
+          <button class="report-btn" type="button">Download Report</button>
+        </div>
+      </article>
+
+      <article class="stats-card stats-card--small">
+        <div>
+          <h3>Curation Level</h3>
+          <p class="card-kicker">Elite Status</p>
+          <div class="progress-track">
+            <span style="width: {{ curation_percent }}%"></span>
+          </div>
+        </div>
+        <div>
+          <p class="card-quote">
+            "Quality over quantity. Your collection is {{ curation_percent }}% curated with {{ top_category }} as your signature."
+          </p>
+          <a class="card-link" href="{{ url_for('wardrobe') }}">Review Archive</a>
+        </div>
+      </article>
+
+      <article class="stats-card stats-card--small stats-card--dark">
+        <div>
+          <span class="material-symbols-outlined badge-icon">workspace_premium</span>
+          <h3>Season Ready</h3>
+        </div>
+        <div>
+          <p class="card-muted">Top season: {{ top_season }}</p>
+          <div class="avatar-stack">
+            {% if top_items %}
+              {% for entry in top_items[:3] %}
+                {% set it = entry.item %}
+                <span class="stack-avatar{% if not it or not it.image_path %} is-empty{% endif %}"{% if it and it.image_path %} style="background-image:url('{{ it.image_path }}')"{% endif %}></span>
+              {% endfor %}
+              {% if top_items|length > 3 %}
+                <span class="stack-more">+{{ top_items|length - 3 }}</span>
+              {% endif %}
+            {% else %}
+              <span class="stack-avatar is-empty"></span>
+              <span class="stack-avatar is-empty"></span>
+              <span class="stack-avatar is-empty"></span>
+            {% endif %}
+          </div>
+        </div>
+      </article>
+
+      <article class="stats-card stats-card--small stats-card--center">
+        <span class="material-symbols-outlined badge-icon">auto_awesome</span>
+        <h3>The Style Arch</h3>
+        <p class="card-muted">You have logged {{ total_outfits }} outfits so far in {{ current_year }}.</p>
+        <a class="outline-btn" href="{{ url_for('diary') }}">View Diary</a>
+      </article>
+    </section>
+  </main>
+</section>
 {% endblock %}

@@ -1,102 +1,125 @@
-{% extends "base.html" %}
-{% block title %}옷장 - Fashion Diary{% endblock %}
+﻿{% extends "base.html" %}
+{% block title %}Closet - Fashion Diary{% endblock %}
 {% block styles %}
 <link rel="stylesheet" href="{{ url_for('static', filename='css/wardrobe.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
 {% endblock %}
 
 {% block content %}
-
-<div class="page-hero">
-  <div>
-    <p class="eyebrow">My Closet</p>
-    <h1 class="hero-title">나의 옷장</h1>
-    <p class="hero-subtitle">
-      보유 중인 아이템을 기록하고, 코디 다이어리와 자연스럽게 연결해요.
-      <span class="badge-soft ms-2">총 {{ items|length }}개</span>
-    </p>
-  </div>
-  <div class="hero-actions">
-    <button id="deleteToggleBtn" type="button" class="btn btn-danger-outline btn-sm"
-            {% if items|length == 0 %}disabled{% endif %}>삭제</button>
-    <a class="btn btn-solid btn-sm" href="{{ url_for('items_create') }}">+ 추가</a>
-  </div>
-</div>
-
-<form class="card-clean p-3 mb-3 filter-panel" method="get" action="{{ url_for('wardrobe') }}">
-  <div class="row g-2 align-items-end">
-    <div class="col-md-4">
-      <label class="form-label">검색</label>
-      <input name="q" class="form-control" value="{{ q or '' }}" placeholder="브랜드, 제품명, 색상">
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">카테고리</label>
-      <select name="category" class="form-select">
-        <option value="">전체</option>
-        {% for c in categories %}
-          <option value="{{ c }}" {% if c == category %}selected{% endif %}>{{ c }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div class="col-md-3">
-      <label class="form-label">색상</label>
-      <input name="color" class="form-control" value="{{ color or '' }}" placeholder="예: 블랙">
-    </div>
-    <div class="col-md-2 d-grid">
-      <button class="btn btn-solid btn-sm" type="submit">필터</button>
-      <a class="btn btn-soft btn-sm mt-1" href="{{ url_for('wardrobe') }}">초기화</a>
-    </div>
-  </div>
-</form>
-
-{% if items|length == 0 %}
-  <div class="card-clean p-4 text-center">
-    {% if has_filters %}
-      조건에 맞는 아이템이 없습니다.
-    {% else %}
-      아직 아이템이 없습니다. 첫 아이템을 추가해보세요.
-    {% endif %}
-  </div>
-{% else %}
-  <div id="deleteHint" class="text-muted small mb-2" style="display:none;">삭제할 아이템을 선택하세요.</div>
-  <form id="itemDeleteForm" method="post" action="{{ url_for('items_delete') }}"></form>
-  <div class="row g-3 wardrobe-grid">
-    {% for it in items %}
-    <div class="col-6 col-md-4 col-lg-3">
-      <a class="text-decoration-none wardrobe-item" data-item-id="{{ it.id }}"
-         href="{{ url_for('tag_page', item_id=it.id) }}">
-        <div class="card-clean h-100 wardrobe-card">
-          <div class="media-frame">
-            {% if it.image_path %}
-              <img class="card-media" src="{{ it.image_path }}" alt="{{ it.name }}">
-            {% else %}
-              <div class="media-placeholder">이미지 없음</div>
-            {% endif %}
-            <span class="item-tag">{{ it.category or '기타' }}</span>
-          </div>
-          <div class="card-body">
-            <div class="item-title">{{ it.name }}</div>
-            <div class="item-meta">
-              {% set wear = wear_counts.get(it.id, 0) %}
-              {% if it.id in fav_ids %}
-                <span class="badge-fav">즐겨찾기</span>
-              {% endif %}
-              {% if wear > 0 %}
-                <span class="badge-wear">착용 {{ wear }}회</span>
-              {% endif %}
-              {% if it.color %}
-                <span class="badge-soft">{{ it.color }}</span>
-              {% endif %}
-              {% if it.season %}
-                <span class="meta">{{ it.season }}</span>
-              {% endif %}
-            </div>
-          </div>
-        </div>
+<section class="closet-page">
+  <aside class="closet-rail app-rail">
+    <nav class="rail-nav">
+      <a class="rail-item" href="{{ url_for('diary') }}" aria-label="Diary">
+        <span class="material-symbols-outlined">stylus</span>
+        <span class="rail-tooltip">Looks</span>
       </a>
-    </div>
-    {% endfor %}
-  </div>
-{% endif %}
+      <a class="rail-item is-active" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+        <span class="rail-tooltip">Closet</span>
+      </a>
+      <a class="rail-item" href="{{ url_for('stats') }}" aria-label="Insights">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="rail-tooltip">Insights</span>
+      </a>
+    </nav>
+    <div class="rail-footer"></div>
+  </aside>
+
+  <main class="closet-main">
+    <header class="closet-header">
+      <div class="header-title">
+        <p class="header-kicker">Digital Archive</p>
+        <h1>Curated Collection</h1>
+      </div>
+      <div class="header-actions">
+        <form class="search-bar" method="get" action="{{ url_for('wardrobe') }}">
+          <input type="hidden" name="category" value="{{ category or '' }}">
+          <span class="material-symbols-outlined search-icon">search</span>
+          <input class="search-input" name="q" value="{{ q or '' }}" placeholder="Search Collection">
+          <span class="search-divider"></span>
+          <input class="search-input" name="color" value="{{ color or '' }}" placeholder="Color">
+          <button class="search-btn" type="submit" aria-label="Search">
+            <span class="material-symbols-outlined">search</span>
+          </button>
+        </form>
+        <span class="actions-divider" aria-hidden="true"></span>
+        <button id="deleteToggleBtn" type="button" class="action-btn ghost" {% if items|length == 0 %}disabled{% endif %}>
+          Delete
+        </button>
+        <a class="action-btn primary" href="{{ url_for('items_create') }}">
+          Add New
+          <span class="material-symbols-outlined">add</span>
+        </a>
+        <div class="profile-chip" aria-label="Profile">
+          {{ initials[:1] if initials else 'F' }}
+        </div>
+      </div>
+    </header>
+
+    <form class="filter-bar" method="get" action="{{ url_for('wardrobe') }}">
+      <input type="hidden" name="q" value="{{ q or '' }}">
+      <input type="hidden" name="color" value="{{ color or '' }}">
+      <button class="filter-btn {% if not category %}is-active{% endif %}" name="category" value="">All pieces</button>
+      <button class="filter-btn {% if category == 'Outerwear' %}is-active{% endif %}" name="category" value="Outerwear">Outerwear</button>
+      <button class="filter-btn {% if category == 'Top' or category == 'Tops' %}is-active{% endif %}" name="category" value="Top">Top</button>
+      <button class="filter-btn {% if category == 'Bottom' or category == 'Bottoms' %}is-active{% endif %}" name="category" value="Bottom">Bottom</button>
+      <button class="filter-btn {% if category == 'Footwear' %}is-active{% endif %}" name="category" value="Footwear">Footwear</button>
+      <button class="filter-btn {% if category == 'Accessories' %}is-active{% endif %}" name="category" value="Accessories">Accessories</button>
+    </form>
+
+    {% if items|length == 0 %}
+      <div class="empty-state">
+        {% if has_filters %}
+          No items match your filters.
+        {% else %}
+          Your closet is empty. Add your first piece.
+        {% endif %}
+      </div>
+    {% else %}
+      <div id="deleteHint" class="delete-hint" style="display:none;">Select items to delete.</div>
+      <form id="itemDeleteForm" method="post" action="{{ url_for('items_delete') }}"></form>
+      <div class="masonry-grid">
+        <div class="masonry-item">
+          <a class="add-card" href="{{ url_for('items_create') }}">
+            <span class="add-icon">
+              <span class="material-symbols-outlined">add</span>
+            </span>
+            <span class="add-label">Add New Piece</span>
+          </a>
+        </div>
+        {% for it in items %}
+        <div class="masonry-item">
+          <a class="wardrobe-item" data-item-id="{{ it.id }}" href="{{ url_for('tag_page', item_id=it.id) }}">
+            <div class="closet-card">
+              <div class="closet-media">
+                {% if it.image_path %}
+                  <img src="{{ it.image_path }}" alt="{{ it.name }}">
+                {% else %}
+                  <div class="media-placeholder">No Image</div>
+                {% endif %}
+                {% if it.season %}
+                  <span class="tag">{{ it.season }}</span>
+                {% endif %}
+              </div>
+              <div class="closet-info">
+                <div class="info-text">
+                  <h3>{{ it.name }}</h3>
+                  <p>{{ it.category or 'Item' }}{% if it.color %} • {{ it.color }}{% endif %}</p>
+                </div>
+                {% set wear = wear_counts.get(it.id, 0) %}
+                {% if wear > 0 %}
+                  <span class="wear">{{ wear }} wears</span>
+                {% endif %}
+              </div>
+            </div>
+          </a>
+        </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  </main>
+</section>
 {% endblock %}
 
 {% block scripts %}

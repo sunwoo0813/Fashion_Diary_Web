@@ -1,59 +1,173 @@
 {% extends "base.html" %}
-{% block title %}아이템 추가 - Fashion Diary{% endblock %}
+{% block title %}Add Item - Fashion Diary{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/item_new.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-6">
-    <div class="glass p-4">
-      <h3 class="mb-3">아이템 추가</h3>
-      <form method="post" enctype="multipart/form-data">
-        <div class="row">
-          <div class="col-6 mb-3">
-            <label class="form-label">브랜드</label>
-            <input name="brand" class="form-control" placeholder="예: COS" required>
+<section class="add-item-page">
+  <aside class="side-rail app-rail">
+    <nav class="rail-nav">
+      <a class="rail-item" href="{{ url_for('diary') }}" aria-label="Diary">
+        <span class="material-symbols-outlined">stylus</span>
+        <span class="rail-tooltip">Looks</span>
+      </a>
+      <a class="rail-item is-active" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+        <span class="rail-tooltip">Closet</span>
+      </a>
+      <a class="rail-item" href="{{ url_for('stats') }}" aria-label="Insights">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="rail-tooltip">Insights</span>
+      </a>
+    </nav>
+    <div class="rail-footer"></div>
+  </aside>
+
+  <main class="add-item-main">
+    <header class="add-header">
+      <div>
+        <p class="header-kicker">Curate Your Collection</p>
+        <h1 class="header-title">Add New Item</h1>
+      </div>
+      <div class="header-actions">
+        <a class="btn-ghost" href="{{ url_for('wardrobe') }}">Cancel</a>
+        <button class="btn-solid" type="submit" form="addItemForm">Save to Closet</button>
+      </div>
+    </header>
+
+    <form id="addItemForm" class="add-form" method="post" enctype="multipart/form-data">
+      <div class="glass-card upload-card col-5 file-input-wrapper">
+        <div class="upload-surface">
+          <div class="upload-icon">
+            <span class="material-symbols-outlined">add_a_photo</span>
           </div>
-          <div class="col-6 mb-3">
-            <label class="form-label">제품명</label>
-            <input name="product" class="form-control" placeholder="예: 리넨 셔츠" required>
-          </div>
+          <h3>Upload Garment</h3>
+          <p>Drag &amp; Drop or Click</p>
         </div>
-        <div class="row">
-          <div class="col-6 mb-3">
-            <label class="form-label">카테고리</label>
-            <select name="category" class="form-select">
-              <option value="">선택</option>
-              <option>top</option>
-              <option>bottom</option>
-              <option>outer</option>
-              <option>shoes</option>
-              <option>acc</option>
-            </select>
-          </div>
-          <div class="col-6 mb-3">
-            <label class="form-label">색상</label>
-            <input name="color" class="form-control" placeholder="예: 아이보리">
-          </div>
+
+        <div id="itemPhotoPreviewWrap" class="photo-preview" style="display:none;">
+          <img id="itemPhotoPreviewImg" alt="preview">
         </div>
-        <div class="mb-3">
-          <label class="form-label">사진</label>
-          <input type="file" name="image" class="form-control" accept="image/*">
-          <div id="itemPhotoPreviewWrap" class="mt-3" style="display:none;">
-            <div class="card-clean p-2">
-              <img
-                id="itemPhotoPreviewImg"
-                alt="preview"
-                style="width:100%; height:320px; object-fit:contain; border-radius:14px; display:block; background:rgba(47,62,78,0.04);"
-              />
+
+        <div class="upload-actions">
+          <button class="icon-pill" type="button" aria-label="Crop">
+            <span class="material-symbols-outlined">crop</span>
+          </button>
+          <button class="icon-pill" type="button" aria-label="Enhance">
+            <span class="material-symbols-outlined">auto_fix_high</span>
+          </button>
+        </div>
+
+        <input type="file" name="image" accept="image/*">
+      </div>
+
+      <div class="col-7 detail-stack">
+        <div class="glass-card detail-card">
+          <h3>Item Details</h3>
+          <div class="detail-grid">
+            <div class="field field-wide">
+              <label>Item Name</label>
+              <input name="product" type="text" placeholder="e.g. Vintage Silk Blouse" required>
+            </div>
+            <div class="field">
+              <label>Brand</label>
+              <input name="brand" type="text" placeholder="e.g. Celine" required>
+            </div>
+            <div class="field">
+              <label>Category</label>
+              <div class="select-wrap">
+                <select name="category" required>
+                  <option value="" disabled selected>Select</option>
+                  <option value="Tops">Tops &amp; Blouses</option>
+                  <option value="Outerwear">Outerwear</option>
+                  <option value="Bottoms">Bottoms</option>
+                  <option value="Footwear">Shoes</option>
+                  <option value="Accessories">Accessories</option>
+                </select>
+                <span class="material-symbols-outlined">expand_more</span>
+              </div>
             </div>
           </div>
         </div>
-        <div class="d-grid">
-          <button class="btn btn-dark" type="submit">저장</button>
+
+        <div class="detail-row">
+          <div class="glass-card sub-card">
+            <h3>Season &amp; Usage</h3>
+            <div class="pill-block">
+              <p>Season</p>
+              <div class="pill-group">
+                <input type="radio" name="season" id="season-autumn" value="autumn" checked>
+                <label for="season-autumn">Autumn</label>
+                <input type="radio" name="season" id="season-winter" value="winter">
+                <label for="season-winter">Winter</label>
+                <input type="radio" name="season" id="season-spring" value="spring">
+                <label for="season-spring">Spring</label>
+                <input type="radio" name="season" id="season-summer" value="summer">
+                <label for="season-summer">Summer</label>
+              </div>
+            </div>
+            <div class="pill-block">
+              <p>Occasion</p>
+              <div class="pill-group is-muted">
+                <input type="radio" name="occasion" id="occ-casual" value="casual">
+                <label for="occ-casual">Casual</label>
+                <input type="radio" name="occasion" id="occ-work" value="work" checked>
+                <label for="occ-work">Work</label>
+                <input type="radio" name="occasion" id="occ-evening" value="evening">
+                <label for="occ-evening">Evening</label>
+              </div>
+            </div>
+          </div>
+
+          <div class="glass-card sub-card">
+            <h3>Color &amp; Material</h3>
+            <div class="pill-block">
+              <p>Primary Color</p>
+              <div class="color-row">
+                <button class="swatch is-active" type="button" data-color="Black" style="background:#1a1a1a;"></button>
+                <button class="swatch" type="button" data-color="Ivory" style="background:#f5f5dc;"></button>
+                <button class="swatch" type="button" data-color="Brown" style="background:#8b4513;"></button>
+                <button class="swatch" type="button" data-color="Olive" style="background:#556b2f;"></button>
+                <button class="swatch swatch-add" type="button" aria-label="Add color">
+                  <span class="material-symbols-outlined">add</span>
+                </button>
+              </div>
+            </div>
+            <div class="field">
+              <label>Fabric Composition</label>
+              <input name="material" type="text" placeholder="e.g. 100% Organic Cotton">
+            </div>
+            <div class="field">
+              <label>Color</label>
+              <input id="colorInput" name="color" type="text" placeholder="e.g. Ivory">
+            </div>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-</div>
+
+        <div class="glass-card notes-card">
+          <div class="notes-head">
+            <h3>Styling Notes</h3>
+            <span class="material-symbols-outlined">edit_note</span>
+          </div>
+          <textarea name="note" placeholder="Add personal notes about fit, styling ideas, or care instructions..."></textarea>
+          <div class="tag-row">
+            <span>Tags:</span>
+            <span class="tag-pill">#vintage</span>
+            <span class="tag-pill">#investment</span>
+            <button type="button" class="tag-add">
+              <span class="material-symbols-outlined">add_circle</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </form>
+  </main>
+</section>
 {% endblock %}
+
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/item_new.js') }}"></script>
 {% endblock %}

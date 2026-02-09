@@ -1,128 +1,151 @@
-{% extends "base.html" %}
-{% block title %}코디 기록 - Fashion Diary{% endblock %}
+﻿{% extends "base.html" %}
+{% block title %}오늘의 코디 기록 - Fashion Diary{% endblock %}
+{% block styles %}
+<link rel="stylesheet" href="{{ url_for('static', filename='css/outfit_new.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
+{% endblock %}
+
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-lg-7">
-    <div class="glass p-4">
-      <h3 class="mb-3">오늘의 코디 기록</h3>
+<section class="ootd-page">
+  <aside class="side-rail app-rail">
+    <nav class="rail-nav">
+      <a class="rail-item is-active" href="{{ url_for('diary') }}" aria-label="Diary">
+        <span class="material-symbols-outlined">stylus</span>
+        <span class="rail-tooltip">Looks</span>
+      </a>
+      <a class="rail-item" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+        <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
+        <span class="rail-tooltip">Closet</span>
+      </a>
+      <a class="rail-item" href="{{ url_for('stats') }}" aria-label="Insights">
+        <span class="material-symbols-outlined">analytics</span>
+        <span class="rail-tooltip">Insights</span>
+      </a>
+    </nav>
+    <div class="rail-footer"></div>
+  </aside>
 
-      <form method="post" enctype="multipart/form-data">
+  <main class="ootd-main">
+    <header class="entry-header">
+      <div>
+        <p class="entry-kicker">New Entry</p>
+        <h1 class="entry-title">Today&#39;s Look</h1>
+      </div>
+      <div class="entry-actions">
+        <a class="btn-ghost" href="{{ url_for('diary') }}">Cancel</a>
+        <button class="btn-solid" type="submit" form="ootdForm">Publish to Diary</button>
+      </div>
+    </header>
 
-        <div class="row g-2 mb-3">
-          <div class="col-8">
-            <label class="form-label">도시</label>
-            <input id="city" name="city" class="form-control" value="서울" placeholder="예: 서울, 부산, 제주">
+    <form id="ootdForm" class="ootd-form" method="post" enctype="multipart/form-data">
+      <div class="glass-card upload-card col-7 file-input-wrapper">
+        <div class="upload-placeholder">
+          <div class="upload-icon">
+            <span class="material-symbols-outlined">add</span>
           </div>
-          <div class="col-4 d-flex align-items-end">
-            <button id="fillWeather" type="button" class="btn btn-outline-dark w-100">오늘 날씨 불러오기</button>
-          </div>
-          <div class="col-12">
-            <div id="weatherPreview" class="form-text" style="display:none;"></div>
-          </div>
+          <h3>Upload OOTD</h3>
+          <p>Drag &amp; drop or click to browse</p>
         </div>
+        <div id="photoPreviewWrap" class="photo-preview" style="display:none;">
+          <div class="preview-frame">
+            <img id="photoPreviewImg" alt="preview">
+            <button id="photoPrevBtn" type="button" class="preview-btn prev">Prev</button>
+            <button id="photoNextBtn" type="button" class="preview-btn next">Next</button>
+            <div id="photoCounter" class="preview-counter"></div>
+          </div>
+          <div id="photoThumbs" class="preview-thumbs"></div>
+        </div>
+        <div class="upload-meta">
+          <span class="material-symbols-outlined">photo_camera</span>
+          <span>High Res</span>
+        </div>
+        <input type="file" name="photos" accept="image/*" multiple>
+      </div>
 
-        <div class="mb-3">
-          <label class="form-label">사진</label>
-          <input type="file" name="photos" class="form-control" accept="image/*" multiple>
-          <div id="photoPreviewWrap" class="mt-3" style="display:none;">
-            <div class="card-clean p-2">
-              <div style="position:relative; border-radius:14px; overflow:hidden; border:1px solid var(--border);">
-                <img
-                  id="photoPreviewImg"
-                  alt="preview"
-                  style="width:100%; height:360px; object-fit:contain; display:block; background:rgba(47,62,78,0.04);"
-                />
-
-                <button
-                  type="button"
-                  id="photoPrevBtn"
-                  class="btn btn-soft btn-sm"
-                  style="position:absolute; left:10px; top:50%; transform:translateY(-50%);"
-                >
-                  이전
-                </button>
-
-                <button
-                  type="button"
-                  id="photoNextBtn"
-                  class="btn btn-soft btn-sm"
-                  style="position:absolute; right:10px; top:50%; transform:translateY(-50%);"
-                >
-                  다음
-                </button>
-
-                <div
-                  id="photoCounter"
-                  style="position:absolute; right:12px; bottom:12px;
-                         padding:6px 10px; border-radius:999px; font-size:14px;
-                         background: color-mix(in oklab, var(--card) 85%, transparent);
-                         border:1px solid var(--border);"
-                ></div>
-              </div>
-
-              <div id="photoThumbs" class="mt-2" style="display:flex; gap:8px; flex-wrap:wrap;"></div>
+      <div class="col-5 right-stack">
+        <div class="glass-card reflection-card">
+          <div class="card-head">
+            <h3>Daily Reflection</h3>
+            <span class="material-symbols-outlined">edit_note</span>
+          </div>
+          <textarea name="note" placeholder="How did this outfit make you feel?"></textarea>
+          <div class="reflection-foot">
+            <div class="field-inline">
+              <label for="date">Date</label>
+              <input id="date" type="date" name="date" value="{{ (now or '') }}">
             </div>
+            <div class="char-count">0 / 500</div>
           </div>
+        </div>
 
-          <div id="photoTagPanel" class="mt-3" style="display:none;">
-            <div class="fw-semibold mb-2">사진 태그</div>
-            <div id="photoTagChips" class="d-flex flex-wrap gap-2 mb-2"></div>
-            <div class="position-relative">
-              <input id="photoTagInput" class="form-control" placeholder="옷장 아이템 검색">
-              <div
-                id="photoTagResults"
-                class="card-clean p-2 mt-1"
-                style="display:none; position:absolute; z-index:10; width:100%; max-height:240px; overflow:auto;"
-              ></div>
+        <div class="glass-card weather-card">
+          <div class="weather-head">
+            <div class="weather-location">
+              <span class="material-symbols-outlined">location_on</span>
+              <input id="city" name="city" value="서울" placeholder="City">
             </div>
-            <input type="hidden" name="photo_tags_json" id="photoTagsJson">
-            <div class="form-text mt-1">사진마다 착용 아이템을 태그할 수 있습니다.</div>
+            <button id="fillWeather" type="button" class="icon-btn">
+              <span class="material-symbols-outlined">refresh</span>
+            </button>
           </div>
-
-          <div class="form-text">여러 장 선택 가능합니다.</div>
-        </div>
-
-        <div class="row">
-          <div class="col-6 mb-3">
-            <label class="form-label">날짜</label>
-            <input type="date" name="date" class="form-control" value="{{ (now or '') }}">
+          <div class="weather-body">
+            <div class="weather-temp">--°C</div>
+            <p class="weather-desc">Weather preview will appear here.</p>
+            <div id="weatherPreview" class="weather-preview" style="display:none;"></div>
           </div>
-          <div class="col-6 mb-3">
-            <label class="form-label">메모</label>
-            <input name="note" class="form-control" placeholder="오늘 코디에 대한 메모를 남겨보세요.">
-          </div>
-        </div>
-
-        <div class="row">
-          <div class="col-3 mb-3">
-            <label class="form-label">최저</label>
-            <input id="t_min" type="number" step="0.1" name="t_min" class="form-control" placeholder="예: 22">
-          </div>
-          <div class="col-3 mb-3">
-            <label class="form-label">최고</label>
-            <input id="t_max" type="number" step="0.1" name="t_max" class="form-control" placeholder="예: 28">
-          </div>
-          <div class="col-3 mb-3">
-            <label class="form-label">강수</label>
-            <select id="rain" name="rain" class="form-select">
-              <option value="0">없음</option>
-              <option value="1">비</option>
+          <div class="weather-hidden">
+            <input id="t_min" type="number" step="0.1" name="t_min" placeholder="Min">
+            <input id="t_max" type="number" step="0.1" name="t_max" placeholder="Max">
+            <input id="humidity" type="number" name="humidity" placeholder="Humidity">
+            <select id="rain" name="rain">
+              <option value="0">No Rain</option>
+              <option value="1">Rain</option>
             </select>
           </div>
-          <div class="col-3 mb-3">
-            <label class="form-label">습도(%)</label>
-            <input id="humidity" type="number" name="humidity" class="form-control" placeholder="예: 70">
-          </div>
         </div>
 
-        <div class="d-grid">
-          <button class="btn btn-dark" type="submit">저장</button>
+        <div class="glass-card tag-card">
+          <div class="card-head">
+            <h3>Tag Your Closet</h3>
+            <button class="tag-search" type="button">Search All</button>
+          </div>
+
+          <div id="photoTagPanel" class="tag-panel" style="display:none;">
+            <div id="photoTagChips" class="tag-chips"></div>
+            <div class="tag-input-wrap">
+              <input id="photoTagInput" class="tag-input" placeholder="Search wardrobe items">
+              <div id="photoTagResults" class="tag-results" style="display:none;"></div>
+            </div>
+            <input type="hidden" name="photo_tags_json" id="photoTagsJson">
+            <p class="tag-help">Tag items per photo to connect your outfit.</p>
+          </div>
+
+          <div class="tag-grid">
+            {% for it in items[:3] %}
+              <div class="tag-item">
+                <div class="tag-thumb" {% if it.image_path %}style="background-image:url('{{ it.image_path }}')"{% endif %}>
+                  {% if not it.image_path %}
+                    <span class="material-symbols-outlined">search</span>
+                  {% endif %}
+                </div>
+                <p>{{ it.name }}</p>
+              </div>
+            {% endfor %}
+            <div class="tag-item">
+              <div class="tag-thumb is-empty">
+                <span class="material-symbols-outlined">search</span>
+              </div>
+              <p>Browse</p>
+            </div>
+          </div>
         </div>
-      </form>
-    </div>
-  </div>
-</div>
+      </div>
+    </form>
+  </main>
+</section>
 {% endblock %}
+
 {% block scripts %}
 <script type="application/json" id="fdWardrobeItemsData">
 [
