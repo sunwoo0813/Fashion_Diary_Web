@@ -27,6 +27,12 @@ if not db_url:
     raise RuntimeError("DATABASE_URL is not set")
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    "pool_size": 1,
+    "max_overflow": 0,
+    "pool_pre_ping": True,
+    "pool_recycle": 180,
+}
 
 # Supabase Storage 설정
 SUPABASE_URL = os.getenv("SUPABASE_URL")
