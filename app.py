@@ -18,11 +18,14 @@ from supabase_auth.errors import AuthApiError
 
 app = Flask(__name__)
 load_dotenv()
-API_KEY = "47afe938567d28eaa932281c49255b53"
+API_KEY = os.getenv("WEATHER_API_KEY") or os.getenv("API_KEY") or ""
 app.secret_key = os.getenv("FLASK_SECRET_KEY") or os.getenv("SECRET_KEY") or "dev-secret"
 
 # DB 설정
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres.csbvhoczfmdlelmfjqij:sunwoo0813%40@aws-1-ap-northeast-2.pooler.supabase.com:5432/postgres'
+db_url = os.getenv("DATABASE_URL") or os.getenv("SQLALCHEMY_DATABASE_URI")
+if not db_url:
+    raise RuntimeError("DATABASE_URL is not set")
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 # Supabase Storage 설정
@@ -1209,6 +1212,8 @@ def tag_page(item_id):
 @app.route("/api/weather")
 @login_required
 def api_weather():
+    if not API_KEY:
+        return jsonify({"ok": False, "error": "weather api key not set"}), 500
     city = (request.args.get("city") or "서울").strip()
     w = get_today_weather_summary(city)
     if not w:
