@@ -13,15 +13,15 @@
 <section class="account-page">
   <aside class="account-rail app-rail">
     <nav class="rail-nav">
-      <a class="rail-item" href="{{ url_for('diary') }}" aria-label="Diary">
+      <a class="rail-item" href="{{ url_for('diary.diary') }}" aria-label="Diary">
         <span class="material-symbols-outlined">stylus</span>
         <span class="rail-tooltip">Looks</span>
       </a>
-      <a class="rail-item" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+      <a class="rail-item" href="{{ url_for('wardrobe.wardrobe') }}" aria-label="Closet">
         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
         <span class="rail-tooltip">Closet</span>
       </a>
-      <a class="rail-item" href="{{ url_for('stats') }}" aria-label="Insights">
+      <a class="rail-item" href="{{ url_for('stats.stats') }}" aria-label="Insights">
         <span class="material-symbols-outlined">analytics</span>
         <span class="rail-tooltip">Insights</span>
       </a>
@@ -37,7 +37,7 @@
         <p class="subtitle">Keep your login details and data preferences updated.</p>
       </div>
       <div class="header-actions">
-        <form method="post" action="{{ url_for('logout') }}">
+        <form method="post" action="{{ url_for('auth.logout') }}">
           <button class="btn-pill" type="submit">Log out</button>
         </form>
       </div>
@@ -91,7 +91,7 @@
           </div>
           <span class="material-symbols-outlined">warning</span>
         </div>
-        <form method="post" action="{{ url_for('account_delete') }}">
+        <form method="post" action="{{ url_for('auth.account_delete') }}">
           <label class="danger-label" for="confirm">Confirm text</label>
           <input class="danger-input" id="confirm" name="confirm" placeholder="DELETE" required>
           <button class="btn-danger" type="submit">Delete account</button>
@@ -101,3 +101,4 @@
   </main>
 </section>
 {% endblock %}
+

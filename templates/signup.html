@@ -35,7 +35,7 @@
         {% endif %}
       {% endwith %}
 
-      <form method="post" action="{{ url_for('signup') }}" class="login-form">
+      <form method="post" action="{{ url_for('auth.signup') }}" class="login-form">
         <div class="field-row">
           <input id="email" name="email" type="email" placeholder=" " required>
           <label for="email">EMAIL ADDRESS</label>
@@ -53,9 +53,10 @@
 
       <p class="auth-switch">
         Already a member?
-        <a href="{{ url_for('home') }}">Log in</a>
+        <a href="{{ url_for('auth.home') }}">Log in</a>
       </p>
     </div>
   </div>
 </section>
 {% endblock %}
+

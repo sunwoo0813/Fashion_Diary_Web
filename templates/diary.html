@@ -13,7 +13,7 @@
     <p class="hero-subtitle">달력에서 코디 기록을 확인하고 날짜별로 관리하세요.</p>
   </div>
   <div class="hero-actions">
-    <a class="btn btn-solid btn-sm" href="{{ url_for('outfits_create', date=today.isoformat()) }}">오늘 기록</a>
+    <a class="btn btn-solid btn-sm" href="{{ url_for('diary.outfits_create', date=today.isoformat()) }}">오늘 기록</a>
   </div>
 </div>
 
@@ -40,7 +40,7 @@
       {% endif %}
     </div>
 
-    <form class="d-flex gap-2" method="get" action="{{ url_for('diary_month') }}">
+    <form class="d-flex gap-2" method="get" action="{{ url_for('diary.diary_month') }}">
       <input name="city" class="form-control form-control-sm" style="max-width:160px"
              value="{{ city }}" placeholder="도시 (예: 서울)">
       <input type="hidden" name="year" value="{{ year }}">
@@ -52,9 +52,9 @@
 
 <div class="card-clean p-4 calendar-card">
   <div class="d-flex justify-content-between align-items-center mb-3 calendar-head">
-    <a href="{{ url_for('diary_month', year=year, month=month-1 if month>1 else 12) }}" class="btn btn-soft btn-sm">이전 달</a>
+    <a href="{{ url_for('diary.diary_month', year=year, month=month-1 if month>1 else 12) }}" class="btn btn-soft btn-sm">이전 달</a>
     <h4 class="m-0">{{ year }}년 {{ month }}월</h4>
-    <a href="{{ url_for('diary_month', year=year, month=month+1 if month<12 else 1) }}" class="btn btn-soft btn-sm">다음 달</a>
+    <a href="{{ url_for('diary.diary_month', year=year, month=month+1 if month<12 else 1) }}" class="btn btn-soft btn-sm">다음 달</a>
   </div>
   <div class="calendar-legend">
     <span class="legend-item"><span class="legend-dot today"></span>오늘</span>
@@ -76,7 +76,7 @@
       {% set is_today = (today.year==year and today.month==month and today.day==d) %}
       {% set has_record = d in recorded_days %}
 
-      <a href="{{ url_for('diary_day', date_str='%04d-%02d-%02d' % (year, month, d)) }}"
+      <a href="{{ url_for('diary.diary_day', date_str='%04d-%02d-%02d' % (year, month, d)) }}"
          class="day text-decoration-none {% if is_today %}today{% elif has_record %}recorded{% else %}emptyday{% endif %}">
         <div class="num">{{ d }}</div>
       </a>

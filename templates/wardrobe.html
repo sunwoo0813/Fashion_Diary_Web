@@ -10,15 +10,15 @@
 <section class="closet-page">
   <aside class="closet-rail app-rail">
     <nav class="rail-nav">
-      <a class="rail-item" href="{{ url_for('diary') }}" aria-label="Diary">
+      <a class="rail-item" href="{{ url_for('diary.diary') }}" aria-label="Diary">
         <span class="material-symbols-outlined">stylus</span>
         <span class="rail-tooltip">Looks</span>
       </a>
-      <a class="rail-item is-active" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+      <a class="rail-item is-active" href="{{ url_for('wardrobe.wardrobe') }}" aria-label="Closet">
         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
         <span class="rail-tooltip">Closet</span>
       </a>
-      <a class="rail-item" href="{{ url_for('stats') }}" aria-label="Insights">
+      <a class="rail-item" href="{{ url_for('stats.stats') }}" aria-label="Insights">
         <span class="material-symbols-outlined">analytics</span>
         <span class="rail-tooltip">Insights</span>
       </a>
@@ -33,7 +33,7 @@
         <h1>Curated Collection</h1>
       </div>
       <div class="header-actions">
-        <form class="search-bar" method="get" action="{{ url_for('wardrobe') }}">
+        <form class="search-bar" method="get" action="{{ url_for('wardrobe.wardrobe') }}">
           <input type="hidden" name="category" value="{{ category or '' }}">
           <span class="material-symbols-outlined search-icon">search</span>
           <input class="search-input" name="q" value="{{ q or '' }}" placeholder="Search Collection">
@@ -47,7 +47,7 @@
         <button id="deleteToggleBtn" type="button" class="action-btn ghost" {% if items|length == 0 %}disabled{% endif %}>
           Delete
         </button>
-        <a class="action-btn primary" href="{{ url_for('items_create') }}">
+        <a class="action-btn primary" href="{{ url_for('wardrobe.items_create') }}">
           Add New
           <span class="material-symbols-outlined">add</span>
         </a>
@@ -57,7 +57,7 @@
       </div>
     </header>
 
-    <form class="filter-bar" method="get" action="{{ url_for('wardrobe') }}">
+    <form class="filter-bar" method="get" action="{{ url_for('wardrobe.wardrobe') }}">
       <input type="hidden" name="q" value="{{ q or '' }}">
       <input type="hidden" name="color" value="{{ color or '' }}">
       <button class="filter-btn {% if not category %}is-active{% endif %}" name="category" value="">All pieces</button>
@@ -78,10 +78,10 @@
       </div>
     {% else %}
       <div id="deleteHint" class="delete-hint" style="display:none;">Select items to delete.</div>
-      <form id="itemDeleteForm" method="post" action="{{ url_for('items_delete') }}"></form>
+      <form id="itemDeleteForm" method="post" action="{{ url_for('wardrobe.items_delete') }}"></form>
       <div class="masonry-grid">
         <div class="masonry-item">
-          <a class="add-card" href="{{ url_for('items_create') }}">
+          <a class="add-card" href="{{ url_for('wardrobe.items_create') }}">
             <span class="add-icon">
               <span class="material-symbols-outlined">add</span>
             </span>
@@ -90,7 +90,7 @@
         </div>
         {% for it in items %}
         <div class="masonry-item">
-          <a class="wardrobe-item" data-item-id="{{ it.id }}" href="{{ url_for('tag_page', item_id=it.id) }}">
+          <a class="wardrobe-item" data-item-id="{{ it.id }}" href="{{ url_for('wardrobe.tag_page', item_id=it.id) }}">
             <div class="closet-card">
               <div class="closet-media">
                 {% if it.image_path %}

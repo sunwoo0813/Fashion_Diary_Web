@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko">
 <head>
   <meta charset="utf-8">
@@ -20,7 +20,7 @@
       {% set initials = (display_name[:1] if display_name else 'F')|upper %}
       <div class="nav-utility">
         <div class="nav-left">
-          <a class="top-initials" href="{{ url_for('account') }}" aria-label="Account">
+          <a class="top-initials" href="{{ url_for('auth.account') }}" aria-label="Account">
             {{ initials }}
           </a>
           <div class="nav-site">Fashion Diary</div>
@@ -31,7 +31,7 @@
         </div>
       </div>
       {% if not hide_nav %}
-        <a class="profile-btn profile-floating" href="{{ url_for('account') }}" aria-label="Profile">
+        <a class="profile-btn profile-floating" href="{{ url_for('auth.account') }}" aria-label="Profile">
           <svg class="profile-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
             <circle cx="12" cy="8" r="4"></circle>
             <path d="M4 20c1.8-3.4 5.1-5.5 8-5.5s6.2 2.1 8 5.5"></path>
@@ -50,4 +50,5 @@
   {% block scripts %}{% endblock %}
 </body>
 </html>
+
 

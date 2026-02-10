@@ -12,10 +12,10 @@
     <div class="ghost">선택한 날짜의 코디 기록을 확인하세요.</div>
   </div>
   <div class="d-flex gap-2">
-    <a class="btn btn-soft" href="{{ url_for('diary_month', year=target_date.year, month=target_date.month) }}">달력으로</a>
+    <a class="btn btn-soft" href="{{ url_for('diary.diary_month', year=target_date.year, month=target_date.month) }}">달력으로</a>
 
     {% if outfits|length == 0 %}
-      <a class="btn btn-solid" href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">+ 코디 기록</a>
+      <a class="btn btn-solid" href="{{ url_for('diary.outfits_create', date=target_date.isoformat()) }}">+ 코디 기록</a>
     {% endif %}
   </div>
 </div>
@@ -82,7 +82,7 @@
             </div>
 
             <div class="d-flex gap-2 justify-content-end mt-3">
-              <a class="btn btn-outline-dark btn-sm" href="{{ url_for('outfit_edit', outfit_id=o.id) }}">수정</a>
+              <a class="btn btn-outline-dark btn-sm" href="{{ url_for('diary.outfit_edit', outfit_id=o.id) }}">수정</a>
             </div>
           </div>
         </div>

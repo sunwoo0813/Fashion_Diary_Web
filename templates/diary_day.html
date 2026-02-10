@@ -7,18 +7,18 @@
 {% endblock %}
 
 {% block content %}
-<section class="diary-day" data-prev="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" data-next="{{ url_for('diary_day', date_str=next_date.isoformat()) }}">
+<section class="diary-day" data-prev="{{ url_for('diary.diary_day', date_str=prev_date.isoformat()) }}" data-next="{{ url_for('diary.diary_day', date_str=next_date.isoformat()) }}">
   <aside class="side-rail app-rail">
     <nav class="rail-nav">
-      <a class="rail-item is-active" href="{{ url_for('diary') }}" aria-label="Diary">
+      <a class="rail-item is-active" href="{{ url_for('diary.diary') }}" aria-label="Diary">
         <span class="material-symbols-outlined">stylus</span>
         <span class="rail-tooltip">Looks</span>
       </a>
-      <a class="rail-item" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+      <a class="rail-item" href="{{ url_for('wardrobe.wardrobe') }}" aria-label="Closet">
         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
         <span class="rail-tooltip">Closet</span>
       </a>
-      <a class="rail-item" href="{{ url_for('stats') }}" aria-label="Insights">
+      <a class="rail-item" href="{{ url_for('stats.stats') }}" aria-label="Insights">
         <span class="material-symbols-outlined">analytics</span>
         <span class="rail-tooltip">Insights</span>
       </a>
@@ -34,18 +34,18 @@
       </div>
       <div class="header-actions">
         <div class="date-pill">
-          <a class="date-arrow" href="{{ url_for('diary_day', date_str=prev_date.isoformat()) }}" aria-label="Previous day">
+          <a class="date-arrow" href="{{ url_for('diary.diary_day', date_str=prev_date.isoformat()) }}" aria-label="Previous day">
             <span class="material-symbols-outlined">chevron_left</span>
           </a>
           <div class="date-days">
             {% for d in week_days[:4] %}
-              <a class="date-day {% if d == target_date %}is-active{% endif %}" href="{{ url_for('diary_day', date_str=d.isoformat()) }}">
+              <a class="date-day {% if d == target_date %}is-active{% endif %}" href="{{ url_for('diary.diary_day', date_str=d.isoformat()) }}">
                 <span class="day-name">{{ d.strftime('%a') }}</span>
                 <span class="day-num">{{ '%02d'|format(d.day) }}</span>
               </a>
             {% endfor %}
           </div>
-          <a class="date-arrow" href="{{ url_for('diary_day', date_str=next_date.isoformat()) }}" aria-label="Next day">
+          <a class="date-arrow" href="{{ url_for('diary.diary_day', date_str=next_date.isoformat()) }}" aria-label="Next day">
             <span class="material-symbols-outlined">chevron_right</span>
           </a>
         </div>
@@ -59,7 +59,7 @@
         <article class="glass-card empty-card col-12">
           <h2>No entries yet</h2>
           <p>Start recording today&#39;s outfit and notes.</p>
-          <a class="add-inline" href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">Create Entry</a>
+          <a class="add-inline" href="{{ url_for('diary.outfits_create', date=target_date.isoformat()) }}">Create Entry</a>
         </article>
       {% else %}
         {% set first = outfits[0] %}
@@ -101,7 +101,7 @@
               <h2 class="hero-title">{{ first.note or 'Outfit Entry' }}</h2>
               <p class="hero-note">{{ first.note or 'No notes yet.' }}</p>
             </div>
-            <a class="hero-action" href="{{ url_for('outfit_edit', outfit_id=first.id) }}" aria-label="Edit entry">
+            <a class="hero-action" href="{{ url_for('diary.outfit_edit', outfit_id=first.id) }}" aria-label="Edit entry">
               <span class="material-symbols-outlined">arrow_outward</span>
             </a>
           </div>
@@ -150,14 +150,14 @@
                   <span class="stack-avatar is-empty"></span>
                 {% endif %}
               </div>
-              <a class="entry-fav" href="{{ url_for('outfit_edit', outfit_id=secondary.id) }}" aria-label="Edit entry">
+              <a class="entry-fav" href="{{ url_for('diary.outfit_edit', outfit_id=secondary.id) }}" aria-label="Edit entry">
                 <span class="material-symbols-outlined">favorite</span>
               </a>
             </div>
           {% else %}
             <div class="entry-empty">
               <p>No entry yet.</p>
-              <a href="{{ url_for('outfits_create', date=target_date.isoformat()) }}">Create Entry</a>
+              <a href="{{ url_for('diary.outfits_create', date=target_date.isoformat()) }}">Create Entry</a>
             </div>
           {% endif %}
         </article>
@@ -165,13 +165,13 @@
         <article class="glass-card list-card col-5">
           <div class="list-head">
             <h3>Recently Worn</h3>
-            <a class="list-link" href="{{ url_for('wardrobe') }}">View All</a>
+            <a class="list-link" href="{{ url_for('wardrobe.wardrobe') }}">View All</a>
           </div>
           {% set list_items = item_map.get(first.id, []) %}
           {% if list_items and list_items|length > 0 %}
             <div class="list-body">
               {% for it in list_items[:3] %}
-                <a class="list-row" href="{{ url_for('tag_page', item_id=it.id) }}">
+                <a class="list-row" href="{{ url_for('wardrobe.tag_page', item_id=it.id) }}">
                   {% if it.image_path %}
                     <span class="list-thumb" style="background-image:url('{{ it.image_path }}')"></span>
                   {% else %}
@@ -206,7 +206,7 @@
             <div class="entry-photo {% if not extra_photo %}is-empty{% endif %}" {% if extra_photo %}style="background-image:url('{{ extra_photo }}')"{% endif %}></div>
             <h3 class="entry-title">{{ o.note or 'Outfit Entry' }}</h3>
             <p class="entry-note">{{ o.note or 'No notes yet.' }}</p>
-            <a class="entry-link" href="{{ url_for('outfit_edit', outfit_id=o.id) }}">Edit</a>
+            <a class="entry-link" href="{{ url_for('diary.outfit_edit', outfit_id=o.id) }}">Edit</a>
           </article>
         {% endfor %}
       {% endif %}

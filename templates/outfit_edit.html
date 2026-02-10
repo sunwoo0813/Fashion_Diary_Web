@@ -10,7 +10,7 @@
     <div class="glass p-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
         <h3 class="m-0">코디 수정</h3>
-        <a class="btn btn-outline-dark btn-sm" href="{{ url_for('outfits_by_date', date_str=outfit.date.isoformat()) }}">뒤로 가기</a>
+        <a class="btn btn-outline-dark btn-sm" href="{{ url_for('diary.outfits_by_date', date_str=outfit.date.isoformat()) }}">뒤로 가기</a>
       </div>
 
       <form id="outfitEditForm" method="post" enctype="multipart/form-data">
@@ -98,7 +98,7 @@
         <button class="btn btn-dark w-50" type="submit" form="outfitEditForm">수정 저장</button>
         <form
           method="post"
-          action="{{ url_for('outfit_delete', outfit_id=outfit.id) }}"
+          action="{{ url_for('diary.outfit_delete', outfit_id=outfit.id) }}"
           class="w-50"
           onsubmit="return confirm('이 코디를 삭제할까요?');"
         >

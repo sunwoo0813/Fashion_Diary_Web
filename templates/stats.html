@@ -10,15 +10,15 @@
 <section class="stats-page">
   <aside class="stats-rail app-rail">
     <nav class="rail-nav">
-      <a class="rail-item" href="{{ url_for('diary') }}" aria-label="Diary">
+      <a class="rail-item" href="{{ url_for('diary.diary') }}" aria-label="Diary">
         <span class="material-symbols-outlined">stylus</span>
         <span class="rail-tooltip">Looks</span>
       </a>
-      <a class="rail-item" href="{{ url_for('wardrobe') }}" aria-label="Closet">
+      <a class="rail-item" href="{{ url_for('wardrobe.wardrobe') }}" aria-label="Closet">
         <span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">grid_view</span>
         <span class="rail-tooltip">Closet</span>
       </a>
-      <a class="rail-item is-active" href="{{ url_for('stats') }}" aria-label="Insights">
+      <a class="rail-item is-active" href="{{ url_for('stats.stats') }}" aria-label="Insights">
         <span class="material-symbols-outlined">analytics</span>
         <span class="rail-tooltip">Insights</span>
       </a>
@@ -79,7 +79,7 @@
         {% else %}
           <div class="top-empty">
             <p>No wear data yet.</p>
-            <a href="{{ url_for('wardrobe') }}">Add items to your closet</a>
+            <a href="{{ url_for('wardrobe.wardrobe') }}">Add items to your closet</a>
           </div>
         {% endif %}
       </article>
@@ -170,7 +170,7 @@
           <p class="card-quote">
             "Quality over quantity. Your collection is {{ curation_percent }}% curated with {{ top_category }} as your signature."
           </p>
-          <a class="card-link" href="{{ url_for('wardrobe') }}">Review Archive</a>
+          <a class="card-link" href="{{ url_for('wardrobe.wardrobe') }}">Review Archive</a>
         </div>
       </article>
 
@@ -203,7 +203,7 @@
         <span class="material-symbols-outlined badge-icon">auto_awesome</span>
         <h3>The Style Arch</h3>
         <p class="card-muted">You have logged {{ total_outfits }} outfits so far in {{ current_year }}.</p>
-        <a class="outline-btn" href="{{ url_for('diary') }}">View Diary</a>
+        <a class="outline-btn" href="{{ url_for('diary.diary') }}">View Diary</a>
       </article>
     </section>
   </main>
