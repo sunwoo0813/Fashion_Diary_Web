@@ -1,8 +1,8 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Closet - Fashion Diary{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/wardrobe.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/wardrobe.css', v=asset_v) }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css', v=asset_v) }}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
 {% endblock %}
 
@@ -23,7 +23,11 @@
         <span class="rail-tooltip">Insights</span>
       </a>
     </nav>
-    <div class="rail-footer"></div>
+    <div class="rail-footer">
+      <a class="rail-account" href="{{ url_for('auth.account') }}" aria-label="Account">
+        <span class="material-symbols-outlined">settings</span>
+      </a>
+    </div>
   </aside>
 
   <main class="closet-main">
@@ -35,31 +39,26 @@
       <div class="header-actions">
         <form class="search-bar" method="get" action="{{ url_for('wardrobe.wardrobe') }}">
           <input type="hidden" name="category" value="{{ category or '' }}">
-          <span class="material-symbols-outlined search-icon">search</span>
-          <input class="search-input" name="q" value="{{ q or '' }}" placeholder="Search Collection">
-          <span class="search-divider"></span>
-          <input class="search-input" name="color" value="{{ color or '' }}" placeholder="Color">
-          <button class="search-btn" type="submit" aria-label="Search">
-            <span class="material-symbols-outlined">search</span>
+          <button type="submit" class="search-btn" aria-label="Search">
+            <span class="material-symbols-outlined search-icon">search</span>
           </button>
+          <input class="search-input" name="q" value="{{ q or '' }}" placeholder="Search Collection">
         </form>
         <span class="actions-divider" aria-hidden="true"></span>
-        <button id="deleteToggleBtn" type="button" class="action-btn ghost" {% if items|length == 0 %}disabled{% endif %}>
-          Delete
-        </button>
-        <a class="action-btn primary" href="{{ url_for('wardrobe.items_create') }}">
-          Add New
-          <span class="material-symbols-outlined">add</span>
-        </a>
-        <div class="profile-chip" aria-label="Profile">
-          {{ initials[:1] if initials else 'F' }}
+        <div class="action-pair">
+          <a class="action-btn primary" href="{{ url_for('wardrobe.items_create') }}">
+            Add New
+            <span class="material-symbols-outlined">add</span>
+          </a>
+          <button id="deleteToggleBtn" type="button" class="action-btn ghost" {% if items|length == 0 %}disabled{% endif %}>
+            Delete
+          </button>
         </div>
       </div>
     </header>
 
     <form class="filter-bar" method="get" action="{{ url_for('wardrobe.wardrobe') }}">
       <input type="hidden" name="q" value="{{ q or '' }}">
-      <input type="hidden" name="color" value="{{ color or '' }}">
       <button class="filter-btn {% if not category %}is-active{% endif %}" name="category" value="">All pieces</button>
       <button class="filter-btn {% if category == 'Outerwear' %}is-active{% endif %}" name="category" value="Outerwear">Outerwear</button>
       <button class="filter-btn {% if category == 'Top' or category == 'Tops' %}is-active{% endif %}" name="category" value="Top">Top</button>

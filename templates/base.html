@@ -1,6 +1,7 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="ko">
 <head>
+  {% set asset_v = "20260216v10" %}
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>{% block title %}Fashion Diary{% endblock %}</title>
@@ -8,39 +9,21 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/base.css', v=asset_v) }}">
+  <style>
+    html, body { height: 100%; overflow: hidden; }
+    main.container.my-4 {
+      margin: 0 !important;
+      padding: 0 !important;
+      height: 100dvh;
+      min-height: 100dvh;
+      overflow-y: auto;
+    }
+    main.container.my-4 > *:first-child { margin-top: 0 !important; }
+  </style>
   {% block styles %}{% endblock %}
 </head>
-<body class="{% if session.get('user_id') %}has-topbar{% endif %}{% if session.get('user_id') and not hide_nav %} has-mainnav{% endif %}">
-  {% if session.get('user_id') %}
-  <div class="nav-wrap">
-    <div class="container nav-stack">
-      {% set email = session.get('user_email') or '' %}
-      {% set display_name = email.split('@')[0] if email else 'User' %}
-      {% set initials = (display_name[:1] if display_name else 'F')|upper %}
-      <div class="nav-utility">
-        <div class="nav-left">
-          <a class="top-initials" href="{{ url_for('auth.account') }}" aria-label="Account">
-            {{ initials }}
-          </a>
-          <div class="nav-site">Fashion Diary</div>
-        </div>
-        <div class="lang-toggle" aria-label="Language toggle">
-          <button class="lang-btn is-active" type="button">KR</button>
-          <button class="lang-btn" type="button">EN</button>
-        </div>
-      </div>
-      {% if not hide_nav %}
-        <a class="profile-btn profile-floating" href="{{ url_for('auth.account') }}" aria-label="Profile">
-          <svg class="profile-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <circle cx="12" cy="8" r="4"></circle>
-            <path d="M4 20c1.8-3.4 5.1-5.5 8-5.5s6.2 2.1 8 5.5"></path>
-          </svg>
-        </a>
-      {% endif %}
-    </div>
-  </div>
-  {% endif %}
+<body>
 
   <main class="container my-4">
     {% block content %}{% endblock %}

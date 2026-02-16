@@ -1,29 +1,29 @@
 {% extends "base.html" %}
-{% block title %}{{ target_date }} 코디 - Fashion Diary{% endblock %}
+{% block title %}{{ target_date }} 肄붾뵒 - Fashion Diary{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/outfit_day.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/outfit_day.css', v=asset_v) }}">
 {% endblock %}
 
 {% block content %}
 
 <div class="section-head mb-3">
   <div>
-    <h2 class="m-0">{{ target_date.year }}년 {{ target_date.month }}월 {{ target_date.day }}일</h2>
-    <div class="ghost">선택한 날짜의 코디 기록을 확인하세요.</div>
+    <h2 class="m-0">{{ target_date.year }}??{{ target_date.month }}??{{ target_date.day }}??/h2>
+    <div class="ghost">?좏깮???좎쭨??肄붾뵒 湲곕줉???뺤씤?섏꽭??</div>
   </div>
   <div class="d-flex gap-2">
-    <a class="btn btn-soft" href="{{ url_for('diary.diary_month', year=target_date.year, month=target_date.month) }}">달력으로</a>
+    <a class="btn btn-soft" href="{{ url_for('diary.diary_month', year=target_date.year, month=target_date.month) }}">?щ젰?쇰줈</a>
 
     {% if outfits|length == 0 %}
-      <a class="btn btn-solid" href="{{ url_for('diary.outfits_create', date=target_date.isoformat()) }}">+ 코디 기록</a>
+      <a class="btn btn-solid" href="{{ url_for('diary.outfits_create', date=target_date.isoformat()) }}">+ 肄붾뵒 湲곕줉</a>
     {% endif %}
   </div>
 </div>
 
 {% if outfits|length == 0 %}
   <div class="card-clean p-4">
-    <div class="mb-2 fw-semibold">기록된 코디가 없습니다.</div>
-    <div class="ghost">+ 코디 기록 버튼으로 새 기록을 추가해보세요.</div>
+    <div class="mb-2 fw-semibold">湲곕줉??肄붾뵒媛 ?놁뒿?덈떎.</div>
+    <div class="ghost">+ 肄붾뵒 湲곕줉 踰꾪듉?쇰줈 ??湲곕줉??異붽??대낫?몄슂.</div>
   </div>
 {% else %}
   <div class="row g-3">
@@ -43,25 +43,25 @@
                     alt="outfit"
                   >
                 {% endfor %}
-                <button class="fd-nav prev" type="button">이전</button>
-                <button class="fd-nav next" type="button">다음</button>
+                <button class="fd-nav prev" type="button">?댁쟾</button>
+                <button class="fd-nav next" type="button">?ㅼ쓬</button>
                 <div class="fd-counter">1 / {{ photos|length }}</div>
               {% else %}
-                <div class="fd-empty">사진이 없습니다</div>
+                <div class="fd-empty">?ъ쭊???놁뒿?덈떎</div>
               {% endif %}
             </div>
 
             <div class="fd-meta">
-              <div class="fd-note">{{ o.note or '메모 없음' }}</div>
+              <div class="fd-note">{{ o.note or '硫붾え ?놁쓬' }}</div>
               <div class="d-flex flex-wrap gap-2">
-                <span class="chip">기온 {{ (o.t_min or 0) }}°C ~ {{ (o.t_max or 0) }}°C</span>
-                <span class="chip">습도 {{ (o.humidity or 0) }}%</span>
-                <span class="chip">{% if o.rain %}강수 가능{% else %}강수 없음{% endif %}</span>
+                <span class="chip">湲곗삩 {{ (o.t_min or 0) }}째C ~ {{ (o.t_max or 0) }}째C</span>
+                <span class="chip">?듬룄 {{ (o.humidity or 0) }}%</span>
+                <span class="chip">{% if o.rain %}媛뺤닔 媛??% else %}媛뺤닔 ?놁쓬{% endif %}</span>
               </div>
             </div>
 
             <div class="fd-items">
-              <div class="fw-semibold mb-1">착용 아이템</div>
+              <div class="fw-semibold mb-1">李⑹슜 ?꾩씠??/div>
               <div class="fd-photo-tags">
                 {% if photos and photos|length > 0 %}
                   {% set first_pid = photos[0].id %}
@@ -73,16 +73,16 @@
                       {% endfor %}
                     </div>
                   {% else %}
-                    <div class="ghost">태그된 아이템이 없습니다.</div>
+                    <div class="ghost">?쒓렇???꾩씠?쒖씠 ?놁뒿?덈떎.</div>
                   {% endif %}
                 {% else %}
-                  <div class="ghost">태그된 아이템이 없습니다.</div>
+                  <div class="ghost">?쒓렇???꾩씠?쒖씠 ?놁뒿?덈떎.</div>
                 {% endif %}
               </div>
             </div>
 
             <div class="d-flex gap-2 justify-content-end mt-3">
-              <a class="btn btn-outline-dark btn-sm" href="{{ url_for('diary.outfit_edit', outfit_id=o.id) }}">수정</a>
+              <a class="btn btn-outline-dark btn-sm" href="{{ url_for('diary.outfit_edit', outfit_id=o.id) }}">?섏젙</a>
             </div>
           </div>
         </div>

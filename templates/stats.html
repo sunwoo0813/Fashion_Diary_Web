@@ -1,8 +1,8 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}Stats - Fashion Diary{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/stats.css', v=asset_v) }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css', v=asset_v) }}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
 {% endblock %}
 
@@ -23,7 +23,11 @@
         <span class="rail-tooltip">Insights</span>
       </a>
     </nav>
-    <div class="rail-footer"></div>
+    <div class="rail-footer">
+      <a class="rail-account" href="{{ url_for('auth.account') }}" aria-label="Account">
+        <span class="material-symbols-outlined">settings</span>
+      </a>
+    </div>
   </aside>
 
   <main class="stats-main">
@@ -31,28 +35,6 @@
       <div class="header-title">
         <p class="kicker">Analytics &amp; Trends</p>
         <h1>Wardrobe Insights</h1>
-      </div>
-      <div class="header-tools">
-        <div class="date-strip" aria-label="Date range">
-          <button class="strip-btn" type="button" aria-label="Previous days">
-            <span class="material-symbols-outlined">chevron_left</span>
-          </button>
-          <div class="strip-days">
-            {% for d in stats_days %}
-              <div class="strip-day {% if d == today %}is-active{% endif %}">
-                <span class="strip-date">{{ d.strftime('%b %d') }}</span>
-                <span class="strip-dow">{{ d.strftime('%a') }}</span>
-              </div>
-            {% endfor %}
-          </div>
-          <button class="strip-btn" type="button" aria-label="Next days">
-            <span class="material-symbols-outlined">chevron_right</span>
-          </button>
-        </div>
-        <div class="profile-pill">
-          <span class="profile-avatar">{{ initials[:1] if initials else 'F' }}</span>
-          <span class="profile-name">{{ display_name }}</span>
-        </div>
       </div>
     </header>
 

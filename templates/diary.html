@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}다이어리 - Fashion Diary{% endblock %}
+{% block title %}?ㅼ씠?대━ - Fashion Diary{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/diary.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/diary.css', v=asset_v) }}">
 {% endblock %}
 
 {% block content %}
@@ -9,23 +9,23 @@
 <div class="page-hero">
   <div>
     <p class="eyebrow">Outfit Diary</p>
-    <h1 class="hero-title">코디 다이어리</h1>
-    <p class="hero-subtitle">달력에서 코디 기록을 확인하고 날짜별로 관리하세요.</p>
+    <h1 class="hero-title">肄붾뵒 ?ㅼ씠?대━</h1>
+    <p class="hero-subtitle">?щ젰?먯꽌 肄붾뵒 湲곕줉???뺤씤?섍퀬 ?좎쭨蹂꾨줈 愿由ы븯?몄슂.</p>
   </div>
   <div class="hero-actions">
-    <a class="btn btn-solid btn-sm" href="{{ url_for('diary.outfits_create', date=today.isoformat()) }}">오늘 기록</a>
+    <a class="btn btn-solid btn-sm" href="{{ url_for('diary.outfits_create', date=today.isoformat()) }}">?ㅻ뒛 湲곕줉</a>
   </div>
 </div>
 
 <div class="card-clean p-3 mb-3 weather-panel">
   <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
     <div class="d-flex flex-wrap align-items-center gap-2">
-      <span class="chip">도시 {{ (weather.city if weather else city) }}</span>
+      <span class="chip">?꾩떆 {{ (weather.city if weather else city) }}</span>
 
       {% if weather %}
-        <span class="chip">기온 {{ weather.t_min }}°C ~ {{ weather.t_max }}°C</span>
-        <span class="chip">습도 {{ weather.humidity }}%</span>
-        <span class="chip">{% if weather.rain %}강수 가능{% else %}강수 없음{% endif %}</span>
+        <span class="chip">湲곗삩 {{ weather.t_min }}째C ~ {{ weather.t_max }}째C</span>
+        <span class="chip">?듬룄 {{ weather.humidity }}%</span>
+        <span class="chip">{% if weather.rain %}媛뺤닔 媛??% else %}媛뺤닔 ?놁쓬{% endif %}</span>
         <span class="chip">{{ weather.desc }}</span>
 
         {% if weather.icon %}
@@ -36,35 +36,35 @@
           >
         {% endif %}
       {% else %}
-        <span class="chip">날씨 정보를 불러오지 못했습니다</span>
+        <span class="chip">?좎뵪 ?뺣낫瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??/span>
       {% endif %}
     </div>
 
     <form class="d-flex gap-2" method="get" action="{{ url_for('diary.diary_month') }}">
       <input name="city" class="form-control form-control-sm" style="max-width:160px"
-             value="{{ city }}" placeholder="도시 (예: 서울)">
+             value="{{ city }}" placeholder="?꾩떆 (?? ?쒖슱)">
       <input type="hidden" name="year" value="{{ year }}">
       <input type="hidden" name="month" value="{{ month }}">
-      <button class="btn btn-soft btn-sm" type="submit">적용</button>
+      <button class="btn btn-soft btn-sm" type="submit">?곸슜</button>
     </form>
   </div>
 </div>
 
 <div class="card-clean p-4 calendar-card">
   <div class="d-flex justify-content-between align-items-center mb-3 calendar-head">
-    <a href="{{ url_for('diary.diary_month', year=year, month=month-1 if month>1 else 12) }}" class="btn btn-soft btn-sm">이전 달</a>
-    <h4 class="m-0">{{ year }}년 {{ month }}월</h4>
-    <a href="{{ url_for('diary.diary_month', year=year, month=month+1 if month<12 else 1) }}" class="btn btn-soft btn-sm">다음 달</a>
+    <a href="{{ url_for('diary.diary_month', year=year, month=month-1 if month>1 else 12) }}" class="btn btn-soft btn-sm">?댁쟾 ??/a>
+    <h4 class="m-0">{{ year }}??{{ month }}??/h4>
+    <a href="{{ url_for('diary.diary_month', year=year, month=month+1 if month<12 else 1) }}" class="btn btn-soft btn-sm">?ㅼ쓬 ??/a>
   </div>
   <div class="calendar-legend">
-    <span class="legend-item"><span class="legend-dot today"></span>오늘</span>
-    <span class="legend-item"><span class="legend-dot recorded"></span>기록</span>
-    <span class="legend-item"><span class="legend-dot empty"></span>미기록</span>
+    <span class="legend-item"><span class="legend-dot today"></span>?ㅻ뒛</span>
+    <span class="legend-item"><span class="legend-dot recorded"></span>湲곕줉</span>
+    <span class="legend-item"><span class="legend-dot empty"></span>誘멸린濡?/span>
   </div>
 
   <div class="calendar-grid">
     {% for i in range(7) %}
-      <div class="day-name">{{ ['일', '월', '화', '수', '목', '금', '토'][i] }}</div>
+      <div class="day-name">{{ ['??, '??, '??, '??, '紐?, '湲?, '??][i] }}</div>
     {% endfor %}
 
     {% set offset = (datetime(year, month, 1).weekday() + 1) % 7 %}

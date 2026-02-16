@@ -8,6 +8,7 @@
   --fashion-muted: #bfbfbf;
   --shadow-soft: 0 20px 40px -20px rgba(0, 0, 0, 0.15);
   --shadow-card: 0 12px 30px -20px rgba(0, 0, 0, 0.18);
+  --header-control-height: 42px;
 }
 
 html, body {
@@ -39,7 +40,7 @@ main.container.my-4 {
   height: 100vh;
   overflow-y: auto;
   background: radial-gradient(circle at top left, #ffffff 0%, #f9f9f8 45%, #f3f1ed 100%);
-  padding: 44px 56px 72px;
+  padding: 18px 56px 72px 32px;
   position: relative;
 }
 
@@ -79,11 +80,47 @@ main.container.my-4 {
   flex-wrap: wrap;
 }
 
+.action-pair {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: nowrap;
+}
+
+.action-pair .action-btn {
+  min-width: 132px;
+  height: var(--header-control-height);
+  min-height: var(--header-control-height);
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid #000;
+  border-radius: 999px;
+  background: #000;
+  color: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.action-pair .action-btn.ghost {
+  background: #000;
+  border-color: #000;
+  color: #fff;
+}
+
+.action-pair .action-btn.ghost.is-active {
+  background: #fff;
+  color: #121212;
+  border-color: #121212;
+}
+
 .search-bar {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px 16px;
+  height: var(--header-control-height);
+  padding: 0 16px;
   background: rgba(255, 255, 255, 0.75);
   border: 1px solid #e5e5e5;
   border-radius: 999px;
@@ -105,6 +142,8 @@ main.container.my-4 {
 .search-input {
   border: none;
   background: transparent;
+  height: 100%;
+  padding: 0;
   font-size: 0.65rem;
   text-transform: uppercase;
   letter-spacing: 0.25em;
@@ -128,6 +167,7 @@ main.container.my-4 {
   padding: 0;
   display: grid;
   place-items: center;
+  cursor: pointer;
 }
 
 .actions-divider {
@@ -145,6 +185,13 @@ main.container.my-4 {
   letter-spacing: 0.28em;
   cursor: pointer;
   border-radius: 999px;
+  text-decoration: none;
+}
+
+.action-btn:hover,
+.action-btn:focus,
+.action-btn:visited {
+  text-decoration: none;
 }
 
 .action-btn.ghost {
@@ -376,7 +423,7 @@ main.container.my-4 {
 
 @media (max-width: 1200px) {
   .closet-main {
-    padding: 40px 36px 64px;
+    padding: 18px 56px 72px 32px;
   }
   .search-input {
     width: 120px;
@@ -392,7 +439,7 @@ main.container.my-4 {
   }
   .closet-main {
     height: auto;
-    padding: 28px 20px 48px;
+    padding: 0 20px 48px;
   }
   .closet-header {
     flex-direction: column;
@@ -403,7 +450,7 @@ main.container.my-4 {
   }
   .search-bar {
     width: 100%;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
   .search-input {
     width: 100%;

@@ -15,10 +15,12 @@
     const count = selectedIds().length;
     if (hint) hint.style.display = deleteMode ? 'block' : 'none';
     if (!deleteMode) {
-      toggleBtn.textContent = '삭제';
+      toggleBtn.textContent = 'Delete';
+      toggleBtn.classList.remove('is-active');
       return;
     }
-    toggleBtn.textContent = count > 0 ? '선택 삭제' : '삭제 취소';
+    toggleBtn.classList.add('is-active');
+    toggleBtn.textContent = count > 0 ? 'Delete Selected' : 'Cancel Delete';
   }
 
   toggleBtn.addEventListener('click', () => {
@@ -35,7 +37,7 @@
       updateUI();
       return;
     }
-    if (!confirm(`선택한 ${ids.length}개를 삭제할까요?`)) return;
+    if (!confirm(`Delete ${ids.length} selected item(s)?`)) return;
 
     form.innerHTML = '';
     ids.forEach((id) => {

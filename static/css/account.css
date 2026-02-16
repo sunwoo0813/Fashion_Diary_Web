@@ -37,7 +37,7 @@ main.container.my-4 {
 .account-main {
   height: 100vh;
   overflow-y: auto;
-  padding: 44px 56px 72px;
+  padding: 18px 56px 72px 32px;
   background: radial-gradient(circle at top left, #ffffff 0%, #f7f7f7 45%, #efefef 100%);
 }
 
@@ -259,7 +259,7 @@ main.container.my-4 {
   }
   .account-main {
     height: auto;
-    padding: 28px 20px 48px;
+    padding: 0 20px 48px;
   }
   .account-header {
     flex-direction: column;

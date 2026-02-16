@@ -1,8 +1,8 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}{{ target_date }} - Fashion Diary{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/diary_day.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/diary_day.css', v=asset_v) }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css', v=asset_v) }}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
 {% endblock %}
 
@@ -23,7 +23,11 @@
         <span class="rail-tooltip">Insights</span>
       </a>
     </nav>
-    <div class="rail-footer"></div>
+    <div class="rail-footer">
+      <a class="rail-account" href="{{ url_for('auth.account') }}" aria-label="Account">
+        <span class="material-symbols-outlined">settings</span>
+      </a>
+    </div>
   </aside>
 
   <main class="dash-main">
@@ -38,7 +42,7 @@
             <span class="material-symbols-outlined">chevron_left</span>
           </a>
           <div class="date-days">
-            {% for d in week_days[:4] %}
+            {% for d in week_days %}
               <a class="date-day {% if d == target_date %}is-active{% endif %}" href="{{ url_for('diary.diary_day', date_str=d.isoformat()) }}">
                 <span class="day-name">{{ d.strftime('%a') }}</span>
                 <span class="day-num">{{ '%02d'|format(d.day) }}</span>

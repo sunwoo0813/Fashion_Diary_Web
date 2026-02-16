@@ -1,8 +1,8 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block title %}오늘의 코디 기록 - Fashion Diary{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/outfit_new.css') }}">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/outfit_new.css', v=asset_v) }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/rail_shared.css', v=asset_v) }}">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght@100..700&display=swap">
 {% endblock %}
 
@@ -23,7 +23,11 @@
         <span class="rail-tooltip">Insights</span>
       </a>
     </nav>
-    <div class="rail-footer"></div>
+    <div class="rail-footer">
+      <a class="rail-account" href="{{ url_for('auth.account') }}" aria-label="Account">
+        <span class="material-symbols-outlined">settings</span>
+      </a>
+    </div>
   </aside>
 
   <main class="ootd-main">
@@ -154,5 +158,5 @@
 {% endfor %}
 ]
 </script>
-<script src="{{ url_for('static', filename='js/outfit_new.js') }}"></script>
+<script src="{{ url_for('static', filename='js/outfit_new.js', v='20260216') }}"></script>
 {% endblock %}

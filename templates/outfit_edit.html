@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}코디 수정 - Fashion Diary{% endblock %}
+{% block title %}肄붾뵒 ?섏젙 - Fashion Diary{% endblock %}
 {% block styles %}
-<link rel="stylesheet" href="{{ url_for('static', filename='css/outfit_edit.css') }}">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/outfit_edit.css', v=asset_v) }}">
 {% endblock %}
 
 {% block content %}
@@ -9,51 +9,51 @@
   <div class="col-lg-7">
     <div class="glass p-4">
       <div class="d-flex justify-content-between align-items-center mb-3">
-        <h3 class="m-0">코디 수정</h3>
-        <a class="btn btn-outline-dark btn-sm" href="{{ url_for('diary.outfits_by_date', date_str=outfit.date.isoformat()) }}">뒤로 가기</a>
+        <h3 class="m-0">肄붾뵒 ?섏젙</h3>
+        <a class="btn btn-outline-dark btn-sm" href="{{ url_for('diary.outfits_by_date', date_str=outfit.date.isoformat()) }}">?ㅻ줈 媛湲?/a>
       </div>
 
       <form id="outfitEditForm" method="post" enctype="multipart/form-data">
         <div class="row">
           <div class="col-6 mb-3">
-            <label class="form-label">날짜</label>
+            <label class="form-label">?좎쭨</label>
             <input type="date" name="date" class="form-control" value="{{ outfit.date.isoformat() }}">
           </div>
           <div class="col-6 mb-3">
-            <label class="form-label">메모</label>
+            <label class="form-label">硫붾え</label>
             <input name="note" class="form-control" value="{{ outfit.note or '' }}">
           </div>
         </div>
 
         <div class="row">
           <div class="col-3 mb-3">
-            <label class="form-label">최저</label>
+            <label class="form-label">理쒖?</label>
             <input type="number" step="0.1" name="t_min" class="form-control" value="{{ outfit.t_min or 0 }}">
           </div>
           <div class="col-3 mb-3">
-            <label class="form-label">최고</label>
+            <label class="form-label">理쒓퀬</label>
             <input type="number" step="0.1" name="t_max" class="form-control" value="{{ outfit.t_max or 0 }}">
           </div>
           <div class="col-3 mb-3">
-            <label class="form-label">강수</label>
+            <label class="form-label">媛뺤닔</label>
             <select name="rain" class="form-select">
-              <option value="0" {% if not outfit.rain %}selected{% endif %}>없음</option>
-              <option value="1" {% if outfit.rain %}selected{% endif %}>비</option>
+              <option value="0" {% if not outfit.rain %}selected{% endif %}>?놁쓬</option>
+              <option value="1" {% if outfit.rain %}selected{% endif %}>鍮?/option>
             </select>
           </div>
           <div class="col-3 mb-3">
-            <label class="form-label">습도(%)</label>
+            <label class="form-label">?듬룄(%)</label>
             <input type="number" name="humidity" class="form-control" value="{{ outfit.humidity or 0 }}">
           </div>
         </div>
 
         <div class="mb-3">
-          <label class="form-label">사진 추가 업로드 (여러 장 가능)</label>
+          <label class="form-label">?ъ쭊 異붽? ?낅줈??(?щ윭 ??媛??</label>
           <input type="file" name="photos" class="form-control" accept="image/*" multiple>
         </div>
 
         <div class="mb-3">
-          <div class="form-label mb-2">사진</div>
+          <div class="form-label mb-2">?ъ쭊</div>
           <div class="fd-slider" data-total="{{ photos|length }}">
             <div class="fd-slider-frame">
               {% if photos and photos|length > 0 %}
@@ -66,19 +66,19 @@
                   >
                 {% endfor %}
               {% endif %}
-              <button class="fd-nav prev" type="button">이전</button>
-              <button class="fd-nav next" type="button">다음</button>
-              <button class="fd-delete" type="button">삭제</button>
+              <button class="fd-nav prev" type="button">?댁쟾</button>
+              <button class="fd-nav next" type="button">?ㅼ쓬</button>
+              <button class="fd-delete" type="button">??젣</button>
               <div class="fd-counter">{{ (1 if photos and photos|length > 0 else 0) }} / {{ photos|length }}</div>
-              <div class="fd-empty">사진이 없습니다</div>
+              <div class="fd-empty">?ъ쭊???놁뒿?덈떎</div>
             </div>
           </div>
 
           <div class="fd-tag-panel mt-3">
-            <div class="fw-semibold mb-2">사진 태그</div>
+            <div class="fw-semibold mb-2">?ъ쭊 ?쒓렇</div>
             <div id="editPhotoTagChips" class="d-flex flex-wrap gap-2 mb-2"></div>
             <div class="position-relative">
-              <input id="editPhotoTagInput" class="form-control" placeholder="옷장 아이템 검색">
+              <input id="editPhotoTagInput" class="form-control" placeholder="?룹옣 ?꾩씠??寃??>
               <div
                 id="editPhotoTagResults"
                 class="card-clean p-2 mt-1"
@@ -87,7 +87,7 @@
             </div>
             <input type="hidden" name="photo_tags_existing_json" id="photoTagsExistingJson">
             <input type="hidden" name="photo_tags_new_json" id="photoTagsNewJson">
-            <div class="form-text mt-1">사진마다 착용 아이템을 태그할 수 있습니다.</div>
+            <div class="form-text mt-1">?ъ쭊留덈떎 李⑹슜 ?꾩씠?쒖쓣 ?쒓렇?????덉뒿?덈떎.</div>
           </div>
 
           <div id="deletePhotoInputs"></div>
@@ -95,14 +95,14 @@
       </form>
 
       <div class="d-flex gap-2">
-        <button class="btn btn-dark w-50" type="submit" form="outfitEditForm">수정 저장</button>
+        <button class="btn btn-dark w-50" type="submit" form="outfitEditForm">?섏젙 ???/button>
         <form
           method="post"
           action="{{ url_for('diary.outfit_delete', outfit_id=outfit.id) }}"
           class="w-50"
-          onsubmit="return confirm('이 코디를 삭제할까요?');"
+          onsubmit="return confirm('??肄붾뵒瑜???젣?좉퉴??');"
         >
-          <button class="btn btn-outline-danger w-100" type="submit">코디 삭제</button>
+          <button class="btn btn-outline-danger w-100" type="submit">肄붾뵒 ??젣</button>
         </form>
       </div>
     </div>

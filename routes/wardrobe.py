@@ -1,11 +1,16 @@
+import os
 from datetime import date
 
-from flask import Blueprint, redirect, render_template, request, session, url_for
+from flask import Blueprint, jsonify, redirect, render_template, request, session, url_for
 from sqlalchemy import func, or_
 
 from extensions import db
 from models import Item, Outfit, OutfitItem, OutfitPhoto, OutfitPhotoItem
-from services.supabase_service import delete_from_storage, upload_to_storage
+from services.supabase_service import (
+    delete_from_storage,
+    get_supabase_admin,
+    upload_to_storage,
+)
 
 wardrobe_bp = Blueprint("wardrobe", __name__)
 
@@ -18,6 +23,25 @@ def _get_current_user_id() -> int | None:
         return None
 
 
+def _normalize_public_image_path(path: str, bucket_name: str | None = None) -> str:
+    raw = (path or "").strip()
+    if not raw:
+        return ""
+    if raw.startswith(("http://", "https://")):
+        return raw
+
+    supabase_url = (os.getenv("SUPABASE_URL") or "").rstrip("/")
+    if raw.startswith("/storage/v1/object/public/"):
+        return f"{supabase_url}{raw}" if supabase_url else raw
+    if raw.startswith("storage/v1/object/public/"):
+        return f"{supabase_url}/{raw}" if supabase_url else f"/{raw}"
+    if raw.startswith("uploads/") or raw.startswith("product-assets/"):
+        return f"{supabase_url}/storage/v1/object/public/{raw}" if supabase_url else raw
+
+    bucket = (bucket_name or os.getenv("SUPABASE_BUCKET") or "uploads").strip() or "uploads"
+    return f"{supabase_url}/storage/v1/object/public/{bucket}/{raw}" if supabase_url else raw
+
+
 @wardrobe_bp.route("/wardrobe", endpoint="wardrobe")
 def wardrobe():
     user_id = _get_current_user_id()
@@ -26,14 +50,11 @@ def wardrobe():
 
     q = (request.args.get("q") or "").strip()
     category = (request.args.get("category") or "").strip()
-    color = (request.args.get("color") or "").strip()
 
     query = Item.query.filter(Item.user_id == user_id)
     if q:
         like_q = f"%{q}%"
-        query = query.filter(
-            or_(Item.name.ilike(like_q), Item.category.ilike(like_q), Item.color.ilike(like_q))
-        )
+        query = query.filter(or_(Item.name.ilike(like_q), Item.category.ilike(like_q)))
     if category:
         category_map = {
             "Top": ["Top", "Tops"],
@@ -46,9 +67,6 @@ def wardrobe():
             query = query.filter(Item.category.in_(category_map[category]))
         else:
             query = query.filter(Item.category == category)
-    if color:
-        query = query.filter(Item.color.ilike(f"%{color}%"))
-
     items = query.order_by(Item.created_at.desc()).all()
     categories = [
         c[0]
@@ -58,7 +76,7 @@ def wardrobe():
         .all()
         if c[0]
     ]
-    has_filters = bool(q or category or color)
+    has_filters = bool(q or category)
 
     wear_counts = {}
     if items:
@@ -98,7 +116,6 @@ def wardrobe():
         items=items,
         q=q,
         category=category,
-        color=color,
         categories=categories,
         has_filters=has_filters,
         wear_counts=wear_counts,
@@ -117,8 +134,11 @@ def items_create():
     if request.method == "POST":
         f = request.files.get("image")
         image_path = None
+        image_path_prefill = (request.form.get("image_path_prefill") or "").strip()
         if f and f.filename:
             image_path = upload_to_storage(f, "items")
+        elif image_path_prefill:
+            image_path = _normalize_public_image_path(image_path_prefill)
 
         brand = (request.form.get("brand") or "").strip()
         product = (request.form.get("product") or "").strip()
@@ -138,6 +158,52 @@ def items_create():
         db.session.commit()
         return redirect(url_for("wardrobe.wardrobe"))
     return render_template("item_new.html")
+
+
+@wardrobe_bp.route("/api/products/search", endpoint="api_products_search")
+def api_products_search():
+    user_id = _get_current_user_id()
+    if not user_id:
+        return jsonify({"ok": False, "error": "Unauthorized"}), 401
+
+    q = (request.args.get("q") or "").strip()
+    if not q:
+        return jsonify({"ok": True, "items": []})
+
+    try:
+        resp = (
+            get_supabase_admin()
+            .table("products")
+            .select("brand,name,category,size_table,image_path")
+            .ilike("brand", f"%{q}%")
+            .order("brand")
+            .limit(12)
+            .execute()
+        )
+        rows = resp.data or []
+
+        def _to_text(value) -> str:
+            if value is None:
+                return ""
+            if isinstance(value, str):
+                return value.strip()
+            return str(value).strip()
+
+        items = [
+            {
+                "brand": _to_text(row.get("brand")),
+                "name": _to_text(row.get("name")),
+                "category": _to_text(row.get("category")),
+                "size_table": _to_text(row.get("size_table")),
+                "image_path": _normalize_public_image_path(
+                    _to_text(row.get("image_path")), bucket_name="product-assets"
+                ),
+            }
+            for row in rows
+        ]
+        return jsonify({"ok": True, "items": items})
+    except Exception:
+        return jsonify({"ok": False, "error": "Product search failed"}), 500
 
 
 @wardrobe_bp.route("/items/delete", methods=["POST"], endpoint="items_delete")
