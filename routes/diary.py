@@ -86,11 +86,13 @@ def diary_month():
 
     _, last_day = monthrange(year, month)
     days = list(range(1, last_day + 1))
+    month_start = date(year, month, 1)
+    month_end = month_start + timedelta(days=last_day)
 
     outfits = Outfit.query.filter(
         Outfit.user_id == user_id,
-        db.extract("year", Outfit.date) == year,
-        db.extract("month", Outfit.date) == month,
+        Outfit.date >= month_start,
+        Outfit.date < month_end,
     ).all()
     recorded_days = {o.date.day for o in outfits}
 

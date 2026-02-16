@@ -93,7 +93,7 @@
             <div class="closet-card">
               <div class="closet-media">
                 {% if it.image_path %}
-                  <img src="{{ it.image_path }}" alt="{{ it.name }}">
+                  <img src="{{ it.image_path }}" alt="{{ it.name }}" loading="lazy" decoding="async">
                 {% else %}
                   <div class="media-placeholder">No Image</div>
                 {% endif %}

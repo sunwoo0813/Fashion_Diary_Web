@@ -80,10 +80,11 @@ def wardrobe():
 
     wear_counts = {}
     if items:
+        item_ids = [it.id for it in items]
         wear_rows = (
             db.session.query(OutfitItem.item_id, func.count(OutfitItem.item_id))
             .join(Outfit, OutfitItem.outfit_id == Outfit.id)
-            .filter(Outfit.user_id == user_id)
+            .filter(Outfit.user_id == user_id, OutfitItem.item_id.in_(item_ids))
             .group_by(OutfitItem.item_id)
             .all()
         )
@@ -94,7 +95,7 @@ def wardrobe():
             db.session.query(OutfitPhotoItem.item_id, func.count(OutfitPhotoItem.item_id))
             .join(OutfitPhoto, OutfitPhotoItem.photo_id == OutfitPhoto.id)
             .join(Outfit, OutfitPhoto.outfit_id == Outfit.id)
-            .filter(Outfit.user_id == user_id)
+            .filter(Outfit.user_id == user_id, OutfitPhotoItem.item_id.in_(item_ids))
             .group_by(OutfitPhotoItem.item_id)
             .all()
         )

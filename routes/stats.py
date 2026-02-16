@@ -30,49 +30,81 @@ def stats():
     today = date.today()
     stats_start = today - timedelta(days=2)
     stats_days = [stats_start + timedelta(days=i) for i in range(5)]
-    items = Item.query.filter(Item.user_id == user_id).all()
-    outfits = Outfit.query.filter(Outfit.user_id == user_id).all()
+    total_items = Item.query.filter(Item.user_id == user_id).count()
+    total_outfits = Outfit.query.filter(Outfit.user_id == user_id).count()
+
+    category_rows = (
+        db.session.query(Item.category, func.count(Item.id))
+        .filter(Item.user_id == user_id)
+        .group_by(Item.category)
+        .all()
+    )
+    season_rows = (
+        db.session.query(Item.season, func.count(Item.id))
+        .filter(Item.user_id == user_id)
+        .group_by(Item.season)
+        .all()
+    )
+    color_rows = (
+        db.session.query(func.lower(Item.color), func.count(Item.id))
+        .filter(Item.user_id == user_id)
+        .filter(Item.color.isnot(None), func.length(func.trim(Item.color)) > 0)
+        .group_by(func.lower(Item.color))
+        .all()
+    )
     photos_count = OutfitPhoto.query.join(Outfit, OutfitPhoto.outfit_id == Outfit.id).filter(
         Outfit.user_id == user_id
     ).count()
 
     category_counts = {}
-    season_counts = {}
-    color_counts = {}
+    for category, cnt in category_rows:
+        key = (category or "Unknown").strip() or "Unknown"
+        category_counts[key] = category_counts.get(key, 0) + int(cnt)
 
-    for it in items:
-        cat = (it.category or "Unknown").strip()
-        category_counts[cat] = category_counts.get(cat, 0) + 1
-        season = (it.season or "Unknown").strip()
-        season_counts[season] = season_counts.get(season, 0) + 1
-        color = (it.color or "").strip()
-        if color:
-            color_key = color.lower()
-            color_counts[color_key] = color_counts.get(color_key, 0) + 1
+    season_counts = {}
+    for season, cnt in season_rows:
+        key = (season or "Unknown").strip() or "Unknown"
+        season_counts[key] = season_counts.get(key, 0) + int(cnt)
+
+    color_counts = {}
+    for color, cnt in color_rows:
+        key = (color or "").strip().lower()
+        if key:
+            color_counts[key] = color_counts.get(key, 0) + int(cnt)
 
     current_year = date.today().year
     month_counts = {m: 0 for m in range(1, 13)}
-    for o in outfits:
-        if o.date and o.date.year == current_year:
-            month_counts[o.date.month] += 1
+    year_start = date(current_year, 1, 1)
+    next_year_start = date(current_year + 1, 1, 1)
+    month_rows = (
+        db.session.query(db.extract("month", Outfit.date), func.count(Outfit.id))
+        .filter(Outfit.user_id == user_id, Outfit.date >= year_start, Outfit.date < next_year_start)
+        .group_by(db.extract("month", Outfit.date))
+        .all()
+    )
+    for month_num, cnt in month_rows:
+        month_counts[int(month_num)] = int(cnt)
     max_month_count = max(month_counts.values()) if month_counts else 0
 
     weather_total = 0
     rain_count = 0
     clear_count = 0
     temp_bucket_counts = {"0-4C": 0, "5-13C": 0, "14-22C": 0, "23-28C": 0, "29C+": 0}
-    for o in outfits:
-        if o.t_min is None or o.t_max is None:
-            continue
-        if o.t_min == 0 and o.t_max == 0 and (o.humidity in (0, None)):
+    weather_rows = (
+        Outfit.query.with_entities(Outfit.t_min, Outfit.t_max, Outfit.humidity, Outfit.rain)
+        .filter(Outfit.user_id == user_id, Outfit.t_min.isnot(None), Outfit.t_max.isnot(None))
+        .all()
+    )
+    for t_min, t_max, humidity, rain in weather_rows:
+        if t_min == 0 and t_max == 0 and (humidity in (0, None)):
             continue
         weather_total += 1
-        if o.rain:
+        if rain:
             rain_count += 1
         else:
             clear_count += 1
 
-        avg = (o.t_min + o.t_max) / 2
+        avg = (t_min + t_max) / 2
         if avg <= 4:
             temp_bucket_counts["0-4C"] += 1
         elif avg <= 13:
@@ -105,7 +137,7 @@ def stats():
     item_ids = [row.item_id for row in wear_counts]
     item_map = {}
     if item_ids:
-        for it in Item.query.filter(Item.id.in_(item_ids)).all():
+        for it in Item.query.filter(Item.user_id == user_id, Item.id.in_(item_ids)).all():
             item_map[it.id] = it
     top_items = []
     for row in wear_counts:
@@ -134,9 +166,9 @@ def stats():
     month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     month_pairs = [(month_labels[m - 1], month_counts[m]) for m in range(1, 13)]
     efficiency_rate = 0
-    if len(items) > 0:
-        efficiency_rate = min(100, round((len(outfits) / len(items)) * 100))
-    curation_percent = min(100, round(60 + efficiency_rate * 0.4)) if len(items) > 0 else 0
+    if total_items > 0:
+        efficiency_rate = min(100, round((total_outfits / total_items) * 100))
+    curation_percent = min(100, round(60 + efficiency_rate * 0.4)) if total_items > 0 else 0
     top_season = season_sorted[0][0] if season_sorted else "Unknown"
     top_category = category_sorted[0][0] if category_sorted else "Unknown"
 
@@ -157,8 +189,8 @@ def stats():
         curation_percent=curation_percent,
         top_season=top_season,
         top_category=top_category,
-        total_items=len(items),
-        total_outfits=len(outfits),
+        total_items=total_items,
+        total_outfits=total_outfits,
         total_photos=photos_count,
         category_sorted=category_sorted,
         season_sorted=season_sorted,

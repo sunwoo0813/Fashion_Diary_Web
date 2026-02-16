@@ -1,8 +1,19 @@
 import os
 from datetime import datetime
+from threading import Lock
+from time import time
 from urllib.parse import quote
 
 import requests
+
+_session = requests.Session()
+_cache_lock = Lock()
+_geo_cache = {}
+_weather_cache = {}
+
+_GEO_TTL_SEC = 60 * 60 * 24
+_WEATHER_TTL_SEC = 60 * 10
+_WEATHER_ERR_TTL_SEC = 60
 
 
 def _weather_api_key() -> str:
@@ -13,18 +24,46 @@ def has_weather_api_key() -> bool:
     return bool(_weather_api_key())
 
 
+def _cache_get(cache: dict, key: str):
+    now = time()
+    with _cache_lock:
+        record = cache.get(key)
+        if not record:
+            return None
+        expires_at, value = record
+        if expires_at < now:
+            cache.pop(key, None)
+            return None
+        return value
+
+
+def _cache_set(cache: dict, key: str, value, ttl_sec: int):
+    with _cache_lock:
+        cache[key] = (time() + ttl_sec, value)
+
+
+def _city_key(city_name: str) -> str:
+    return (city_name or "").strip().lower()
+
+
 def get_coordinates(city_name: str):
     api_key = _weather_api_key()
     if not api_key:
         return None, None, city_name
 
+    cache_key = _city_key(city_name)
+    cached = _cache_get(_geo_cache, cache_key)
+    if cached is not None:
+        lat, lon, display_name = cached
+        return lat, lon, display_name
+
     try:
         city_encoded = quote(city_name)
         geo_url = (
-            f"http://api.openweathermap.org/geo/1.0/direct?q={city_encoded}"
+            f"https://api.openweathermap.org/geo/1.0/direct?q={city_encoded}"
             f"&limit=1&appid={api_key}"
         )
-        res = requests.get(geo_url, timeout=6)
+        res = _session.get(geo_url, timeout=4)
         data = res.json()
 
         if res.status_code == 200 and isinstance(data, list) and len(data) > 0:
@@ -32,6 +71,7 @@ def get_coordinates(city_name: str):
             lon = data[0].get("lon")
             local_names = data[0].get("local_names") or {}
             display_name = local_names.get("ko", data[0].get("name", city_name))
+            _cache_set(_geo_cache, cache_key, (lat, lon, display_name), _GEO_TTL_SEC)
             return lat, lon, display_name
     except Exception:
         pass
@@ -44,19 +84,26 @@ def get_today_weather_summary(city_name: str):
     if not api_key:
         return None
 
+    weather_key = f"{datetime.now().date().isoformat()}::{_city_key(city_name)}"
+    cached_weather = _cache_get(_weather_cache, weather_key)
+    if cached_weather is not None:
+        return cached_weather
+
     lat, lon, display_city = get_coordinates(city_name)
     if lat is None or lon is None:
+        _cache_set(_weather_cache, weather_key, None, _WEATHER_ERR_TTL_SEC)
         return None
 
     try:
         url = (
-            "http://api.openweathermap.org/data/2.5/forecast"
+            "https://api.openweathermap.org/data/2.5/forecast"
             f"?lat={lat}&lon={lon}&appid={api_key}&units=metric&lang=kr"
         )
-        res = requests.get(url, timeout=6)
+        res = _session.get(url, timeout=4)
         data = res.json()
 
         if res.status_code != 200 or "list" not in data:
+            _cache_set(_weather_cache, weather_key, None, _WEATHER_ERR_TTL_SEC)
             return None
 
         today = datetime.now().date()
@@ -100,7 +147,7 @@ def get_today_weather_summary(city_name: str):
         t_max = round(max(temps), 1)
         humidity = int(round(sum(hums) / len(hums))) if hums else 0
 
-        return {
+        result = {
             "city": display_city,
             "t_min": t_min,
             "t_max": t_max,
@@ -109,5 +156,8 @@ def get_today_weather_summary(city_name: str):
             "desc": desc,
             "icon": icon,
         }
+        _cache_set(_weather_cache, weather_key, result, _WEATHER_TTL_SEC)
+        return result
     except Exception:
+        _cache_set(_weather_cache, weather_key, None, _WEATHER_ERR_TTL_SEC)
         return None
