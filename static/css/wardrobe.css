@@ -355,12 +355,13 @@ main.container.my-4 {
   width: 100%;
   height: 100%;
   display: block;
-  object-fit: cover;
+  object-fit: contain;
+  background: #f6f6f6;
   transition: transform 1s ease;
 }
 
 .wardrobe-item:hover .closet-media img {
-  transform: scale(1.05);
+  transform: none;
 }
 
 .media-placeholder {

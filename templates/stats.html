@@ -66,44 +66,6 @@
         {% endif %}
       </article>
 
-      <article class="stats-card stats-card--palette">
-        <div class="card-head">
-          <h2>Color Palette</h2>
-          <span>Tonal Balance</span>
-        </div>
-        <div
-          class="palette-ring"
-          style="
-            --p1: {{ palette[0].percent if palette|length > 0 else 0 }};
-            --p2: {{ palette[1].percent if palette|length > 1 else 0 }};
-            --p3: {{ palette[2].percent if palette|length > 2 else 0 }};
-            --p4: {{ palette[3].percent if palette|length > 3 else 0 }};
-            --c1: {{ palette[0].color if palette|length > 0 else '#A89F91' }};
-            --c2: {{ palette[1].color if palette|length > 1 else '#D2B48C' }};
-            --c3: {{ palette[2].color if palette|length > 2 else '#9CAF88' }};
-            --c4: {{ palette[3].color if palette|length > 3 else '#E5D3B3' }};
-          "
-        >
-          <div class="palette-center">
-            <span class="center-value">{{ palette_center_percent }}%</span>
-            <span class="center-label">{{ palette_center_label }}</span>
-          </div>
-        </div>
-        <div class="palette-legend">
-          {% if palette %}
-            {% for entry in palette %}
-              <div class="legend-row">
-                <span class="legend-swatch" style="background: {{ entry.color }}"></span>
-                <span class="legend-name">{{ entry.name }}</span>
-                <span class="legend-value">{{ entry.percent }}%</span>
-              </div>
-            {% endfor %}
-          {% else %}
-            <div class="legend-empty">No color data yet.</div>
-          {% endif %}
-        </div>
-      </article>
-
       <article class="stats-card stats-card--trend">
         <div class="trend-head">
           <div>
@@ -159,10 +121,10 @@
       <article class="stats-card stats-card--small stats-card--dark">
         <div>
           <span class="material-symbols-outlined badge-icon">workspace_premium</span>
-          <h3>Season Ready</h3>
+          <h3>Category Focus</h3>
         </div>
         <div>
-          <p class="card-muted">Top season: {{ top_season }}</p>
+          <p class="card-muted">Top category: {{ top_category }}</p>
           <div class="avatar-stack">
             {% if top_items %}
               {% for entry in top_items[:3] %}

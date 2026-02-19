@@ -87,7 +87,7 @@
           <div class="weather-head">
             <div class="weather-location">
               <span class="material-symbols-outlined">location_on</span>
-              <input id="city" name="city" value="서울" placeholder="City">
+              <input id="city" name="city" value="" placeholder="City">
             </div>
             <button id="fillWeather" type="button" class="icon-btn">
               <span class="material-symbols-outlined">refresh</span>
@@ -112,7 +112,9 @@
         <div class="glass-card tag-card">
           <div class="card-head">
             <h3>Tag Your Closet</h3>
-            <button class="tag-search" type="button">Search All</button>
+            <button class="tag-search" type="button" aria-label="Search closet items">
+              <span class="material-symbols-outlined">search</span>
+            </button>
           </div>
 
           <div id="photoTagPanel" class="tag-panel" style="display:none;">
@@ -125,24 +127,6 @@
             <p class="tag-help">Tag items per photo to connect your outfit.</p>
           </div>
 
-          <div class="tag-grid">
-            {% for it in items[:3] %}
-              <div class="tag-item">
-                <div class="tag-thumb" {% if it.image_path %}style="background-image:url('{{ it.image_path }}')"{% endif %}>
-                  {% if not it.image_path %}
-                    <span class="material-symbols-outlined">search</span>
-                  {% endif %}
-                </div>
-                <p>{{ it.name }}</p>
-              </div>
-            {% endfor %}
-            <div class="tag-item">
-              <div class="tag-thumb is-empty">
-                <span class="material-symbols-outlined">search</span>
-              </div>
-              <p>Browse</p>
-            </div>
-          </div>
         </div>
       </div>
     </form>
@@ -158,5 +142,5 @@
 {% endfor %}
 ]
 </script>
-<script src="{{ url_for('static', filename='js/outfit_new.js', v='20260216') }}"></script>
+<script src="{{ url_for('static', filename='js/outfit_new.js', v=asset_v) }}"></script>
 {% endblock %}

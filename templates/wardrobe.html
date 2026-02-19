@@ -79,17 +79,9 @@
       <div id="deleteHint" class="delete-hint" style="display:none;">Select items to delete.</div>
       <form id="itemDeleteForm" method="post" action="{{ url_for('wardrobe.items_delete') }}"></form>
       <div class="masonry-grid">
-        <div class="masonry-item">
-          <a class="add-card" href="{{ url_for('wardrobe.items_create') }}">
-            <span class="add-icon">
-              <span class="material-symbols-outlined">add</span>
-            </span>
-            <span class="add-label">Add New Piece</span>
-          </a>
-        </div>
         {% for it in items %}
         <div class="masonry-item">
-          <a class="wardrobe-item" data-item-id="{{ it.id }}" href="{{ url_for('wardrobe.tag_page', item_id=it.id) }}">
+          <div class="wardrobe-item" data-item-id="{{ it.id }}">
             <div class="closet-card">
               <div class="closet-media">
                 {% if it.image_path %}
@@ -97,22 +89,15 @@
                 {% else %}
                   <div class="media-placeholder">No Image</div>
                 {% endif %}
-                {% if it.season %}
-                  <span class="tag">{{ it.season }}</span>
-                {% endif %}
               </div>
               <div class="closet-info">
                 <div class="info-text">
                   <h3>{{ it.name }}</h3>
-                  <p>{{ it.category or 'Item' }}{% if it.color %} • {{ it.color }}{% endif %}</p>
+                  <p>{{ it.category or 'Item' }}</p>
                 </div>
-                {% set wear = wear_counts.get(it.id, 0) %}
-                {% if wear > 0 %}
-                  <span class="wear">{{ wear }} wears</span>
-                {% endif %}
               </div>
             </div>
-          </a>
+          </div>
         </div>
         {% endfor %}
       </div>

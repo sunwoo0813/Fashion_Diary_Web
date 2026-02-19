@@ -39,19 +39,6 @@ def stats():
         .group_by(Item.category)
         .all()
     )
-    season_rows = (
-        db.session.query(Item.season, func.count(Item.id))
-        .filter(Item.user_id == user_id)
-        .group_by(Item.season)
-        .all()
-    )
-    color_rows = (
-        db.session.query(func.lower(Item.color), func.count(Item.id))
-        .filter(Item.user_id == user_id)
-        .filter(Item.color.isnot(None), func.length(func.trim(Item.color)) > 0)
-        .group_by(func.lower(Item.color))
-        .all()
-    )
     photos_count = OutfitPhoto.query.join(Outfit, OutfitPhoto.outfit_id == Outfit.id).filter(
         Outfit.user_id == user_id
     ).count()
@@ -60,17 +47,6 @@ def stats():
     for category, cnt in category_rows:
         key = (category or "Unknown").strip() or "Unknown"
         category_counts[key] = category_counts.get(key, 0) + int(cnt)
-
-    season_counts = {}
-    for season, cnt in season_rows:
-        key = (season or "Unknown").strip() or "Unknown"
-        season_counts[key] = season_counts.get(key, 0) + int(cnt)
-
-    color_counts = {}
-    for color, cnt in color_rows:
-        key = (color or "").strip().lower()
-        if key:
-            color_counts[key] = color_counts.get(key, 0) + int(cnt)
 
     current_year = date.today().year
     month_counts = {m: 0 for m in range(1, 13)}
@@ -120,8 +96,6 @@ def stats():
     rain_ratio = round((rain_count / weather_total) * 100) if weather_total else 0
 
     category_sorted = sorted(category_counts.items(), key=lambda x: (-x[1], x[0]))
-    season_sorted = sorted(season_counts.items(), key=lambda x: (-x[1], x[0]))
-    color_sorted = sorted(color_counts.items(), key=lambda x: (-x[1], x[0]))
 
     cutoff = today - timedelta(days=30)
     wear_counts = (
@@ -145,31 +119,12 @@ def stats():
         if it:
             top_items.append({"item": it, "count": int(row.cnt)})
 
-    color_total = sum(color_counts.values())
-    palette_colors = ["#A89F91", "#D2B48C", "#9CAF88", "#E5D3B3"]
-    palette = []
-    if color_total:
-        for idx, (name, cnt) in enumerate(color_sorted[:4]):
-            percent = round((cnt / color_total) * 100)
-            palette.append(
-                {
-                    "name": name.title(),
-                    "count": cnt,
-                    "percent": percent,
-                    "color": palette_colors[idx],
-                }
-            )
-    palette_center_percent = palette[0]["percent"] if palette else 0
-    palette_center_label = palette[0]["name"] if palette else "Neutral"
-    palette_remainder = max(0, 100 - sum(p["percent"] for p in palette))
-
     month_labels = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     month_pairs = [(month_labels[m - 1], month_counts[m]) for m in range(1, 13)]
     efficiency_rate = 0
     if total_items > 0:
         efficiency_rate = min(100, round((total_outfits / total_items) * 100))
     curation_percent = min(100, round(60 + efficiency_rate * 0.4)) if total_items > 0 else 0
-    top_season = season_sorted[0][0] if season_sorted else "Unknown"
     top_category = category_sorted[0][0] if category_sorted else "Unknown"
 
     return render_template(
@@ -180,21 +135,14 @@ def stats():
         today=today,
         stats_days=stats_days,
         top_items=top_items,
-        palette=palette,
-        palette_center_label=palette_center_label,
-        palette_center_percent=palette_center_percent,
-        palette_remainder=palette_remainder,
         month_pairs=month_pairs,
         efficiency_rate=efficiency_rate,
         curation_percent=curation_percent,
-        top_season=top_season,
         top_category=top_category,
         total_items=total_items,
         total_outfits=total_outfits,
         total_photos=photos_count,
         category_sorted=category_sorted,
-        season_sorted=season_sorted,
-        color_sorted=color_sorted,
         month_counts=month_counts,
         max_month_count=max_month_count,
         weather_total=weather_total,

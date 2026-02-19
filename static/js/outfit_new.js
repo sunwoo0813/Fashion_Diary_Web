@@ -13,10 +13,14 @@
   if (!btn) return;
 
   btn.addEventListener('click', async () => {
-    const city = (cityEl?.value || '서울').trim();
+    const city = (cityEl?.value || '').trim();
+    if (!city) {
+      alert('도시를 입력해 주세요.');
+      cityEl?.focus();
+      return;
+    }
     btn.disabled = true;
-    const prevText = btn.textContent;
-    btn.textContent = '불러오는 중...';
+    btn.setAttribute('aria-busy', 'true');
 
     try {
       const res = await fetch(`/api/weather?city=${encodeURIComponent(city)}`);
@@ -50,7 +54,7 @@
       alert('날씨 조회 중 오류가 발생했습니다.');
     } finally {
       btn.disabled = false;
-      btn.textContent = prevText;
+      btn.removeAttribute('aria-busy');
     }
   });
 })();
@@ -59,12 +63,14 @@
 (function () {
   const fileInput = document.querySelector('input[type="file"][name="photos"]');
   const wrap = document.getElementById('photoPreviewWrap');
+  const frameEl = wrap?.querySelector('.preview-frame');
   const imgEl = document.getElementById('photoPreviewImg');
   const prevBtn = document.getElementById('photoPrevBtn');
   const nextBtn = document.getElementById('photoNextBtn');
   const counter = document.getElementById('photoCounter');
   const thumbs = document.getElementById('photoThumbs');
   const tagPanel = document.getElementById('photoTagPanel');
+  const tagSearchBtn = document.querySelector('.tag-search');
   const tagChips = document.getElementById('photoTagChips');
   const tagInput = document.getElementById('photoTagInput');
   const tagResults = document.getElementById('photoTagResults');
@@ -88,6 +94,7 @@
   let idx = 0;
   let fileKeys = [];
   let tagsByKey = {};
+  let isTagPanelOpen = false;
 
   function fileKey(file) {
     return `${file.name}|${file.size}|${file.lastModified}`;
@@ -102,6 +109,34 @@
     urls = [];
     fileKeys = [];
     tagsByKey = {};
+    isTagPanelOpen = false;
+  }
+
+  function fitPreviewFrame() {
+    if (!wrap || !frameEl || !imgEl || !thumbs) return;
+    if (wrap.style.display === 'none') return;
+    if (!imgEl.naturalWidth || !imgEl.naturalHeight) return;
+
+    const style = window.getComputedStyle(wrap);
+    const padX = (parseFloat(style.paddingLeft) || 0) + (parseFloat(style.paddingRight) || 0);
+    const padY = (parseFloat(style.paddingTop) || 0) + (parseFloat(style.paddingBottom) || 0);
+    const gap = parseFloat(style.rowGap || style.gap || '0') || 0;
+
+    const maxW = wrap.clientWidth - padX;
+    const maxH = wrap.clientHeight - padY - gap - (thumbs.offsetHeight || 0);
+    if (maxW <= 0 || maxH <= 0) return;
+
+    const ratio = imgEl.naturalWidth / imgEl.naturalHeight;
+    let width = maxW;
+    let height = width / ratio;
+
+    if (height > maxH) {
+      height = maxH;
+      width = height * ratio;
+    }
+
+    frameEl.style.width = `${Math.max(120, Math.floor(width))}px`;
+    frameEl.style.height = `${Math.max(120, Math.floor(height))}px`;
   }
 
   function syncHidden() {
@@ -115,6 +150,15 @@
     if (!urls.length) {
       tagPanel.style.display = 'none';
       tagChips.innerHTML = '';
+      if (tagResults) {
+        tagResults.style.display = 'none';
+        tagResults.innerHTML = '';
+      }
+      isTagPanelOpen = false;
+      return;
+    }
+    if (!isTagPanelOpen) {
+      tagPanel.style.display = 'none';
       return;
     }
     tagPanel.style.display = 'block';
@@ -194,10 +238,18 @@
   function render() {
     if (!urls.length) {
       wrap.style.display = 'none';
+      if (frameEl) {
+        frameEl.style.removeProperty('width');
+        frameEl.style.removeProperty('height');
+      }
       renderTags();
       return;
     }
     wrap.style.display = 'flex';
+    if (frameEl) {
+      frameEl.style.removeProperty('width');
+      frameEl.style.removeProperty('height');
+    }
     imgEl.src = urls[idx];
     counter.textContent = `${idx + 1} / ${urls.length}`;
 
@@ -211,7 +263,8 @@
       t.alt = `thumb-${i}`;
       t.style.width = '72px';
       t.style.height = '72px';
-      t.style.objectFit = 'cover';
+      t.style.objectFit = 'contain';
+      t.style.background = '#f1f1f1';
       t.style.borderRadius = '12px';
       t.style.cursor = 'pointer';
       t.style.border = i === idx ? '2px solid var(--text)' : '1px solid var(--border)';
@@ -221,6 +274,7 @@
       });
       thumbs.appendChild(t);
     });
+    fitPreviewFrame();
     renderTags();
   }
 
@@ -234,6 +288,22 @@
     idx = 0;
     render();
   });
+
+  if (tagSearchBtn) {
+    tagSearchBtn.addEventListener('click', () => {
+      if (!urls.length) {
+        alert('먼저 사진을 업로드해 주세요.');
+        fileInput.focus();
+        return;
+      }
+      isTagPanelOpen = true;
+      renderTags();
+      if (tagInput) {
+        tagInput.focus();
+        renderResults();
+      }
+    });
+  }
 
   prevBtn.addEventListener('click', () => {
     if (idx > 0) {
@@ -261,10 +331,19 @@
   });
 
   if (formEl) {
+    formEl.addEventListener('keydown', (e) => {
+      if (e.key !== 'Enter') return;
+      const target = e.target;
+      if (target instanceof HTMLElement && target.tagName === 'TEXTAREA') return;
+      e.preventDefault();
+    });
     formEl.addEventListener('submit', () => {
       syncHidden();
     });
   }
+
+  imgEl.addEventListener('load', fitPreviewFrame);
+  window.addEventListener('resize', fitPreviewFrame);
 
   window.addEventListener('keydown', (e) => {
     if (wrap.style.display === 'none') return;

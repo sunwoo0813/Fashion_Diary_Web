@@ -115,55 +115,22 @@
         </div>
 
         <div class="detail-row">
-          <div class="glass-card sub-card">
-            <h3>Season &amp; Usage</h3>
-            <div class="pill-block">
-              <p>Season</p>
-              <div class="pill-group">
-                <input type="radio" name="season" id="season-autumn" value="autumn" checked>
-                <label for="season-autumn">Autumn</label>
-                <input type="radio" name="season" id="season-winter" value="winter">
-                <label for="season-winter">Winter</label>
-                <input type="radio" name="season" id="season-spring" value="spring">
-                <label for="season-spring">Spring</label>
-                <input type="radio" name="season" id="season-summer" value="summer">
-                <label for="season-summer">Summer</label>
-              </div>
-            </div>
-            <div class="pill-block">
-              <p>Occasion</p>
-              <div class="pill-group is-muted">
-                <input type="radio" name="occasion" id="occ-casual" value="casual">
-                <label for="occ-casual">Casual</label>
-                <input type="radio" name="occasion" id="occ-work" value="work" checked>
-                <label for="occ-work">Work</label>
-                <input type="radio" name="occasion" id="occ-evening" value="evening">
-                <label for="occ-evening">Evening</label>
-              </div>
-            </div>
-          </div>
-
-          <div class="glass-card sub-card">
-            <h3>Color &amp; Material</h3>
-            <div class="pill-block">
-              <p>Primary Color</p>
-              <div class="color-row">
-                <button class="swatch is-active" type="button" data-color="Black" style="background:#1a1a1a;"></button>
-                <button class="swatch" type="button" data-color="Ivory" style="background:#f5f5dc;"></button>
-                <button class="swatch" type="button" data-color="Brown" style="background:#8b4513;"></button>
-                <button class="swatch" type="button" data-color="Olive" style="background:#556b2f;"></button>
-                <button class="swatch swatch-add" type="button" aria-label="Add color">
-                  <span class="material-symbols-outlined">add</span>
-                </button>
-              </div>
-            </div>
+          <div class="glass-card sub-card size-card">
+            <h3>Size</h3>
             <div class="field">
-              <label>Fabric Composition</label>
-              <input name="material" type="text" placeholder="e.g. 100% Organic Cotton">
+              <label>Item Size</label>
+              <input id="sizeInput" name="size" type="text" placeholder="e.g. S, M, 27, 240mm">
+              <input type="hidden" name="size_detail_json" id="sizeDetailJson">
             </div>
-            <div class="field">
-              <label>Color</label>
-              <input id="colorInput" name="color" type="text" placeholder="e.g. Ivory">
+            <div id="sizeOptionWrap" class="size-option-wrap" style="display:none;">
+              <p class="size-option-title">Choose From Size Table</p>
+              <div id="sizeOptionButtons" class="size-option-buttons"></div>
+            </div>
+            <div id="sizeTablePreviewWrap" class="size-table-wrap" style="display:none;">
+              <table class="size-table-preview">
+                <thead id="sizeTableHead"></thead>
+                <tbody id="sizeTableBody"></tbody>
+              </table>
             </div>
           </div>
         </div>

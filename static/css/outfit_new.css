@@ -248,7 +248,10 @@ main.container.my-4 {
 }
 
 .preview-frame {
-  flex: 1;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 4 / 5;
+  margin: 0 auto;
   border-radius: 18px;
   overflow: hidden;
   position: relative;
@@ -258,7 +261,8 @@ main.container.my-4 {
 .preview-frame img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  background: #f8f8f8;
 }
 
 .preview-btn {
@@ -481,13 +485,24 @@ main.container.my-4 {
 }
 
 .tag-search {
-  border: none;
-  background: transparent;
-  font-size: 0.6rem;
-  letter-spacing: 0.25em;
-  text-transform: uppercase;
-  border-bottom: 1px solid var(--fashion-black);
-  padding-bottom: 2px;
+  width: 34px;
+  height: 34px;
+  border-radius: 999px;
+  border: 1px solid #e3e3e3;
+  background: rgba(255, 255, 255, 0.72);
+  color: #6f6f6f;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.tag-search .material-symbols-outlined {
+  font-size: 18px;
+}
+
+.tag-search:hover {
+  background: #fff;
+  border-color: #d3d3d3;
 }
 
 .tag-panel {

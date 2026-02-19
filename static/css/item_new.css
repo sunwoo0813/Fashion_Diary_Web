@@ -248,8 +248,8 @@ main.container.my-4 {
   padding-bottom: 80px;
 }
 
-.col-5 { grid-column: span 5; }
-.col-7 { grid-column: span 7; }
+.col-5 { grid-column: span 6; }
+.col-7 { grid-column: span 6; }
 
 .detail-stack {
   display: flex;
@@ -264,6 +264,82 @@ main.container.my-4 {
   gap: 24px;
 }
 
+.size-card {
+  grid-column: 1 / -1;
+}
+
+.size-option-wrap {
+  margin-top: 16px;
+}
+
+.size-option-title {
+  margin: 0 0 8px;
+  font-size: 0.58rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #9a9a9a;
+}
+
+.size-option-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.size-option-btn {
+  border: 1px solid #dfdfdf;
+  background: #fff;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  color: #626262;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.size-option-btn:hover {
+  border-color: #c9c9c9;
+}
+
+.size-option-btn.is-active {
+  background: var(--fashion-black);
+  border-color: var(--fashion-black);
+  color: #fff;
+}
+
+.size-table-wrap {
+  margin-top: 14px;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  overflow-x: auto;
+  background: #fff;
+}
+
+.size-table-preview {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 300px;
+}
+
+.size-table-preview th,
+.size-table-preview td {
+  padding: 10px 12px;
+  font-size: 0.72rem;
+  border-bottom: 1px solid #f1f1f1;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.size-table-preview th {
+  background: #fafafa;
+  color: #767676;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.size-table-preview tbody tr:last-child td {
+  border-bottom: none;
+}
+
 .glass-card {
   background: var(--glass-bg);
   border: 1px solid var(--glass-border);
@@ -274,7 +350,7 @@ main.container.my-4 {
 
 .upload-card {
   position: relative;
-  min-height: 620px;
+  min-height: 700px;
   overflow: hidden;
 }
 
@@ -362,7 +438,9 @@ main.container.my-4 {
 
 .photo-preview {
   position: absolute;
-  inset: 16px;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
   border-radius: 24px;
   background: #fff;
   box-shadow: var(--shadow-subtle);
@@ -370,13 +448,17 @@ main.container.my-4 {
   display: flex;
   align-items: center;
   justify-content: center;
+  width: calc(100% - 32px);
+  height: calc(100% - 32px);
   z-index: 2;
+  pointer-events: none;
 }
 
 .photo-preview img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
 }
 
 .detail-card {

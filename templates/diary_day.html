@@ -175,7 +175,7 @@
           {% if list_items and list_items|length > 0 %}
             <div class="list-body">
               {% for it in list_items[:3] %}
-                <a class="list-row" href="{{ url_for('wardrobe.tag_page', item_id=it.id) }}">
+                <div class="list-row">
                   {% if it.image_path %}
                     <span class="list-thumb" style="background-image:url('{{ it.image_path }}')"></span>
                   {% else %}
@@ -185,8 +185,7 @@
                     <span class="list-title">{{ it.name }}</span>
                     <span class="list-sub">{{ it.category or 'Item' }}</span>
                   </span>
-                  <span class="material-symbols-outlined list-arrow">arrow_forward</span>
-                </a>
+                </div>
               {% endfor %}
             </div>
           {% else %}

@@ -1,3 +1,4 @@
+import json
 import os
 from datetime import date
 
@@ -147,12 +148,28 @@ def items_create():
         if not display_name:
             display_name = "Untitled"
 
+        size_value = (request.form.get("size") or "").strip()
+        size_detail_raw = (request.form.get("size_detail_json") or "").strip()
+        size_detail_value = None
+        if size_detail_raw:
+            try:
+                parsed_size_detail = json.loads(size_detail_raw)
+                if isinstance(parsed_size_detail, dict):
+                    size_detail_value = parsed_size_detail
+            except Exception:
+                size_detail_value = None
+
+        if not size_value and isinstance(size_detail_value, dict):
+            values = size_detail_value.get("values")
+            if isinstance(values, list) and values:
+                size_value = str(values[0] or "").strip()
+
         item = Item(
             user_id=user_id,
             name=display_name,
             category=request.form.get("category"),
-            color=request.form.get("color"),
-            season=request.form.get("season"),
+            size=size_value or None,
+            size_detail=size_detail_value,
             image_path=image_path,
         )
         db.session.add(item)
@@ -190,12 +207,30 @@ def api_products_search():
                 return value.strip()
             return str(value).strip()
 
+        def _normalize_size_table(value):
+            if value is None:
+                return ""
+            if isinstance(value, (dict, list)):
+                return value
+            if isinstance(value, str):
+                raw = value.strip()
+                if not raw:
+                    return ""
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, (dict, list)):
+                        return parsed
+                except Exception:
+                    pass
+                return raw
+            return str(value).strip()
+
         items = [
             {
                 "brand": _to_text(row.get("brand")),
                 "name": _to_text(row.get("name")),
                 "category": _to_text(row.get("category")),
-                "size_table": _to_text(row.get("size_table")),
+                "size_table": _normalize_size_table(row.get("size_table")),
                 "image_path": _normalize_public_image_path(
                     _to_text(row.get("image_path")), bucket_name="product-assets"
                 ),
@@ -244,19 +279,3 @@ def items_delete():
 
     db.session.commit()
     return redirect(url_for("wardrobe.wardrobe"))
-
-
-@wardrobe_bp.route("/tag/<int:item_id>", endpoint="tag_page")
-def tag_page(item_id):
-    user_id = _get_current_user_id()
-    if not user_id:
-        return redirect(url_for("auth.home"))
-
-    item = Item.query.filter_by(id=item_id, user_id=user_id).first_or_404()
-    outfit_ids = [r.outfit_id for r in OutfitItem.query.filter_by(item_id=item.id).all()]
-    outfits = (
-        Outfit.query.filter(Outfit.id.in_(outfit_ids), Outfit.user_id == user_id)
-        .order_by(Outfit.date.desc())
-        .all()
-    )
-    return render_template("tag.html", item=item, outfits=outfits)
