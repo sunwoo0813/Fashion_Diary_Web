@@ -35,21 +35,21 @@ def get_or_create_user(email: str) -> User:
 
 @auth_bp.route("/", methods=["GET"])
 def home():
-    if get_current_user_id():
-        return redirect(url_for("diary.diary"))
-    return render_template("login.html", hide_nav=True)
+    return render_template("landing.html", hide_nav=True)
 
 
 @auth_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "GET":
-        return redirect(url_for("auth.home"))
+        if get_current_user_id():
+            return redirect(url_for("auth.dashboard"))
+        return render_template("login.html", hide_nav=True)
 
     email = (request.form.get("email") or "").strip().lower()
     password = request.form.get("password") or ""
     if not email or not password:
         flash("Email and password are required.", "danger")
-        return redirect(url_for("auth.home"))
+        return redirect(url_for("auth.login"))
 
     try:
         resp = get_supabase_auth().auth.sign_in_with_password(
@@ -57,26 +57,26 @@ def login():
         )
         if not resp or not resp.user or not (resp.user.email or email):
             flash("Login failed. Please check your credentials.", "danger")
-            return redirect(url_for("auth.home"))
+            return redirect(url_for("auth.login"))
 
         user = get_or_create_user(resp.user.email or email)
         session["user_id"] = user.id
         session["user_email"] = user.email
         session["supabase_uid"] = resp.user.id
-        return redirect(url_for("diary.diary"))
+        return redirect(url_for("auth.dashboard"))
     except AuthApiError as e:
         flash(f"Login failed: {e.message}", "danger")
-        return redirect(url_for("auth.home"))
+        return redirect(url_for("auth.login"))
     except Exception as e:
         flash(f"Login failed: {str(e)}", "danger")
-        return redirect(url_for("auth.home"))
+        return redirect(url_for("auth.login"))
 
 
 @auth_bp.route("/signup", methods=["GET", "POST"])
 def signup():
     if request.method == "GET":
         if get_current_user_id():
-            return redirect(url_for("diary.diary"))
+            return redirect(url_for("auth.dashboard"))
         return render_template("signup.html", hide_nav=True)
 
     email = (request.form.get("email") or "").strip().lower()
@@ -115,10 +115,10 @@ def signup():
             session["user_id"] = user.id
             session["user_email"] = user.email
             session["supabase_uid"] = resp.user.id
-            return redirect(url_for("diary.diary"))
+            return redirect(url_for("auth.dashboard"))
 
         flash("Signup complete. Please verify your email and log in.", "success")
-        return redirect(url_for("auth.home"))
+        return redirect(url_for("auth.login"))
     except AuthApiError as e:
         flash(f"Signup failed: {e.message}", "danger")
         return redirect(url_for("auth.signup"))
@@ -131,6 +131,13 @@ def signup():
 def logout():
     session.clear()
     return redirect(url_for("auth.home"))
+
+
+@auth_bp.route("/dashboard", methods=["GET"])
+def dashboard():
+    if not get_current_user_id():
+        return redirect(url_for("auth.login"))
+    return render_template("dashboard.html", hide_nav=True)
 
 
 @auth_bp.route("/account")

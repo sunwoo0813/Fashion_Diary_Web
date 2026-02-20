@@ -28,13 +28,6 @@
         <span class="chip">{% if weather.rain %}媛뺤닔 媛??% else %}媛뺤닔 ?놁쓬{% endif %}</span>
         <span class="chip">{{ weather.desc }}</span>
 
-        {% if weather.icon %}
-          <img
-            alt="weather icon"
-            src="https://openweathermap.org/img/wn/{{ weather.icon }}@2x.png"
-            style="width:42px;height:42px;opacity:.95"
-          >
-        {% endif %}
       {% else %}
         <span class="chip">?좎뵪 ?뺣낫瑜?遺덈윭?ㅼ? 紐삵뻽?듬땲??/span>
       {% endif %}

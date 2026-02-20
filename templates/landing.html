@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WeatherWear - Outfit Recommendation</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/landing.css', v='20260220v1') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script src="{{ url_for('static', filename='js/landing.js', v='20260220v1') }}"></script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-secondary dark:text-slate-100 font-display min-h-screen flex flex-col antialiased selection:bg-primary/30 selection:text-primary">
+  <header class="fixed top-0 w-full z-50 px-6 py-4 flex items-center justify-between max-w-7xl mx-auto left-0 right-0">
+    <div class="flex items-center gap-2 text-secondary dark:text-slate-100">
+      <span class="material-symbols-outlined text-secondary text-3xl">filter_drama</span>
+      <span class="text-xl font-bold tracking-tight">WeatherWear</span>
+    </div>
+    <a href="{{ url_for('auth.login') }}" class="hidden sm:flex items-center justify-center px-5 py-2 rounded-full border border-secondary/20 dark:border-slate-700 hover:bg-white dark:hover:bg-slate-800 transition-colors text-sm font-semibold text-secondary dark:text-slate-100">
+      Log In
+    </a>
+    <button class="sm:hidden p-2 text-secondary dark:text-slate-100">
+      <span class="material-symbols-outlined">menu</span>
+    </button>
+  </header>
+
+  <main class="flex-grow flex flex-col items-center justify-center w-full px-4 pt-24 pb-12">
+    <div class="w-full max-w-md flex flex-col gap-8 relative z-10">
+      <div class="flex flex-col items-center text-center space-y-2 animate-fade-in-up">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/50 dark:bg-black/20 backdrop-blur-sm border border-secondary/10 dark:border-slate-700/60 shadow-sm mb-4">
+          <span class="material-symbols-outlined text-secondary text-sm">location_on</span>
+          <span class="text-sm font-medium text-secondary/80 dark:text-slate-300">Seoul, Gangnam-gu</span>
+        </div>
+        <div class="relative">
+          <h1 class="text-8xl font-bold tracking-tighter text-secondary dark:text-white leading-none">13&deg;</h1>
+          <span class="absolute top-2 -right-6 text-3xl text-secondary/60 dark:text-slate-400 font-light">C</span>
+        </div>
+        <div class="flex items-center gap-3 mt-2">
+          <span class="material-symbols-outlined text-secondary/70 dark:text-slate-500 text-2xl">cloud</span>
+          <p class="text-lg text-secondary/80 dark:text-slate-300 font-medium">Cloudy</p>
+          <span class="w-1 h-1 rounded-full bg-secondary/30 dark:bg-slate-300"></span>
+          <p class="text-lg text-secondary/70 dark:text-slate-400">Feels like 11&deg;</p>
+        </div>
+      </div>
+
+      <div class="flex flex-col items-center text-center mt-4">
+        <h2 class="text-3xl md:text-4xl font-bold leading-tight tracking-tight text-secondary dark:text-white mb-8">
+          Today, a <span class="text-primary decoration-2 underline-offset-4">light coat</span> is a safe choice.
+        </h2>
+        <button class="group relative w-full sm:w-auto min-w-[240px] overflow-hidden rounded-full bg-primary p-4 text-white shadow-lg shadow-primary/25 transition-all hover:scale-105 hover:shadow-xl hover:shadow-primary/40 focus:outline-none focus:ring-4 focus:ring-primary/20">
+          <div class="relative flex items-center justify-center gap-2 font-bold text-lg">
+            <span>Record Today&apos;s Outfit</span>
+            <span class="material-symbols-outlined group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="mt-12 w-full">
+        <div class="flex items-center justify-between mb-4 px-2">
+          <p class="text-sm font-medium text-secondary/60 dark:text-slate-500 uppercase tracking-wider">On similar days, you wore</p>
+          <button class="text-sm text-primary font-medium hover:underline">View History</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4">
+          <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-2 shadow-sm border border-secondary/5 dark:border-slate-700 transition-all hover:shadow-md cursor-pointer">
+            <div class="aspect-[3/4] w-full overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-700 relative">
+              <img alt="Woman in beige trench coat outfit" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110 filter blur-[0.5px] group-hover:blur-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuBRj20bjDLiRvcup8IaN0ZKgxzpBWSBRd4JSrlg1aiRE9d8_c-A9iYRZtObycww4GegrmVGhCGZyoIDQsgpv7wjdTYSNNfgucwL-qs01aHvyg1RTaBwAVyaLkl1CNKnj4VWGTxgLUS5G0dAX1FZfIVQivNtgVRP_6KDeVGqwOI3WuN2HWN637-fiK3cMPagZ25AtB8_QBhHRyIbPGUXOn2VvAZc7W7HH9DFbwneRtPynbFVsoTjqVvOyxuYuovPojl3O5diHRdk8By0">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                <span class="text-white text-xs font-medium">Last Tuesday</span>
+              </div>
+            </div>
+            <div class="mt-3 px-1">
+              <p class="text-sm font-semibold text-secondary dark:text-slate-100">Beige Trench</p>
+              <p class="text-xs text-secondary/60 dark:text-slate-500">Rated 5/5</p>
+            </div>
+          </div>
+
+          <div class="group relative overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-2 shadow-sm border border-secondary/5 dark:border-slate-700 transition-all hover:shadow-md cursor-pointer">
+            <div class="aspect-[3/4] w-full overflow-hidden rounded-xl bg-slate-100 dark:bg-slate-700 relative">
+              <img alt="Casual denim jacket over white tee outfit" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110 filter blur-[0.5px] group-hover:blur-0" src="https://lh3.googleusercontent.com/aida-public/AB6AXuANYVz7uDcIr9UHIR-3QXvfMpvDvrx4LjIRHVr86BQ9wXnI6E8Y_tRPjvhuh82BQO7xDntLAZh_5E8gumZpKwFQ2nXbcUwCEKr2h99dAK84TWzPRyTLM81PNpN1PfPNbn56CKVcerg0LYaQNGhbjg13ObqvOaCjXQ2jFMfDkJzsfi93R9-jVE1vTUttiHb4B1eJhItxUkb_B2P8eaNbVbz_IeLVC0k5XxI4qxO0vvKvxK1pboLOZMKn3Ajabm78XB_fX8PDpWJcT2Gs">
+              <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-3">
+                <span class="text-white text-xs font-medium">2 Weeks Ago</span>
+              </div>
+            </div>
+            <div class="mt-3 px-1">
+              <p class="text-sm font-semibold text-secondary dark:text-slate-100">Denim Layer</p>
+              <p class="text-xs text-secondary/60 dark:text-slate-500">Rated 4/5</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
+      <div class="absolute -top-[20%] left-[10%] w-[600px] h-[600px] bg-primary/5 rounded-full blur-[120px] mix-blend-multiply dark:mix-blend-normal dark:bg-primary/10"></div>
+      <div class="absolute top-[40%] -right-[10%] w-[500px] h-[500px] bg-amber-100/40 dark:bg-amber-900/10 rounded-full blur-[100px] mix-blend-multiply dark:mix-blend-normal"></div>
+    </div>
+  </main>
+
+  <footer class="w-full text-center py-6 text-secondary/40 dark:text-slate-400 text-xs">
+    <p>&copy; 2023 WeatherWear. All rights reserved.</p>
+  </footer>
+</body>
+</html>
