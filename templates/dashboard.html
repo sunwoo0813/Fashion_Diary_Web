@@ -55,10 +55,12 @@
 <span class="text-xs text-slate-400">Pro Plan</span>
 </div>
 </div>
-<button class="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-sm font-medium transition-colors">
+<form action="{{ url_for('auth.logout') }}" method="post">
+<button class="w-full flex items-center justify-center gap-2 h-10 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-white text-sm font-medium transition-colors" type="submit">
 <span class="material-symbols-outlined text-[18px]">logout</span>
                 Logout
             </button>
+</form>
 </div>
 </aside>
 <!-- Main Content Area -->
