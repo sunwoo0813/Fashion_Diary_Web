@@ -38,9 +38,14 @@ const workflow = [
   },
 ];
 
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default async function DashboardPage() {
   const user = await requireUser();
   const displayName = (user.email || "User").split("@")[0];
+  const diaryHref = `/diary/${todayIso()}`;
 
   return (
     <section className="dashboard-page">
@@ -78,7 +83,7 @@ export default async function DashboardPage() {
       </section>
 
       <section className="dashboard-quick-links" aria-label="Quick navigation">
-        <Link href="/diary" className="quick-link">
+        <Link href={diaryHref} className="quick-link">
           Go to Diary
         </Link>
         <Link href="/wardrobe" className="quick-link">

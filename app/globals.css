@@ -157,6 +157,22 @@ a {
   padding: 1.4rem;
 }
 
+.route-loading {
+  min-height: min(360px, 52vh);
+  border: 1px dashed var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.72);
+  display: grid;
+  place-items: center;
+}
+
+.route-loading p {
+  margin: 0;
+  color: var(--muted);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 .solid-button,
 .ghost-button {
   display: inline-flex;
@@ -574,7 +590,10 @@ a {
   gap: 0.5rem;
 }
 
-.wardrobe-filter-form button {
+.wardrobe-filter-form :is(button, .filter-chip) {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.45rem 0.72rem;
@@ -582,7 +601,7 @@ a {
   font-size: 0.82rem;
 }
 
-.wardrobe-filter-form button.is-active {
+.wardrobe-filter-form :is(button, .filter-chip).is-active {
   border-color: var(--accent);
   background: #fff4ee;
   color: var(--accent-deep);

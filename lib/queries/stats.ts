@@ -58,6 +58,20 @@ export type StatsPageData = {
   currentYear: number;
 };
 
+const STATS_CACHE_TTL_MS = 20_000;
+
+type StatsCacheEntry = {
+  data: StatsPageData;
+  expiresAt: number;
+};
+
+type OutfitPhotoRow = {
+  id: number;
+  outfitId: number;
+};
+
+const statsPageCache = new Map<number, StatsCacheEntry>();
+
 function normalizeCategory(value: unknown): string {
   const text = typeof value === "string" ? value.trim() : "";
   return text || "Unknown";
@@ -99,76 +113,91 @@ function chunks<T>(values: T[], size: number): T[][] {
   return out;
 }
 
-async function countPhotosByOutfitIds(outfitIds: number[]): Promise<number> {
-  if (outfitIds.length === 0) return 0;
-  const admin = createServiceRoleSupabaseClient();
+function cleanupStatsCache(now: number) {
+  for (const [key, value] of statsPageCache.entries()) {
+    if (value.expiresAt <= now) {
+      statsPageCache.delete(key);
+    }
+  }
+}
 
-  let total = 0;
+function cloneStatsPageData(data: StatsPageData): StatsPageData {
+  return {
+    ...data,
+    topItems: data.topItems.map((item) => ({ ...item })),
+    monthPairs: data.monthPairs.map((pair) => ({ ...pair })),
+    tempBuckets: data.tempBuckets.map((bucket) => ({ ...bucket })),
+    categorySorted: data.categorySorted.map((row) => ({ ...row })),
+  };
+}
+
+async function fetchPhotosByOutfitIds(outfitIds: number[]): Promise<OutfitPhotoRow[]> {
+  if (outfitIds.length === 0) return [];
+  const admin = createServiceRoleSupabaseClient();
+  const photos: OutfitPhotoRow[] = [];
+
   for (const idChunk of chunks(outfitIds, CHUNK_SIZE)) {
-    const { count, error } = await admin
+    const { data, error } = await admin
       .from("outfit_photo")
-      .select("*", { count: "exact", head: true })
+      .select("id,outfit_id")
       .in("outfit_id", idChunk);
     if (error) {
-      throw new Error(`Outfit photo count query failed: ${error.message}`);
+      throw new Error(`Outfit photo query failed: ${error.message}`);
     }
-    total += count ?? 0;
+
+    (data || []).forEach((row) => {
+      const photoId = toInt(row.id);
+      const outfitId = toInt(row.outfit_id);
+      if (!photoId || !outfitId) return;
+      photos.push({ id: photoId, outfitId });
+    });
   }
-  return total;
+
+  return photos;
 }
 
 async function fetchRecentWearCounts(
   recentOutfitIds: number[],
+  recentPhotoIds: number[],
   allowedItemIds: Set<number>,
 ): Promise<Record<number, number>> {
   const wearCounts: Record<number, number> = {};
-  if (recentOutfitIds.length === 0 || allowedItemIds.size === 0) return wearCounts;
+  if (allowedItemIds.size === 0) return wearCounts;
 
   const admin = createServiceRoleSupabaseClient();
 
-  for (const outfitChunk of chunks(recentOutfitIds, CHUNK_SIZE)) {
-    const { data, error } = await admin
-      .from("outfit_item")
-      .select("item_id")
-      .in("outfit_id", outfitChunk);
-    if (error) {
-      throw new Error(`Outfit wear query failed: ${error.message}`);
+  if (recentOutfitIds.length > 0) {
+    for (const outfitChunk of chunks(recentOutfitIds, CHUNK_SIZE)) {
+      const { data, error } = await admin
+        .from("outfit_item")
+        .select("item_id")
+        .in("outfit_id", outfitChunk);
+      if (error) {
+        throw new Error(`Outfit wear query failed: ${error.message}`);
+      }
+      (data || []).forEach((row) => {
+        const itemId = toInt(row.item_id);
+        if (!itemId || !allowedItemIds.has(itemId)) return;
+        wearCounts[itemId] = (wearCounts[itemId] ?? 0) + 1;
+      });
     }
-    (data || []).forEach((row) => {
-      const itemId = toInt(row.item_id);
-      if (!itemId || !allowedItemIds.has(itemId)) return;
-      wearCounts[itemId] = (wearCounts[itemId] ?? 0) + 1;
-    });
   }
 
-  const recentPhotoIds: number[] = [];
-  for (const outfitChunk of chunks(recentOutfitIds, CHUNK_SIZE)) {
-    const { data, error } = await admin
-      .from("outfit_photo")
-      .select("id")
-      .in("outfit_id", outfitChunk);
-    if (error) {
-      throw new Error(`Outfit photo lookup failed: ${error.message}`);
+  if (recentPhotoIds.length > 0) {
+    for (const photoChunk of chunks(recentPhotoIds, CHUNK_SIZE)) {
+      const { data, error } = await admin
+        .from("outfit_photo_item")
+        .select("item_id")
+        .in("photo_id", photoChunk);
+      if (error) {
+        throw new Error(`Outfit photo wear query failed: ${error.message}`);
+      }
+      (data || []).forEach((row) => {
+        const itemId = toInt(row.item_id);
+        if (!itemId || !allowedItemIds.has(itemId)) return;
+        wearCounts[itemId] = (wearCounts[itemId] ?? 0) + 1;
+      });
     }
-    (data || []).forEach((row) => {
-      const photoId = toInt(row.id);
-      if (photoId) recentPhotoIds.push(photoId);
-    });
-  }
-
-  for (const photoChunk of chunks(recentPhotoIds, CHUNK_SIZE)) {
-    const { data, error } = await admin
-      .from("outfit_photo_item")
-      .select("item_id")
-      .in("photo_id", photoChunk);
-    if (error) {
-      throw new Error(`Outfit photo wear query failed: ${error.message}`);
-    }
-    (data || []).forEach((row) => {
-      const itemId = toInt(row.item_id);
-      if (!itemId || !allowedItemIds.has(itemId)) return;
-      wearCounts[itemId] = (wearCounts[itemId] ?? 0) + 1;
-    });
   }
 
   return wearCounts;
@@ -186,6 +215,14 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
   const admin = createServiceRoleSupabaseClient();
   const today = new Date();
   const currentYear = today.getFullYear();
+  const now = Date.now();
+  cleanupStatsCache(now);
+
+  const cached = statsPageCache.get(appUserId);
+  if (cached && cached.expiresAt > now) {
+    return cloneStatsPageData(cached.data);
+  }
+
   const yearStart = `${currentYear}-01-01`;
   const nextYearStart = `${currentYear + 1}-01-01`;
   const cutoffDate = new Date(today);
@@ -230,7 +267,8 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
   const totalItems = itemRowsSafe.length;
   const totalOutfits = outfitRows.length;
   const outfitIds = outfitRows.map((row) => row.id);
-  const totalPhotos = await countPhotosByOutfitIds(outfitIds);
+  const photos = await fetchPhotosByOutfitIds(outfitIds);
+  const totalPhotos = photos.length;
 
   const categoryCounts: Record<string, number> = {};
   const itemById: Record<number, (typeof itemRowsSafe)[number]> = {};
@@ -295,7 +333,11 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
   const recentOutfitIds = outfitRows
     .filter((row) => row.date >= cutoffIso)
     .map((row) => row.id);
-  const wearCounts = await fetchRecentWearCounts(recentOutfitIds, allowedItemIds);
+  const recentOutfitIdSet = new Set(recentOutfitIds);
+  const recentPhotoIds = photos
+    .filter((photo) => recentOutfitIdSet.has(photo.outfitId))
+    .map((photo) => photo.id);
+  const wearCounts = await fetchRecentWearCounts(recentOutfitIds, recentPhotoIds, allowedItemIds);
   const topItems = Object.entries(wearCounts)
     .map(([idText, count]) => ({
       id: Number(idText),
@@ -319,7 +361,7 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
   const curationPercent = totalItems > 0 ? Math.min(100, Math.round(60 + efficiencyRate * 0.4)) : 0;
   const topCategory = categorySorted[0]?.category || "Unknown";
 
-  return {
+  const result: StatsPageData = {
     topItems,
     monthPairs,
     tempBuckets,
@@ -338,4 +380,11 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
     topCategory,
     currentYear,
   };
+
+  statsPageCache.set(appUserId, {
+    data: result,
+    expiresAt: now + STATS_CACHE_TTL_MS,
+  });
+
+  return cloneStatsPageData(result);
 }

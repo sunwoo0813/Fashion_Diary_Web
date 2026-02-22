@@ -130,6 +130,11 @@ export async function getDiaryDayData(appUserId: number, isoDate: string): Promi
     throw new Error(`Diary day query failed: ${outfitError.message}`);
   }
 
+  const totalsPromise = Promise.all([
+    admin.from("outfit").select("*", { count: "exact", head: true }).eq("user_id", appUserId),
+    admin.from("item").select("*", { count: "exact", head: true }).eq("user_id", appUserId),
+  ]);
+
   const outfitsBase = (outfitRows || []).map(mapOutfitRow);
   const outfitIds = outfitsBase.map((row) => row.id);
 
@@ -219,10 +224,7 @@ export async function getDiaryDayData(appUserId: number, isoDate: string): Promi
   }));
 
   const [{ count: totalOutfitsCount, error: totalOutfitsError }, { count: totalItemsCount, error: totalItemsError }] =
-    await Promise.all([
-      admin.from("outfit").select("*", { count: "exact", head: true }).eq("user_id", appUserId),
-      admin.from("item").select("*", { count: "exact", head: true }).eq("user_id", appUserId),
-    ]);
+    await totalsPromise;
   if (totalOutfitsError) throw new Error(`Total outfit count failed: ${totalOutfitsError.message}`);
   if (totalItemsError) throw new Error(`Total item count failed: ${totalItemsError.message}`);
 
@@ -246,12 +248,84 @@ export async function getOutfitEditData(appUserId: number, outfitId: number) {
   }
   if (!outfitRow) return null;
 
-  const { outfits } = await getDiaryDayData(appUserId, String(outfitRow.date));
-  const outfit = outfits.find((row) => row.id === outfitId) || {
+  const itemsPromise = getUserWardrobeItems(appUserId);
+  const outfit: DiaryOutfit = {
     ...mapOutfitRow(outfitRow as Record<string, unknown>),
     photos: [],
   };
 
-  const items = await getUserWardrobeItems(appUserId);
+  const { data: photoRows, error: photoError } = await admin
+    .from("outfit_photo")
+    .select("id,outfit_id,photo_path,created_at")
+    .eq("outfit_id", outfitId)
+    .order("created_at", { ascending: true });
+  if (photoError) {
+    throw new Error(`Outfit photo lookup failed: ${photoError.message}`);
+  }
+
+  const photos: DiaryPhoto[] = (photoRows || []).map((row) => ({
+    id: Number(row.id),
+    outfit_id: Number(row.outfit_id),
+    photo_path: String(row.photo_path || ""),
+    created_at: row.created_at ? String(row.created_at) : null,
+    tag_items: [],
+  }));
+
+  if (photos.length > 0) {
+    const photoIds = photos.map((photo) => photo.id);
+    const { data: tagRows, error: tagError } = await admin
+      .from("outfit_photo_item")
+      .select("photo_id,item_id")
+      .in("photo_id", photoIds);
+    if (tagError) {
+      throw new Error(`Outfit photo tag query failed: ${tagError.message}`);
+    }
+
+    const itemIds = Array.from(
+      new Set((tagRows || []).map((row) => Number(row.item_id)).filter((id) => Number.isInteger(id) && id > 0)),
+    );
+    let itemsById: Record<number, { id: number; name: string; category: string | null }> = {};
+    if (itemIds.length > 0) {
+      const { data: tagItemRows, error: tagItemError } = await admin
+        .from("item")
+        .select("id,name,category,user_id")
+        .eq("user_id", appUserId)
+        .in("id", itemIds);
+      if (tagItemError) {
+        throw new Error(`Outfit tag item query failed: ${tagItemError.message}`);
+      }
+
+      itemsById = (tagItemRows || []).reduce<Record<number, { id: number; name: string; category: string | null }>>(
+        (acc, row) => {
+          const id = Number(row.id);
+          acc[id] = {
+            id,
+            name: String(row.name || "Item"),
+            category: row.category ? String(row.category) : null,
+          };
+          return acc;
+        },
+        {},
+      );
+    }
+
+    const photoMap = photos.reduce<Record<number, DiaryPhoto>>((acc, photo) => {
+      acc[photo.id] = photo;
+      return acc;
+    }, {});
+
+    (tagRows || []).forEach((row) => {
+      const photoId = Number(row.photo_id);
+      const itemId = Number(row.item_id);
+      const photo = photoMap[photoId];
+      const item = itemsById[itemId];
+      if (!photo || !item) return;
+      photo.tag_items.push(item);
+    });
+  }
+
+  outfit.photos = photos;
+
+  const items = await itemsPromise;
   return { outfit, items };
 }

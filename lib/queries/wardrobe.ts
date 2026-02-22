@@ -24,6 +24,15 @@ type WardrobePageData = {
   hasFilters: boolean;
 };
 
+const WARDROBE_CACHE_TTL_MS = 10_000;
+
+type WardrobeCacheEntry = {
+  data: WardrobePageData;
+  expiresAt: number;
+};
+
+const wardrobePageCache = new Map<string, WardrobeCacheEntry>();
+
 function countById(ids: number[]) {
   const counts: Record<number, number> = {};
   ids.forEach((id) => {
@@ -39,6 +48,27 @@ function mergeCounts(target: Record<number, number>, add: Record<number, number>
   });
 }
 
+function cleanupWardrobeCache(now: number) {
+  for (const [key, entry] of wardrobePageCache.entries()) {
+    if (entry.expiresAt <= now) {
+      wardrobePageCache.delete(key);
+    }
+  }
+}
+
+function buildWardrobeCacheKey(appUserId: number, query: string, category: string): string {
+  return `${appUserId}|q=${query}|c=${category}`;
+}
+
+function cloneWardrobePageData(data: WardrobePageData): WardrobePageData {
+  return {
+    items: data.items.map((item) => ({ ...item })),
+    wearCounts: { ...data.wearCounts },
+    favoriteIds: [...data.favoriteIds],
+    hasFilters: data.hasFilters,
+  };
+}
+
 export async function getWardrobePageData({
   appUserId,
   query,
@@ -47,6 +77,14 @@ export async function getWardrobePageData({
   const admin = createServiceRoleSupabaseClient();
   const normalizedQuery = query.trim();
   const normalizedCategory = category.trim();
+  const now = Date.now();
+  cleanupWardrobeCache(now);
+
+  const cacheKey = buildWardrobeCacheKey(appUserId, normalizedQuery, normalizedCategory);
+  const cached = wardrobePageCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) {
+    return cloneWardrobePageData(cached.data);
+  }
 
   let itemsQuery = admin
     .from("item")
@@ -88,52 +126,27 @@ export async function getWardrobePageData({
   const wearCounts: Record<number, number> = {};
   const itemIds = items.map((item) => item.id);
   if (itemIds.length > 0) {
-    const { data: outfits, error: outfitError } = await admin
-      .from("outfit")
-      .select("id")
-      .eq("user_id", appUserId);
-    if (outfitError) {
-      throw new Error(`Outfit lookup failed: ${outfitError.message}`);
+    const [{ data: outfitItems, error: outfitItemError }, { data: photoItems, error: photoItemError }] =
+      await Promise.all([
+        admin.from("outfit_item").select("item_id").in("item_id", itemIds),
+        admin.from("outfit_photo_item").select("item_id").in("item_id", itemIds),
+      ]);
+    if (outfitItemError) {
+      throw new Error(`Outfit item lookup failed: ${outfitItemError.message}`);
+    }
+    if (photoItemError) {
+      throw new Error(`Outfit photo item lookup failed: ${photoItemError.message}`);
     }
 
-    const outfitIds = (outfits || []).map((row) => Number(row.id));
-    if (outfitIds.length > 0) {
-      const { data: outfitItems, error: outfitItemError } = await admin
-        .from("outfit_item")
-        .select("item_id")
-        .in("outfit_id", outfitIds)
-        .in("item_id", itemIds);
-      if (outfitItemError) {
-        throw new Error(`Outfit item lookup failed: ${outfitItemError.message}`);
-      }
-      const outfitItemCounts = countById(
-        (outfitItems || []).map((row) => Number(row.item_id)).filter((id) => Number.isFinite(id)),
-      );
-      mergeCounts(wearCounts, outfitItemCounts);
+    const outfitItemCounts = countById(
+      (outfitItems || []).map((row) => Number(row.item_id)).filter((id) => Number.isFinite(id)),
+    );
+    mergeCounts(wearCounts, outfitItemCounts);
 
-      const { data: photos, error: photoError } = await admin
-        .from("outfit_photo")
-        .select("id")
-        .in("outfit_id", outfitIds);
-      if (photoError) {
-        throw new Error(`Outfit photo lookup failed: ${photoError.message}`);
-      }
-      const photoIds = (photos || []).map((row) => Number(row.id));
-      if (photoIds.length > 0) {
-        const { data: photoItems, error: photoItemError } = await admin
-          .from("outfit_photo_item")
-          .select("item_id")
-          .in("photo_id", photoIds)
-          .in("item_id", itemIds);
-        if (photoItemError) {
-          throw new Error(`Outfit photo item lookup failed: ${photoItemError.message}`);
-        }
-        const photoItemCounts = countById(
-          (photoItems || []).map((row) => Number(row.item_id)).filter((id) => Number.isFinite(id)),
-        );
-        mergeCounts(wearCounts, photoItemCounts);
-      }
-    }
+    const photoItemCounts = countById(
+      (photoItems || []).map((row) => Number(row.item_id)).filter((id) => Number.isFinite(id)),
+    );
+    mergeCounts(wearCounts, photoItemCounts);
   }
 
   const favoriteIds = Object.entries(wearCounts)
@@ -143,10 +156,17 @@ export async function getWardrobePageData({
     .slice(0, 3)
     .map((row) => row.id);
 
-  return {
+  const result: WardrobePageData = {
     items,
     wearCounts,
     favoriteIds,
     hasFilters: Boolean(normalizedQuery || normalizedCategory),
   };
+
+  wardrobePageCache.set(cacheKey, {
+    data: result,
+    expiresAt: now + WARDROBE_CACHE_TTL_MS,
+  });
+
+  return cloneWardrobePageData(result);
 }

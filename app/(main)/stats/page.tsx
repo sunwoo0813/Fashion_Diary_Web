@@ -12,9 +12,14 @@ function formatCount(value: number): string {
   return new Intl.NumberFormat("en-US").format(value);
 }
 
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default async function StatsPage() {
   const { appUserId } = await requireAppUserContext();
   const stats = await getStatsPageData(appUserId);
+  const diaryHref = `/diary/${todayIso()}`;
 
   return (
     <section className="stats-next-page">
@@ -150,7 +155,7 @@ export default async function StatsPage() {
             outfits logged in {stats.currentYear}.
           </p>
           <div className="stats-next-actions">
-            <Link href="/diary" className="ghost-button">
+            <Link href={diaryHref} className="ghost-button">
               View Diary
             </Link>
             <Link href="/wardrobe" className="ghost-button">

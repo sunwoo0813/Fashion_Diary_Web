@@ -2,10 +2,15 @@ import Link from "next/link";
 
 import { getCurrentUser } from "@/lib/auth";
 
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
 export default async function LandingPage() {
   const user = await getCurrentUser();
   const ctaHref = user ? "/dashboard" : "/login";
   const ctaLabel = user ? "Open Dashboard" : "Log In";
+  const diaryHref = user ? `/diary/${todayIso()}` : "/login";
 
   return (
     <main className="landing-page">
@@ -34,7 +39,7 @@ export default async function LandingPage() {
           <Link href={ctaHref} className="solid-button">
             {user ? "Go to Dashboard" : "Start Logging"}
           </Link>
-          <Link href={user ? "/diary" : "/login"} className="ghost-button">
+          <Link href={diaryHref} className="ghost-button">
             {user ? "Open Diary" : "See Demo Flow"}
           </Link>
         </div>

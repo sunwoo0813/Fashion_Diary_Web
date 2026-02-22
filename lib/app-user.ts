@@ -2,6 +2,40 @@ import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 
 import { requireUser } from "./auth";
 
+const APP_USER_CACHE_TTL_MS = 5 * 60 * 1000;
+
+type AppUserCacheEntry = {
+  appUserId: number;
+  expiresAt: number;
+};
+
+const appUserCacheByEmail = new Map<string, AppUserCacheEntry>();
+
+function cleanupExpiredAppUserCache(now: number) {
+  for (const [key, entry] of appUserCacheByEmail.entries()) {
+    if (entry.expiresAt <= now) {
+      appUserCacheByEmail.delete(key);
+    }
+  }
+}
+
+function readCachedAppUserId(email: string, now: number): number | null {
+  const cached = appUserCacheByEmail.get(email);
+  if (!cached) return null;
+  if (cached.expiresAt <= now) {
+    appUserCacheByEmail.delete(email);
+    return null;
+  }
+  return cached.appUserId;
+}
+
+function writeCachedAppUserId(email: string, appUserId: number, now: number) {
+  appUserCacheByEmail.set(email, {
+    appUserId,
+    expiresAt: now + APP_USER_CACHE_TTL_MS,
+  });
+}
+
 export type AppUserContext = {
   appUserId: number;
   email: string;
@@ -29,6 +63,13 @@ export async function getOrCreateAppUserId(emailInput: string): Promise<number> 
     throw new Error("Email is required to resolve app user.");
   }
 
+  const now = Date.now();
+  cleanupExpiredAppUserCache(now);
+  const cachedAppUserId = readCachedAppUserId(email, now);
+  if (cachedAppUserId) {
+    return cachedAppUserId;
+  }
+
   const admin = createServiceRoleSupabaseClient();
 
   const { data: existing, error: lookupError } = await admin
@@ -41,7 +82,9 @@ export async function getOrCreateAppUserId(emailInput: string): Promise<number> 
   }
 
   if (existing?.id) {
-    return Number(existing.id);
+    const appUserId = Number(existing.id);
+    writeCachedAppUserId(email, appUserId, now);
+    return appUserId;
   }
 
   const { data: created, error: insertError } = await admin
@@ -53,5 +96,7 @@ export async function getOrCreateAppUserId(emailInput: string): Promise<number> 
     throw new Error(`App user create failed: ${insertError?.message || "unknown error"}`);
   }
 
-  return Number(created.id);
+  const appUserId = Number(created.id);
+  writeCachedAppUserId(email, appUserId, now);
+  return appUserId;
 }

@@ -11,6 +11,13 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const pathname = request.nextUrl.pathname;
+  const isAuthPagePost =
+    request.method !== "GET" && (pathname === "/login" || pathname === "/signup");
+  if (isAuthPagePost) {
+    return NextResponse.next();
+  }
+
   return updateSupabaseSession(request);
 }
 

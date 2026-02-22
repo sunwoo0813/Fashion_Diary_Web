@@ -4,10 +4,38 @@ import { WardrobeGrid } from "@/components/wardrobe/wardrobe-grid";
 import { requireAppUserContext } from "@/lib/app-user";
 import { getWardrobePageData } from "@/lib/queries/wardrobe";
 
+type WardrobeCategoryFilter = {
+  label: string;
+  value: string;
+  aliases?: string[];
+};
+
+const CATEGORY_FILTERS: WardrobeCategoryFilter[] = [
+  { label: "All pieces", value: "" },
+  { label: "Outerwear", value: "Outerwear" },
+  { label: "Top", value: "Top", aliases: ["Tops"] },
+  { label: "Bottom", value: "Bottom", aliases: ["Bottoms"] },
+  { label: "Footwear", value: "Footwear" },
+  { label: "Accessories", value: "Accessories" },
+];
+
 function readParam(value: string | string[] | undefined): string {
   if (!value) return "";
   if (Array.isArray(value)) return value[0] || "";
   return value;
+}
+
+function isCategoryActive(currentCategory: string, filter: WardrobeCategoryFilter): boolean {
+  if (!filter.value) return !currentCategory;
+  return currentCategory === filter.value || (filter.aliases || []).includes(currentCategory);
+}
+
+function buildWardrobeFilterHref(query: string, categoryValue: string): string {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (categoryValue) params.set("category", categoryValue);
+  const queryString = params.toString();
+  return queryString ? `/wardrobe?${queryString}` : "/wardrobe";
 }
 
 type WardrobePageProps = {
@@ -47,42 +75,22 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
         </div>
       </header>
 
-      <form method="get" action="/wardrobe" className="wardrobe-filter-form">
-        <input type="hidden" name="q" value={q} />
-        <button type="submit" name="category" value="" className={!category ? "is-active" : ""}>
-          All pieces
-        </button>
-        <button type="submit" name="category" value="Outerwear" className={category === "Outerwear" ? "is-active" : ""}>
-          Outerwear
-        </button>
-        <button
-          type="submit"
-          name="category"
-          value="Top"
-          className={category === "Top" || category === "Tops" ? "is-active" : ""}
-        >
-          Top
-        </button>
-        <button
-          type="submit"
-          name="category"
-          value="Bottom"
-          className={category === "Bottom" || category === "Bottoms" ? "is-active" : ""}
-        >
-          Bottom
-        </button>
-        <button type="submit" name="category" value="Footwear" className={category === "Footwear" ? "is-active" : ""}>
-          Footwear
-        </button>
-        <button
-          type="submit"
-          name="category"
-          value="Accessories"
-          className={category === "Accessories" ? "is-active" : ""}
-        >
-          Accessories
-        </button>
-      </form>
+      <nav className="wardrobe-filter-form" aria-label="Wardrobe categories">
+        {CATEGORY_FILTERS.map((filter) => {
+          const active = isCategoryActive(category, filter);
+          return (
+            <Link
+              key={filter.label}
+              href={buildWardrobeFilterHref(q, filter.value)}
+              replace
+              className={`filter-chip${active ? " is-active" : ""}`}
+              aria-current={active ? "page" : undefined}
+            >
+              {filter.label}
+            </Link>
+          );
+        })}
+      </nav>
 
       {error ? <p className="form-error">{error}</p> : null}
 
