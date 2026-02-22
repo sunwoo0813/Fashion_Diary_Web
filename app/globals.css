@@ -1281,6 +1281,12 @@ a {
   font-size: 0.78rem;
 }
 
+.new-photo-status {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
 .existing-photo-section {
   border: 1px solid var(--line);
   border-radius: 14px;

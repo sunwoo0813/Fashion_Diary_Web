@@ -15,11 +15,16 @@ function requireEnv(name: string, ...keys: string[]): string {
 }
 
 export function getSupabaseUrl(): string {
-  return requireEnv("Supabase URL", "NEXT_PUBLIC_SUPABASE_URL");
+  return requireEnv("Supabase URL", "NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_URL");
 }
 
 export function getSupabaseAnonKey(): string {
-  return requireEnv("Supabase anon key", "NEXT_PUBLIC_SUPABASE_ANON_KEY");
+  return requireEnv(
+    "Supabase anon key",
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "SUPABASE_ANON_KEY",
+    "SUPABASE_PUBLISHABLE_KEY",
+  );
 }
 
 export function getSupabaseServiceRoleKey(): string {

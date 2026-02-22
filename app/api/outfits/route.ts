@@ -38,6 +38,20 @@ function parseTagsJson(raw: string): number[][] {
   }
 }
 
+function parsePhotoUrlsJson(raw: string, bucketName: string): string[] {
+  const value = raw.trim();
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((entry) => toText(entry))
+      .filter((url) => Boolean(extractStorageObjectPath(url, bucketName)));
+  } catch {
+    return [];
+  }
+}
+
 async function uploadOutfitPhoto(file: File) {
   const admin = createServiceRoleSupabaseClient();
   const bucket = getSupabaseBucket();
@@ -121,6 +135,8 @@ export async function POST(request: Request) {
 
     const outfitId = Number(outfitRow.id);
     const tagsList = parseTagsJson(toText(formData.get("photo_tags_json")));
+    const bucket = getSupabaseBucket();
+    const uploadedPhotoUrls = parsePhotoUrlsJson(toText(formData.get("photo_urls_json")), bucket);
     const files = formData
       .getAll("photos")
       .filter((entry): entry is File => entry instanceof File)
@@ -129,9 +145,14 @@ export async function POST(request: Request) {
     const { data: userItems } = await admin.from("item").select("id").eq("user_id", appUserId);
     const allowedItemIds = new Set((userItems || []).map((row) => Number(row.id)));
 
-    for (let index = 0; index < files.length; index += 1) {
+    const photoCount = Math.max(uploadedPhotoUrls.length, files.length);
+    for (let index = 0; index < photoCount; index += 1) {
+      const uploadedUrl = toText(uploadedPhotoUrls[index]);
       const file = files[index];
-      const publicPath = await uploadOutfitPhoto(file);
+      if (!uploadedUrl && !file) continue;
+
+      const publicPath = uploadedUrl || (await uploadOutfitPhoto(file));
+      const uploadedByServer = !uploadedUrl;
 
       const { data: photoRow, error: photoInsertError } = await admin
         .from("outfit_photo")
@@ -142,7 +163,9 @@ export async function POST(request: Request) {
         .select("id")
         .single();
       if (photoInsertError || !photoRow?.id) {
-        await removePublicUrl(publicPath);
+        if (uploadedByServer) {
+          await removePublicUrl(publicPath);
+        }
         continue;
       }
 

@@ -44,6 +44,20 @@ function parseTagsJson(raw: string): number[][] {
   }
 }
 
+function parsePhotoUrlsJson(raw: string, bucketName: string): string[] {
+  const value = raw.trim();
+  if (!value) return [];
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((entry) => toText(entry))
+      .filter((url) => Boolean(extractStorageObjectPath(url, bucketName)));
+  } catch {
+    return [];
+  }
+}
+
 async function uploadOutfitPhoto(file: File) {
   const admin = createServiceRoleSupabaseClient();
   const bucket = getSupabaseBucket();
@@ -239,14 +253,21 @@ async function updateOutfit(
   }
 
   const newTagsList = parseTagsJson(toText(formData.get("photo_tags_new_json")));
+  const bucket = getSupabaseBucket();
+  const uploadedPhotoUrls = parsePhotoUrlsJson(toText(formData.get("photo_urls_new_json")), bucket);
   const newFiles = formData
     .getAll("photos")
     .filter((entry): entry is File => entry instanceof File)
     .filter((file) => file.size > 0);
 
-  for (let index = 0; index < newFiles.length; index += 1) {
+  const photoCount = Math.max(uploadedPhotoUrls.length, newFiles.length);
+  for (let index = 0; index < photoCount; index += 1) {
+    const uploadedUrl = toText(uploadedPhotoUrls[index]);
     const file = newFiles[index];
-    const publicPath = await uploadOutfitPhoto(file);
+    if (!uploadedUrl && !file) continue;
+
+    const publicPath = uploadedUrl || (await uploadOutfitPhoto(file));
+    const uploadedByServer = !uploadedUrl;
 
     const { data: photoRow, error: photoInsertError } = await admin
       .from("outfit_photo")
@@ -257,7 +278,9 @@ async function updateOutfit(
       .select("id")
       .single();
     if (photoInsertError || !photoRow?.id) {
-      await removePublicUrl(publicPath);
+      if (uploadedByServer) {
+        await removePublicUrl(publicPath);
+      }
       continue;
     }
 

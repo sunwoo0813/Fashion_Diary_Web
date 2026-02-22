@@ -117,6 +117,8 @@ export default async function OutfitEditPage({
           items={items.map((item) => ({ id: item.id, name: item.name, category: item.category }))}
           inputName="photos"
           hiddenInputName="photo_tags_new_json"
+          uploadedUrlsInputName="photo_urls_new_json"
+          formId="outfitEditForm"
           label="Add New Photos"
         />
       </form>

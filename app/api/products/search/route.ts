@@ -14,13 +14,16 @@ export async function GET(request: Request) {
     const url = new URL(request.url);
     const q = toText(url.searchParams.get("q"));
     if (!q) return NextResponse.json({ ok: true, items: [] });
+    const escaped = q.replace(/,/g, "\\,");
+    const match = `%${escaped}%`;
 
     const admin = createServiceRoleSupabaseClient();
     const { data, error } = await admin
       .from("products")
       .select("brand,name,category,size_table,image_path")
-      .ilike("brand", `%${q}%`)
+      .or(`brand.ilike.${match},name.ilike.${match}`)
       .order("brand")
+      .order("name")
       .limit(12);
     if (error) {
       return NextResponse.json({ ok: false, error: "Product search failed" }, { status: 500 });

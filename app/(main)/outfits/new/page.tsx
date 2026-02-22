@@ -62,6 +62,8 @@ export default async function OutfitNewPage({ searchParams }: OutfitNewPageProps
           items={items.map((item) => ({ id: item.id, name: item.name, category: item.category }))}
           inputName="photos"
           hiddenInputName="photo_tags_json"
+          uploadedUrlsInputName="photo_urls_json"
+          formId="outfitCreateForm"
           label="Upload Outfit Photos"
         />
       </form>

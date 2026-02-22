@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
 
 type SizeGuide = {
   headers: string[];
@@ -122,6 +122,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   const [searchResults, setSearchResults] = useState<ProductItem[]>([]);
   const [searchError, setSearchError] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
+  const [hasSearched, setHasSearched] = useState(false);
 
   const [product, setProduct] = useState("");
   const [brand, setBrand] = useState("");
@@ -133,33 +134,63 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   const [imagePrefill, setImagePrefill] = useState("");
   const [localImageUrl, setLocalImageUrl] = useState("");
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const searchRequestSeqRef = useRef(0);
+  const suppressNextAutoSearchRef = useRef(false);
 
   const previewSrc = localImageUrl || imagePrefill;
 
-  async function runSearch() {
+  useEffect(() => {
+    if (suppressNextAutoSearchRef.current) {
+      suppressNextAutoSearchRef.current = false;
+      return;
+    }
+
     const q = searchQuery.trim();
     if (!q) {
       setSearchResults([]);
       setSearchError("");
+      setSearchLoading(false);
+      setHasSearched(false);
       return;
     }
 
-    setSearchLoading(true);
-    setSearchError("");
-    try {
-      const response = await fetch(`/api/products/search?q=${encodeURIComponent(q)}`);
-      const body = (await response.json()) as { ok?: boolean; items?: ProductItem[]; error?: string };
-      if (!response.ok || !body.ok) {
-        throw new Error(body.error || "Product search failed");
+    const requestSeq = searchRequestSeqRef.current + 1;
+    searchRequestSeqRef.current = requestSeq;
+    const abortController = new AbortController();
+
+    const timerId = window.setTimeout(async () => {
+      setSearchLoading(true);
+      setSearchError("");
+      try {
+        const response = await fetch(`/api/products/search?q=${encodeURIComponent(q)}`, {
+          signal: abortController.signal,
+        });
+        const body = (await response.json()) as { ok?: boolean; items?: ProductItem[]; error?: string };
+        if (requestSeq !== searchRequestSeqRef.current) return;
+        if (!response.ok || !body.ok) {
+          throw new Error(body.error || "Product search failed");
+        }
+
+        setSearchResults(Array.isArray(body.items) ? body.items : []);
+        setHasSearched(true);
+      } catch (error) {
+        if (error instanceof Error && error.name === "AbortError") return;
+        if (requestSeq !== searchRequestSeqRef.current) return;
+        setSearchResults([]);
+        setSearchError(error instanceof Error ? error.message : "Product search failed");
+        setHasSearched(true);
+      } finally {
+        if (requestSeq === searchRequestSeqRef.current) {
+          setSearchLoading(false);
+        }
       }
-      setSearchResults(Array.isArray(body.items) ? body.items : []);
-    } catch (error) {
-      setSearchResults([]);
-      setSearchError(error instanceof Error ? error.message : "Product search failed");
-    } finally {
-      setSearchLoading(false);
-    }
-  }
+    }, 220);
+
+    return () => {
+      window.clearTimeout(timerId);
+      abortController.abort();
+    };
+  }, [searchQuery]);
 
   function applyProductItem(item: ProductItem) {
     setBrand(item.brand || "");
@@ -187,8 +218,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     }
     if (fileRef.current) fileRef.current.value = "";
 
+    suppressNextAutoSearchRef.current = true;
     setSearchResults([]);
     setSearchError("");
+    setHasSearched(false);
     setSearchQuery(item.name || "");
   }
 
@@ -213,9 +246,12 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     setSizeDetailJson(buildSizeDetail(sizeGuide.headers, row));
   }
 
+  const normalizedSearchQuery = searchQuery.trim();
   const hasSearchResults = useMemo(
-    () => searchResults.length > 0 || searchLoading || Boolean(searchError),
-    [searchError, searchLoading, searchResults.length],
+    () =>
+      Boolean(normalizedSearchQuery) &&
+      (searchResults.length > 0 || searchLoading || Boolean(searchError) || hasSearched),
+    [hasSearched, normalizedSearchQuery, searchError, searchLoading, searchResults.length],
   );
 
   return (
@@ -242,11 +278,8 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           type="text"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
-          placeholder="Search product by brand"
+          placeholder="Type brand or product name"
         />
-        <button type="button" className="ghost-button" onClick={runSearch} disabled={searchLoading}>
-          {searchLoading ? "Searching..." : "Search"}
-        </button>
       </div>
 
       {hasSearchResults ? (
