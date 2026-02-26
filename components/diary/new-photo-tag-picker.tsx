@@ -84,6 +84,7 @@ export function NewPhotoTagPicker({
 }: NewPhotoTagPickerProps) {
   const [files, setFiles] = useState<FileView[]>([]);
   const [tagMap, setTagMap] = useState<Record<string, number[]>>({});
+  const [tagPanelOpenMap, setTagPanelOpenMap] = useState<Record<string, boolean>>({});
   const [uploadedUrls, setUploadedUrls] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
@@ -240,6 +241,13 @@ export function NewPhotoTagPicker({
       });
       return next;
     });
+    setTagPanelOpenMap((prev) => {
+      const next: Record<string, boolean> = {};
+      nextFiles.forEach((fileView) => {
+        next[fileView.key] = prev[fileView.key] || false;
+      });
+      return next;
+    });
 
     event.target.value = "";
   }
@@ -251,6 +259,10 @@ export function NewPhotoTagPicker({
       const nextTags = has ? current.filter((id) => id !== itemId) : [...current, itemId];
       return { ...prev, [fileKey]: nextTags };
     });
+  }
+
+  function toggleTagPanel(fileKey: string) {
+    setTagPanelOpenMap((prev) => ({ ...prev, [fileKey]: !prev[fileKey] }));
   }
 
   const hiddenValue = useMemo(() => {
@@ -289,36 +301,59 @@ export function NewPhotoTagPicker({
 
       {files.length > 0 ? (
         <div className="new-photo-list">
-          {files.map((file) => (
-            <article key={file.key} className="new-photo-card">
-              <div className="new-photo-preview">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={file.previewUrl} alt={file.name} />
-              </div>
-              <div className="new-photo-meta">
-                <p>{file.name}</p>
-                {items.length > 0 ? (
-                  <div className="new-photo-tags">
-                    {items.map((item) => {
-                      const checked = (tagMap[file.key] || []).includes(item.id);
-                      return (
-                        <label key={`${file.key}-${item.id}`} className="new-photo-tag">
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            onChange={() => toggleTag(file.key, item.id)}
-                          />
-                          <span>{item.name}</span>
-                        </label>
-                      );
-                    })}
+          {files.map((file) => {
+            const selectedCount = (tagMap[file.key] || []).length;
+            const isTagPanelOpen = Boolean(tagPanelOpenMap[file.key]);
+            return (
+              <article key={file.key} className="new-photo-card">
+                <div className="new-photo-preview">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={file.previewUrl} alt={file.name} />
+                </div>
+                <div className="new-photo-meta">
+                  <div className="new-photo-meta-head">
+                    <p className="new-photo-file-name">{file.name}</p>
+                    <button
+                      type="button"
+                      className="new-photo-tag-toggle"
+                      aria-expanded={isTagPanelOpen}
+                      onClick={() => toggleTagPanel(file.key)}
+                    >
+                      {isTagPanelOpen ? "상품태그 닫기" : "상품태그 추가"}
+                    </button>
                   </div>
-                ) : (
-                  <p className="new-photo-empty-tag">No wardrobe items available for tagging.</p>
-                )}
-              </div>
-            </article>
-          ))}
+
+                  {isTagPanelOpen ? (
+                    items.length > 0 ? (
+                      <div className="new-photo-tags">
+                        {items.map((item) => {
+                          const checked = (tagMap[file.key] || []).includes(item.id);
+                          return (
+                            <label key={`${file.key}-${item.id}`} className="new-photo-tag">
+                              <input
+                                type="checkbox"
+                                checked={checked}
+                                onChange={() => toggleTag(file.key, item.id)}
+                              />
+                              <span>{item.name}</span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      <p className="new-photo-empty-tag">옷장에 등록된 옷이 없어요.</p>
+                    )
+                  ) : (
+                    <p className="new-photo-tag-hint">
+                      {selectedCount > 0
+                        ? `${selectedCount}개 태그 선택됨`
+                        : "상품태그 추가 버튼을 눌러 내 옷장을 불러오세요."}
+                    </p>
+                  )}
+                </div>
+              </article>
+            );
+          })}
         </div>
       ) : null}
     </section>

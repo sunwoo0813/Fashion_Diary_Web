@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth";
-import { getOrCreateAppUserId } from "@/lib/app-user";
 import { getSupabaseBucket } from "@/lib/env";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 import { toText } from "@/lib/wardrobe";
@@ -42,6 +41,13 @@ type UploadTicket = {
   signedUrl: string;
   publicUrl: string;
 };
+
+function normalizePathSegment(value: string): string {
+  const raw = value.trim();
+  if (!raw) return "anonymous";
+  const cleaned = raw.replace(/[^a-zA-Z0-9_-]/g, "");
+  return cleaned || "anonymous";
+}
 
 function parseUploadFiles(payload: Record<string, unknown>): UploadFileInput[] {
   const rawFiles = Array.isArray(payload.files) ? payload.files : [payload];
@@ -97,14 +103,13 @@ export async function POST(request: Request) {
   }
 
   try {
-    const appUserId = await getOrCreateAppUserId(authUser.email);
     const admin = createServiceRoleSupabaseClient();
     const bucket = getSupabaseBucket();
-    const tickets: UploadTicket[] = [];
+    const authUserIdSegment = normalizePathSegment(toText(authUser.id));
 
-    for (const file of files) {
+    const tickets = await Promise.all(files.map(async (file) => {
       const extension = sanitizeExtension(file.fileName);
-      const objectPath = `outfits/${appUserId}/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
+      const objectPath = `outfits/${authUserIdSegment}/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
       const { data, error } = await admin.storage.from(bucket).createSignedUploadUrl(objectPath);
       if (error || !data?.token) {
         throw new Error(error?.message || "Failed to create signed upload URL.");
@@ -120,14 +125,14 @@ export async function POST(request: Request) {
         throw new Error("Failed to resolve public URL.");
       }
 
-      tickets.push({
+      return {
         bucket,
         path: data.path || objectPath,
         token: data.token,
         signedUrl,
         publicUrl,
-      });
-    }
+      } as UploadTicket;
+    }));
 
     return NextResponse.json({
       ok: true,
