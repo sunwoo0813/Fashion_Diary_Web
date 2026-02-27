@@ -4,9 +4,18 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo } from "react";
 
+import {
+  DashboardIcon,
+  DiaryIcon,
+  StatsIcon,
+  TryOnIcon,
+  WardrobeIcon,
+} from "@/components/common/icons";
+
 type NavLink = {
   href: string;
   label: string;
+  icon: React.ReactNode;
   matchPrefix?: string;
 };
 
@@ -18,16 +27,40 @@ function isActive(pathname: string, link: NavLink): boolean {
 export function MainNav() {
   const pathname = usePathname();
   const router = useRouter();
-  const todayIso = useMemo(() => new Date().toISOString().slice(0, 10), []);
   const links: NavLink[] = useMemo(
     () => [
-      { href: "/dashboard", label: "Dashboard", matchPrefix: "/dashboard" },
-      { href: "/wardrobe", label: "Wardrobe", matchPrefix: "/wardrobe" },
-      { href: `/diary/${todayIso}`, label: "Diary", matchPrefix: "/diary" },
-      { href: "/stats", label: "Stats", matchPrefix: "/stats" },
-      { href: "/account", label: "Account", matchPrefix: "/account" },
+      {
+        href: "/dashboard",
+        label: "Dashboard",
+        icon: <DashboardIcon size={16} />,
+        matchPrefix: "/dashboard",
+      },
+      {
+        href: "/wardrobe",
+        label: "Wardrobe",
+        icon: <WardrobeIcon size={16} />,
+        matchPrefix: "/wardrobe",
+      },
+      {
+        href: "/try-on",
+        label: "Try-on",
+        icon: <TryOnIcon size={16} />,
+        matchPrefix: "/try-on",
+      },
+      {
+        href: "/diary",
+        label: "Diary",
+        icon: <DiaryIcon size={16} />,
+        matchPrefix: "/diary",
+      },
+      {
+        href: "/stats",
+        label: "Stats",
+        icon: <StatsIcon size={16} />,
+        matchPrefix: "/stats",
+      },
     ],
-    [todayIso],
+    [],
   );
 
   useEffect(() => {
@@ -47,7 +80,10 @@ export function MainNav() {
             className={`app-link${active ? " is-active" : ""}`}
             aria-current={active ? "page" : undefined}
           >
-            {link.label}
+            <span className="app-link-icon" aria-hidden>
+              {link.icon}
+            </span>
+            <span className="app-link-text">{link.label}</span>
           </Link>
         );
       })}

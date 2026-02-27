@@ -130,6 +130,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   const [size, setSize] = useState("");
   const [sizeDetailJson, setSizeDetailJson] = useState("");
   const [sizeGuide, setSizeGuide] = useState<SizeGuide | null>(null);
+  const [selectedSizeRowIndex, setSelectedSizeRowIndex] = useState<number | null>(null);
 
   const [imagePrefill, setImagePrefill] = useState("");
   const [localImageUrl, setLocalImageUrl] = useState("");
@@ -193,9 +194,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   }, [searchQuery]);
 
   function applyProductItem(item: ProductItem) {
+    const dbCategory = normalizeCategory(item.category || "") || item.category || "";
     setBrand(item.brand || "");
     setProduct(item.name || "");
-    setCategory(normalizeCategory(item.category || "") || category);
+    setCategory(dbCategory);
 
     const parsedGuide = parseSizeGuide(item.size_table);
     if (parsedGuide && parsedGuide.rows.length > 0) {
@@ -203,12 +205,14 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       setSizeGuide(parsedGuide);
       setSize(first[0] || "");
       setSizeDetailJson(buildSizeDetail(parsedGuide.headers, first));
+      setSelectedSizeRowIndex(0);
     } else {
       setSizeGuide(null);
       const fallbackSize =
         typeof item.size_table === "string" ? item.size_table.trim() : "";
       setSize(fallbackSize);
       setSizeDetailJson("");
+      setSelectedSizeRowIndex(null);
     }
 
     setImagePrefill(item.image_path || "");
@@ -244,6 +248,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     if (!row) return;
     setSize(row[0] || "");
     setSizeDetailJson(buildSizeDetail(sizeGuide.headers, row));
+    setSelectedSizeRowIndex(rowIndex);
   }
 
   const normalizedSearchQuery = searchQuery.trim();
@@ -340,21 +345,13 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           </label>
           <label>
             Category
-            <select
+            <input
+              type="text"
               name="category"
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              required
-            >
-              <option value="" disabled>
-                Select category
-              </option>
-              <option value="Tops">Tops</option>
-              <option value="Outerwear">Outerwear</option>
-              <option value="Bottoms">Bottoms</option>
-              <option value="Footwear">Footwear</option>
-              <option value="Accessories">Accessories</option>
-            </select>
+              placeholder="Category"
+            />
           </label>
           <label>
             Size
@@ -374,15 +371,39 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           {sizeGuide ? (
             <div className="size-guide">
               <p>Size table</p>
-              <div className="size-guide-buttons">
-                {sizeGuide.rows.map((row, index) => {
-                  const label = row[0] || `Size ${index + 1}`;
-                  return (
-                    <button type="button" key={`${label}-${index}`} onClick={() => selectSizeGuideRow(index)}>
-                      {label}
-                    </button>
-                  );
-                })}
+              <div className="size-guide-table-wrap">
+                <table className="size-guide-table">
+                  <thead>
+                    <tr>
+                      {sizeGuide.headers.map((header, index) => (
+                        <th key={`${header}-${index}`} scope="col">
+                          {header || `Col ${index + 1}`}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sizeGuide.rows.map((row, rowIndex) => (
+                      <tr
+                        key={`row-${rowIndex}`}
+                        className={`size-guide-row${selectedSizeRowIndex === rowIndex ? " is-selected" : ""}`}
+                        onClick={() => selectSizeGuideRow(rowIndex)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            selectSizeGuideRow(rowIndex);
+                          }
+                        }}
+                        tabIndex={0}
+                        role="button"
+                      >
+                        {sizeGuide.headers.map((_, colIndex) => (
+                          <td key={`cell-${rowIndex}-${colIndex}`}>{row[colIndex] || "-"}</td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             </div>
           ) : null}

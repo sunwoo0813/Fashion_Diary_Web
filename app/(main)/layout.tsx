@@ -1,6 +1,6 @@
-import { logoutAction } from "@/actions/auth";
 import { MainNav } from "@/components/common/main-nav";
 import { requireUser } from "@/lib/auth";
+import Link from "next/link";
 
 export default async function MainLayout({
   children,
@@ -14,30 +14,30 @@ export default async function MainLayout({
   return (
     <div className="app-shell">
       <aside className="app-rail">
-        <div className="rail-brand">
-          <p className="rail-kicker">Fashion Diary</p>
-          <h2 className="app-rail-title">Wardrobe OS</h2>
-        </div>
-        <div className="rail-user">
-          <div className="rail-avatar" aria-hidden>
-            {initials}
+        <div className="brand-lockup" aria-label="Fashion Diary logo">
+          <div className="brand-logo" aria-hidden>
+            FD
           </div>
-          <div className="rail-user-meta">
-            <p className="rail-user-name">{displayName}</p>
-            <p className="rail-user-email">{user.email ?? "-"}</p>
+          <div className="brand-text">
+            <p className="brand-kicker">Fashion Diary</p>
+            <h2 className="brand-title">Wardrobe OS</h2>
           </div>
         </div>
-
         <MainNav />
-        <form action={logoutAction} style={{ marginTop: "1rem" }}>
-          <button
-            type="submit"
-            className="ghost-button"
-            style={{ width: "100%" }}
-          >
-            Logout
-          </button>
-        </form>
+
+        <div className="topbar-right">
+          <Link href="/account" className="topbar-profile-link" aria-label="Open profile">
+            <div className="rail-user">
+              <div className="rail-avatar" aria-hidden>
+                {initials}
+              </div>
+              <div className="rail-user-meta">
+                <p className="rail-user-name">{displayName}</p>
+                <p className="rail-user-email">{user.email ?? "-"}</p>
+              </div>
+            </div>
+          </Link>
+        </div>
       </aside>
       <main className="app-main">{children}</main>
     </div>

@@ -30,6 +30,122 @@ a {
   text-decoration: none;
 }
 
+button,
+.solid-button,
+.ghost-button,
+.danger-button,
+.quick-link,
+.app-link,
+.filter-chip,
+.diary-icon-button,
+.wardrobe-edit-icon,
+.wardrobe-inline-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button,
+[role="button"],
+.solid-button,
+.ghost-button,
+.danger-button,
+.quick-link,
+.app-link,
+.filter-chip,
+.wardrobe-card,
+.landing-card,
+.dash-card,
+.workflow-card,
+.account-card,
+.diary-outfit-card,
+.diary-day-cell,
+.stats-next-card,
+.stats-next-top-item,
+.new-photo-card,
+.existing-photo-card,
+.item-search-result {
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+button:hover,
+[role="button"]:hover,
+.solid-button:hover,
+.ghost-button:hover,
+.danger-button:hover,
+.quick-link:hover,
+.app-link:hover,
+.filter-chip:hover,
+.wardrobe-card:hover,
+.landing-card:hover,
+.dash-card:hover,
+.workflow-card:hover,
+.account-card:hover,
+.diary-outfit-card:hover,
+.diary-day-cell:hover,
+.stats-next-card:hover,
+.stats-next-top-item:hover,
+.new-photo-card:hover,
+.existing-photo-card:hover,
+.item-search-result:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(31, 26, 23, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  [role="button"],
+  .solid-button,
+  .ghost-button,
+  .danger-button,
+  .quick-link,
+  .app-link,
+  .filter-chip,
+  .wardrobe-card,
+  .landing-card,
+  .dash-card,
+  .workflow-card,
+  .account-card,
+  .diary-outfit-card,
+  .diary-day-cell,
+  .stats-next-card,
+  .stats-next-top-item,
+  .new-photo-card,
+  .existing-photo-card,
+  .item-search-result {
+    transition: none;
+  }
+
+  button:hover,
+  [role="button"]:hover,
+  .solid-button:hover,
+  .ghost-button:hover,
+  .danger-button:hover,
+  .quick-link:hover,
+  .app-link:hover,
+  .filter-chip:hover,
+  .wardrobe-card:hover,
+  .landing-card:hover,
+  .dash-card:hover,
+  .workflow-card:hover,
+  .account-card:hover,
+  .diary-outfit-card:hover,
+  .diary-day-cell:hover,
+  .stats-next-card:hover,
+  .stats-next-top-item:hover,
+  .new-photo-card:hover,
+  .existing-photo-card:hover,
+  .item-search-result:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
 .page {
   padding: 2rem;
 }
@@ -47,41 +163,186 @@ a {
 
 .app-shell {
   display: grid;
-  grid-template-columns: 240px 1fr;
+  grid-template-columns: 1fr;
   min-height: 100vh;
 }
 
 .app-rail {
+  position: fixed;
+  inset: 0 auto 0 0;
+  width: 72px;
   border-right: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.9);
   backdrop-filter: blur(8px);
-  padding: 1.2rem 1rem;
+  padding: 0.8rem 0.6rem;
   display: grid;
   align-content: start;
-  gap: 0.85rem;
+  gap: 1rem;
+  z-index: 80;
+  overflow: hidden;
+  transition: width 0.2s ease, padding 0.2s ease;
 }
 
-.app-rail-title {
+.app-rail:hover {
+  width: 240px;
+  padding: 1rem 0.85rem;
+}
+
+.brand-text,
+.rail-user-meta,
+.app-link-text {
+  max-width: 180px;
+  opacity: 1;
+  visibility: visible;
+  overflow: hidden;
+  transition: opacity 0.18s ease, max-width 0.2s ease, visibility 0.2s ease;
+}
+
+.app-rail:not(:hover) .brand-text,
+.app-rail:not(:hover) .rail-user-meta,
+.app-rail:not(:hover) .app-link-text {
+  max-width: 0;
+  opacity: 0;
+  visibility: hidden;
+}
+
+.app-rail:not(:hover) .brand-lockup {
+  width: 40px;
+  height: 40px;
+  justify-content: center;
+  align-items: center;
+  gap: 0;
+  padding: 0;
+  margin-inline: auto;
+  border-radius: 12px;
+}
+
+.app-rail:not(:hover) .rail-user {
+  width: 40px;
+  height: 40px;
+  grid-template-columns: 1fr;
+  justify-items: center;
+  align-items: center;
+  padding: 0;
+  margin-inline: auto;
+  border-radius: 12px;
+}
+
+.app-rail:not(:hover) .app-link {
+  display: grid;
+  place-items: center;
+  gap: 0;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border-radius: 10px;
+  margin-inline: auto;
+  position: relative;
+}
+
+.app-rail:not(:hover) .topbar-right {
+  justify-content: center;
+}
+
+.app-rail:not(:hover) .app-nav {
+  justify-items: center;
+}
+
+.app-rail:not(:hover) .app-link-icon {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 24px;
+}
+
+.app-rail:not(:hover) .app-link-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.app-rail:not(:hover) .brand-logo {
+  width: 24px;
+  height: 24px;
+  font-size: 0.68rem;
+}
+
+.app-rail:not(:hover) .topbar-profile-link {
+  width: 40px;
+  display: block;
+}
+
+.app-rail:not(:hover) .rail-avatar {
+  width: 24px;
+  height: 24px;
+  font-size: 0.68rem;
+}
+
+.brand-lockup {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 0.45rem 0.62rem;
+  background: #fff;
+}
+
+.brand-logo {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: white;
+  background: linear-gradient(160deg, var(--accent), var(--accent-deep));
+}
+
+.brand-kicker {
+  margin: 0;
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.brand-title {
   margin: 0;
   font-family: "Fraunces", serif;
-  font-size: 1rem;
+  font-size: 0.9rem;
   letter-spacing: 0.02em;
   color: var(--text);
 }
 
-.rail-brand {
-  border: 1px solid var(--line);
-  border-radius: 14px;
-  padding: 0.7rem 0.75rem;
-  background: #fff;
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
 }
 
-.rail-kicker {
-  margin: 0;
-  font-size: 0.72rem;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--muted);
+.topbar-profile-link {
+  border-radius: 14px;
+}
+
+.topbar-profile-link .rail-user {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.topbar-profile-link:hover .rail-user {
+  border-color: #d7c6ba;
+}
+
+.topbar-profile-link:focus-visible {
+  outline: none;
+}
+
+.topbar-profile-link:focus-visible .rail-user {
+  box-shadow: 0 0 0 2px rgba(180, 99, 63, 0.25);
 }
 
 .rail-user {
@@ -132,13 +393,35 @@ a {
 }
 
 .app-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0.45rem;
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: 12px;
   background: var(--surface);
-  padding: 0.63rem 0.7rem;
-  font-size: 0.93rem;
+  padding: 0.56rem 0.72rem;
+  font-size: 0.86rem;
   transition: all 0.2s ease;
+}
+
+.app-link-icon {
+  width: 20px;
+  height: 20px;
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 20px;
+  line-height: 0;
+}
+
+.app-link-icon svg {
+  display: block;
+  width: 16px;
+  height: 16px;
+}
+
+.app-link-text {
+  white-space: nowrap;
 }
 
 .app-link:hover {
@@ -154,7 +437,8 @@ a {
 
 .app-main {
   min-width: 0;
-  padding: 1.4rem;
+  padding: 1.2rem;
+  margin-left: 72px;
 }
 
 .route-loading {
@@ -436,6 +720,14 @@ a {
   grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
+.account-logout {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+}
+
 .account-card {
   border: 1px solid var(--line);
   border-radius: 16px;
@@ -635,11 +927,22 @@ a {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.wardrobe-page .wardrobe-grid {
+  gap: 0.75rem;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
 .wardrobe-card {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: white;
   overflow: hidden;
+}
+
+.wardrobe-page .wardrobe-card {
+  aspect-ratio: 1 / 1.58;
+  display: grid;
+  grid-template-rows: min-content 1fr auto;
 }
 
 .wardrobe-card.is-delete-mode {
@@ -656,6 +959,25 @@ a {
   aspect-ratio: 4 / 5;
   border-bottom: 1px solid var(--line);
   background: #f8f5f2;
+}
+
+.wardrobe-page .wardrobe-media {
+  aspect-ratio: auto;
+  height: 100%;
+  border-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  padding: 4px;
+}
+
+.wardrobe-page .wardrobe-media img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .wardrobe-media img {
@@ -687,10 +1009,162 @@ a {
   letter-spacing: 0.02em;
 }
 
+.wardrobe-brand-bar {
+  border-bottom: 1px solid var(--line);
+  padding: 5px 0;
+  text-align: center;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.74rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
+
+.wardrobe-brand-bar span {
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding-left: 0.9rem;
+}
+
+.wardrobe-edit-icon {
+  border: 0;
+  border-radius: 0;
+  width: auto;
+  height: auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin-right: 5px;
+  font-size: 1rem;
+  line-height: 0;
+  color: var(--muted);
+  background: transparent;
+}
+
+.wardrobe-edit-icon svg {
+  display: block;
+}
+
+.wardrobe-edit-icon:hover {
+  color: var(--accent-deep);
+}
+
+.wardrobe-edit-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(25, 19, 15, 0.42);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.wardrobe-edit-modal {
+  width: min(520px, 100%);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 12px 30px rgba(31, 26, 23, 0.18);
+  padding: 0.95rem;
+}
+
+.wardrobe-edit-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.wardrobe-edit-head h3 {
+  margin: 0;
+  font-family: "Fraunces", serif;
+  font-size: 1.12rem;
+}
+
+.wardrobe-edit-form {
+  margin-top: 0.75rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.wardrobe-edit-form label {
+  display: grid;
+  gap: 0.26rem;
+  font-size: 0.82rem;
+}
+
+.wardrobe-edit-form input,
+.wardrobe-edit-form textarea {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  padding: 0.52rem 0.62rem;
+  font: inherit;
+  color: inherit;
+}
+
+.wardrobe-edit-actions {
+  margin-top: 0.8rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.45rem;
+}
+
 .wardrobe-info {
   padding: 0.72rem;
   display: grid;
   gap: 0.22rem;
+}
+
+.wardrobe-page .wardrobe-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.18rem;
+  justify-content: flex-start;
+  align-items: center;
+  text-align: center;
+  padding: 0.45rem 0.45rem;
+}
+
+.wardrobe-page .wardrobe-info h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.wardrobe-page .wardrobe-info p,
+.wardrobe-page .wardrobe-info span {
+  margin: 0;
+  font-size: 0.64rem;
+}
+
+@media (max-width: 1366px) {
+  .wardrobe-page .wardrobe-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .wardrobe-page .wardrobe-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .wardrobe-page .wardrobe-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .wardrobe-info h3 {
@@ -712,6 +1186,109 @@ a {
   background: #fff9f4;
   padding: 1rem;
   color: var(--muted);
+}
+
+.wardrobe-inline-modal-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  background: transparent;
+}
+
+.wardrobe-inline-modal {
+  position: fixed;
+  width: 320px;
+  max-height: min(460px, calc(100vh - 24px));
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.97);
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 28px rgba(31, 26, 23, 0.14);
+  padding: 0.85rem;
+}
+
+.wardrobe-inline-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 0.52rem;
+}
+
+.wardrobe-inline-modal-head strong {
+  font-size: 0.98rem;
+  font-family: "Fraunces", serif;
+}
+
+.wardrobe-inline-close {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  width: 30px;
+  height: 30px;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.wardrobe-inline-body {
+  margin-top: 0.62rem;
+  display: grid;
+  gap: 0.42rem;
+}
+
+.wardrobe-inline-body p {
+  margin: 0;
+  display: grid;
+  gap: 0.2rem;
+}
+
+.wardrobe-inline-body span {
+  color: var(--muted);
+  font-size: 0.73rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.wardrobe-inline-body strong {
+  font-size: 0.86rem;
+  line-height: 1.35;
+}
+
+.wardrobe-inline-size {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.wardrobe-inline-size-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.wardrobe-inline-size-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.72rem;
+}
+
+.wardrobe-inline-size-table th,
+.wardrobe-inline-size-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.28rem 0.35rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.wardrobe-inline-size-table thead th {
+  background: #faf6f2;
+  font-weight: 700;
+}
+
+.wardrobe-inline-size-table tbody tr:last-child td {
+  border-bottom: 0;
 }
 
 .item-new-page {
@@ -882,6 +1459,55 @@ a {
   color: var(--muted);
 }
 
+.size-guide-table-wrap {
+  overflow-x: auto;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.size-guide-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+}
+
+.size-guide-table th,
+.size-guide-table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.34rem 0.42rem;
+  text-align: left;
+  white-space: nowrap;
+}
+
+.size-guide-table thead th {
+  background: #faf6f2;
+  font-weight: 700;
+}
+
+.size-guide-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.size-guide-row {
+  cursor: pointer;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+.size-guide-row:hover td {
+  background: #f0ece9;
+}
+
+.size-guide-row:focus-visible {
+  outline: 2px solid rgba(180, 99, 63, 0.35);
+  outline-offset: -2px;
+}
+
+.size-guide-row.is-selected td {
+  background: #8c8c8c;
+  color: #fff;
+}
+
 .size-guide-buttons {
   display: flex;
   flex-wrap: wrap;
@@ -912,6 +1538,330 @@ a {
   letter-spacing: 0.08em;
   font-size: 0.75rem;
   color: var(--muted);
+}
+
+.diary-feed-page {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.86);
+  padding: 1.2rem;
+  min-height: calc(100vh - 2.8rem);
+  height: calc(100vh - 2.8rem);
+  display: flex;
+  flex-direction: column;
+}
+
+.diary-feed-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.diary-feed-header h1 {
+  margin: 0.35rem 0 0;
+  font-family: "Fraunces", serif;
+}
+
+.diary-feed-header p {
+  margin: 0.55rem 0 0;
+  color: var(--muted);
+}
+
+.diary-feed-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.diary-feed-title-icon {
+  width: 42px;
+  height: 42px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
+  display: grid;
+  place-items: center;
+  color: var(--accent-deep);
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.diary-feed-title-icon svg {
+  display: block;
+}
+
+.diary-feed-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.diary-feed-count {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  font-weight: 700;
+}
+
+.diary-icon-button {
+  min-width: 42px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  font-size: 1.3rem;
+  line-height: 1;
+  text-align: center;
+}
+
+.diary-icon-button svg {
+  display: block;
+}
+
+.diary-feed-scroll {
+  margin-top: 0.9rem;
+  --diary-grid-gap: 0.75rem;
+  flex: 1;
+  min-height: 0;
+  max-height: none;
+  overflow: auto;
+  padding-right: 0.25rem;
+}
+
+.diary-feed-page .wardrobe-grid {
+  margin-top: 0;
+  gap: var(--diary-grid-gap);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  width: 100%;
+}
+
+@media (max-width: 1366px) {
+  .diary-feed-page .wardrobe-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 1024px) {
+  .diary-feed-page .wardrobe-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 768px) {
+  .diary-feed-page .wardrobe-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.diary-feed-page .wardrobe-media {
+  aspect-ratio: auto;
+  height: 100%;
+  border-bottom: 0;
+}
+
+.diary-post-card {
+  cursor: pointer;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1 / 1.58;
+  justify-self: stretch;
+  display: grid;
+  grid-template-rows: 75% 25%;
+}
+
+.diary-post-card:focus-visible {
+  outline: 2px solid rgba(180, 99, 63, 0.35);
+  outline-offset: 1px;
+}
+
+.diary-post-open {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.diary-post-image {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  object-fit: cover;
+  display: block;
+}
+
+.diary-post-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.16rem;
+  padding: 0.45rem 0.5rem;
+  min-height: 0;
+}
+
+.diary-post-info h3 {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.25;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.diary-post-info p {
+  margin: 0;
+  font-size: 0.62rem;
+  line-height: 1.3;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.diary-post-info .diary-tag-list span {
+  font-size: 0.64rem;
+  padding: 0.15rem 0.35rem;
+}
+
+.diary-post-date {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.64rem;
+}
+
+.diary-post-footer {
+  margin-top: auto;
+  align-self: flex-start;
+  display: grid;
+  gap: 0.08rem;
+}
+
+.diary-post-weather {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.6rem;
+  line-height: 1.25;
+}
+
+.diary-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(25, 19, 15, 0.58);
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+}
+
+.diary-modal {
+  width: 60vw;
+  height: 70vh;
+  overflow: hidden;
+  border-radius: 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+}
+
+.diary-modal-media {
+  background: #f8f5f2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  min-width: 0;
+  min-height: 0;
+  padding: 0.5rem;
+}
+
+.diary-modal-media img {
+  width: auto;
+  height: auto;
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  display: block;
+}
+
+.diary-modal-body {
+  padding: 1rem;
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+}
+
+.diary-modal-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: start;
+  gap: 0.6rem;
+}
+
+.diary-modal-head h2 {
+  margin: 0;
+  font-size: 1.06rem;
+}
+
+.diary-modal-menu-wrap {
+  position: relative;
+}
+
+.diary-modal-menu-button {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  line-height: 0;
+  cursor: pointer;
+}
+
+.diary-modal-menu-button svg {
+  display: block;
+}
+
+.diary-modal-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.35rem);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: #fff;
+  min-width: 90px;
+  box-shadow: 0 6px 20px rgba(31, 26, 23, 0.08);
+  overflow: hidden;
+}
+
+.diary-modal-menu-item {
+  display: block;
+  padding: 0.45rem 0.62rem;
+  font-size: 0.84rem;
+}
+
+.diary-modal-menu-item:hover {
+  background: #fff4ee;
+}
+
+.diary-modal-weather {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+}
+
+.diary-modal-muted {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+}
+
+.diary-modal-date {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.8rem;
 }
 
 .diary-month-page {
@@ -1672,12 +2622,58 @@ a {
   }
 
   .app-rail {
+    position: static;
+    width: auto;
+    transition: none;
     border-right: 0;
     border-bottom: 1px solid var(--line);
+    overflow: visible;
+    padding: 1rem 0.85rem;
+  }
+
+  .brand-text,
+  .rail-user-meta,
+  .app-link-text {
+    max-width: none;
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .app-rail:not(:hover) .brand-lockup,
+  .app-rail:not(:hover) .rail-user,
+  .app-rail:not(:hover) .app-link {
+    justify-content: flex-start;
+    justify-items: stretch;
+  }
+
+  .app-rail:not(:hover) .brand-lockup {
+    padding: 0.45rem 0.62rem;
+  }
+
+  .app-rail:not(:hover) .rail-user {
+    grid-template-columns: auto 1fr;
+    padding: 0.65rem;
+  }
+
+  .app-rail:not(:hover) .app-link {
+    padding: 0.56rem 0.72rem;
+  }
+
+  .app-rail:not(:hover) .topbar-right {
+    justify-content: initial;
   }
 
   .app-main {
     padding: 0.85rem;
+    margin-left: 0;
+  }
+
+  .topbar-right {
+    flex-wrap: wrap;
+  }
+
+  .topbar-right {
+    justify-content: space-between;
   }
 
   .landing-page,
@@ -1696,6 +2692,7 @@ a {
 
   .wardrobe-header,
   .item-new-header,
+  .diary-feed-header,
   .diary-month-header,
   .diary-day-header,
   .outfit-header {
@@ -1771,5 +2768,18 @@ a {
   .new-photo-preview {
     border-right: 0;
     border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 640px) {
+  .diary-modal {
+    grid-template-columns: 1fr;
+    max-height: calc(100vh - 1rem);
+  }
+
+  .diary-feed-page {
+    padding: 0.95rem;
+    min-height: auto;
+    height: auto;
   }
 }

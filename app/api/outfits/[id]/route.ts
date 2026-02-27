@@ -180,19 +180,6 @@ async function updateOutfit(
   const humidity = Math.trunc(toNumber(toText(formData.get("humidity")), 0));
   const rain = toText(formData.get("rain")) === "1";
 
-  const { data: clash } = await admin
-    .from("outfit")
-    .select("id")
-    .eq("user_id", appUserId)
-    .eq("date", dateValue)
-    .neq("id", outfitId)
-    .maybeSingle();
-  if (clash?.id) {
-    const url = new URL(`/outfits/${outfitId}/edit`, request.url);
-    url.searchParams.set("error", "Another entry already exists for this date.");
-    return NextResponse.redirect(url, { status: 303 });
-  }
-
   const { error: updateError } = await admin
     .from("outfit")
     .update({

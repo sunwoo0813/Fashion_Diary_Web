@@ -101,21 +101,6 @@ export async function POST(request: Request) {
     const humidity = Math.trunc(toNumber(toText(formData.get("humidity")), 0));
     const rain = toText(formData.get("rain")) === "1";
 
-    const { data: clash, error: clashError } = await admin
-      .from("outfit")
-      .select("id")
-      .eq("user_id", appUserId)
-      .eq("date", dateValue)
-      .maybeSingle();
-    if (clashError) {
-      return redirectToNew("Failed to validate date.");
-    }
-    if (clash?.id) {
-      return NextResponse.redirect(new URL(`/outfits/${Number(clash.id)}/edit`, request.url), {
-        status: 303,
-      });
-    }
-
     const { data: outfitRow, error: insertError } = await admin
       .from("outfit")
       .insert({
@@ -177,7 +162,7 @@ export async function POST(request: Request) {
       }
     }
 
-    return NextResponse.redirect(new URL(`/diary/${dateValue}`, request.url), { status: 303 });
+    return NextResponse.redirect(new URL("/diary", request.url), { status: 303 });
   } catch {
     return redirectToNew("Outfit save failed.");
   }

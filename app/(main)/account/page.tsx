@@ -1,3 +1,4 @@
+import { logoutAction } from "@/actions/auth";
 import { requireUser } from "@/lib/auth";
 
 function readParam(value: string | string[] | undefined): string {
@@ -63,6 +64,14 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             </button>
           </form>
         </article>
+      </div>
+
+      <div className="account-logout">
+        <form action={logoutAction}>
+          <button type="submit" className="ghost-button">
+            Logout
+          </button>
+        </form>
       </div>
     </section>
   );

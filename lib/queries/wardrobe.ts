@@ -7,6 +7,7 @@ export type WardrobeItem = {
   name: string;
   category: string | null;
   size: string | null;
+  size_detail: unknown;
   image_path: string | null;
   created_at: string | null;
 };
@@ -88,7 +89,7 @@ export async function getWardrobePageData({
 
   let itemsQuery = admin
     .from("item")
-    .select("id,user_id,name,category,size,image_path,created_at")
+    .select("id,user_id,name,category,size,size_detail,image_path,created_at")
     .eq("user_id", appUserId)
     .order("created_at", { ascending: false });
 
@@ -119,6 +120,7 @@ export async function getWardrobePageData({
     name: String(row.name || "Untitled"),
     category: row.category ? String(row.category) : null,
     size: row.size ? String(row.size) : null,
+    size_detail: row.size_detail ?? null,
     image_path: row.image_path ? String(row.image_path) : null,
     created_at: row.created_at ? String(row.created_at) : null,
   }));
