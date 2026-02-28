@@ -113,7 +113,7 @@ export async function getUserWardrobeItems(appUserId: number): Promise<WardrobeI
   const admin = createServiceRoleSupabaseClient();
   const { data, error } = await admin
     .from("item")
-    .select("id,user_id,name,category,size,image_path,created_at")
+    .select("id,user_id,name,category,size,size_detail,image_path,created_at")
     .eq("user_id", appUserId)
     .order("created_at", { ascending: false });
   if (error) {
@@ -126,6 +126,7 @@ export async function getUserWardrobeItems(appUserId: number): Promise<WardrobeI
     name: String(row.name || "Untitled"),
     category: row.category ? String(row.category) : null,
     size: row.size ? String(row.size) : null,
+    size_detail: row.size_detail ?? null,
     image_path: row.image_path ? String(row.image_path) : null,
     created_at: row.created_at ? String(row.created_at) : null,
   }));
