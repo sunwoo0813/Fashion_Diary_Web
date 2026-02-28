@@ -864,15 +864,84 @@ button:hover,
 
 .wardrobe-search-form {
   display: flex;
-  gap: 0.5rem;
+}
+
+.wardrobe-search-shell {
+  position: relative;
+  min-width: 190px;
+}
+
+.wardrobe-search-input-wrap {
+  position: relative;
 }
 
 .wardrobe-search-form input {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.5rem 0.75rem;
+  padding-right: 2.6rem;
   min-width: 190px;
+  width: 100%;
   background: white;
+}
+
+.wardrobe-search-submit {
+  position: absolute;
+  top: 50%;
+  right: 0.35rem;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border: 0;
+  border-radius: 999px;
+  background: var(--accent);
+  color: white;
+  cursor: pointer;
+}
+
+.wardrobe-search-submit:hover {
+  background: var(--accent-deep);
+}
+
+.wardrobe-search-suggestions {
+  position: absolute;
+  top: calc(100% + 0.45rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.45rem;
+  border: 1px solid var(--line);
+  border-radius: 0.95rem;
+  background: white;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
+.wardrobe-search-suggestion {
+  border: 0;
+  border-radius: 0.7rem;
+  padding: 0.55rem 0.7rem;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.wardrobe-search-suggestion:hover {
+  background: #fff4ee;
+  color: var(--accent-deep);
+}
+
+.wardrobe-search-empty {
+  margin: 0;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.88rem;
+  color: var(--muted);
 }
 
 .wardrobe-filter-form {
@@ -958,7 +1027,7 @@ button:hover,
   position: relative;
   aspect-ratio: 4 / 5;
   border-bottom: 1px solid var(--line);
-  background: #f8f5f2;
+  background: white;
 }
 
 .wardrobe-page .wardrobe-media {
@@ -1211,15 +1280,28 @@ button:hover,
 .wardrobe-inline-modal-head {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   gap: 0.6rem;
   border-bottom: 1px solid var(--line);
   padding-bottom: 0.52rem;
 }
 
+.wardrobe-inline-modal-title {
+  display: grid;
+  gap: 0.16rem;
+}
+
 .wardrobe-inline-modal-head strong {
-  font-size: 0.98rem;
+  font-size: 1.14rem;
   font-family: "Fraunces", serif;
+  line-height: 1.1;
+}
+
+.wardrobe-inline-modal-title p {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.3;
+  color: var(--text);
 }
 
 .wardrobe-inline-close {
@@ -1592,6 +1674,25 @@ button:hover,
 }
 
 .diary-feed-title-wrap {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.diary-feed-title-copy {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.diary-feed-title-copy h1 {
+  margin: 0;
+  font-size: clamp(1.85rem, 3.6vw, 2.7rem);
+  line-height: 1;
+  letter-spacing: 0.14em;
+  font-family: "Didot", "Bodoni MT", "Bodoni 72", "Times New Roman", serif;
+  font-weight: 600;
+}
+
+.diary-feed-title-meta {
   display: flex;
   align-items: center;
   gap: 0.55rem;

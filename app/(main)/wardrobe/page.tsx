@@ -1,6 +1,8 @@
 import Link from "next/link";
 
+import { PlusIcon } from "@/components/common/icons";
 import { WardrobeGrid } from "@/components/wardrobe/wardrobe-grid";
+import { WardrobeSearchBar } from "@/components/wardrobe/wardrobe-search-bar";
 import { requireAppUserContext } from "@/lib/app-user";
 import { getWardrobePageData } from "@/lib/queries/wardrobe";
 
@@ -59,18 +61,12 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
       <header className="wardrobe-header">
         <div>
           <p className="wardrobe-kicker">Digital Archive</p>
-          <h1>Curated Collection</h1>
+          <h1>My Closet</h1>
         </div>
         <div className="wardrobe-header-actions">
-          <form method="get" action="/wardrobe" className="wardrobe-search-form">
-            <input type="hidden" name="category" value={category} />
-            <input name="q" defaultValue={q} placeholder="Search collection" />
-            <button type="submit" className="ghost-button">
-              Search
-            </button>
-          </form>
-          <Link href="/wardrobe/new" className="solid-button">
-            Add New
+          <WardrobeSearchBar initialQuery={q} category={category} items={data.items} />
+          <Link href="/wardrobe/new" className="solid-button diary-icon-button" aria-label="Add new item">
+            <PlusIcon size={18} />
           </Link>
         </div>
       </header>

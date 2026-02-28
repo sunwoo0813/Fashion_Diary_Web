@@ -140,6 +140,7 @@ export function WardrobeGrid({
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
   const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
+  const activeParsedName = activeItem ? parseName(activeItem.name) : null;
   const activeSizeGrid = activeItem ? parseSizeGrid(activeItem.size_detail) : null;
 
   useEffect(() => {
@@ -399,7 +400,10 @@ export function WardrobeGrid({
             onClick={(event) => event.stopPropagation()}
           >
             <div className="wardrobe-inline-modal-head">
-              <strong>{parseName(activeItem.name).itemName}</strong>
+              <div className="wardrobe-inline-modal-title">
+                <strong>{activeParsedName?.brand || "-"}</strong>
+                <p>{activeParsedName?.itemName || "Untitled"}</p>
+              </div>
               <button
                 type="button"
                 className="wardrobe-inline-close"
@@ -413,10 +417,6 @@ export function WardrobeGrid({
               </button>
             </div>
             <div className="wardrobe-inline-body">
-              <p><span>Brand</span><strong>{parseName(activeItem.name).brand}</strong></p>
-              <p><span>Item</span><strong>{parseName(activeItem.name).itemName}</strong></p>
-              <p><span>Size</span><strong>{activeItem.size || "-"}</strong></p>
-
               <div className="wardrobe-inline-size">
                 <span>Size Table</span>
                 {activeSizeGrid ? (
@@ -445,6 +445,7 @@ export function WardrobeGrid({
                 )}
               </div>
 
+              <p><span>Size</span><strong>{activeItem.size || "-"}</strong></p>
               <p><span>Color</span><strong>{getDetailValue(activeItem.size_detail, ["color", "colour"])}</strong></p>
               <p>
                 <span>Styling Idea</span>

@@ -96,6 +96,15 @@ export function PlusIcon({ size, className }: IconProps) {
   );
 }
 
+export function ArrowRightIcon({ size, className }: IconProps) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </BaseIcon>
+  );
+}
+
 export function KebabVerticalIcon({ size, className }: IconProps) {
   return (
     <svg

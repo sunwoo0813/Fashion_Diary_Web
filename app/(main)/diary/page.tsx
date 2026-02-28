@@ -21,10 +21,15 @@ export default async function DiaryRootPage() {
     <section className="diary-feed-page">
       <header className="diary-feed-header">
         <div className="diary-feed-title-wrap" aria-label={`Total posts ${sortedPosts.length}`}>
-          <div className="diary-feed-title-icon">
-            <GridIcon size={18} />
+          <div className="diary-feed-title-copy">
+            <h1>OUTFIT</h1>
+            <div className="diary-feed-title-meta">
+              <div className="diary-feed-title-icon">
+                <GridIcon size={18} />
+              </div>
+              <p className="diary-feed-count">{sortedPosts.length} posts</p>
+            </div>
           </div>
-          <p className="diary-feed-count">{sortedPosts.length} posts</p>
         </div>
         <div className="diary-feed-actions">
           <Link href={`/outfits/new?date=${todayIso}`} className="solid-button diary-icon-button" aria-label="Create entry">
