@@ -16,10 +16,32 @@ function todayIso(): string {
   return new Date().toISOString().slice(0, 10);
 }
 
+const DONUT_COLORS = ["#1ED760", "#45E07B", "#74E89A", "#A4F0B9", "#D2F8D7", "#EAFCEC"];
+
+function buildDonutGradient(items: Array<{ category: string; count: number }>): string {
+  const total = items.reduce((sum, item) => sum + item.count, 0);
+  if (total <= 0) {
+    return "conic-gradient(#282828 0deg 360deg)";
+  }
+
+  let currentAngle = 0;
+  const segments = items.map((item, index) => {
+    const slice = (item.count / total) * 360;
+    const start = currentAngle;
+    const end = currentAngle + slice;
+    currentAngle = end;
+    return `${DONUT_COLORS[index % DONUT_COLORS.length]} ${start}deg ${end}deg`;
+  });
+
+  return `conic-gradient(${segments.join(", ")})`;
+}
+
 export default async function StatsPage() {
   const { appUserId } = await requireAppUserContext();
   const stats = await getStatsPageData(appUserId);
   const diaryHref = `/diary/${todayIso()}`;
+  const categoryLegend = stats.categorySorted.slice(0, 6);
+  const donutGradient = buildDonutGradient(categoryLegend);
 
   return (
     <section className="stats-next-page">
@@ -109,16 +131,32 @@ export default async function StatsPage() {
             <span>Top {Math.min(stats.categorySorted.length, 6)}</span>
           </div>
           {stats.categorySorted.length > 0 ? (
-            <div className="stats-next-list">
-              {stats.categorySorted.slice(0, 6).map((row) => (
-                <div key={row.category} className="stats-next-row">
-                  <p>{row.category}</p>
-                  <div className="stats-next-progress">
-                    <span style={{ width: `${ratioPercent(row.count, stats.totalItems || 1)}%` }} />
+            <div className="stats-next-donut-wrap">
+              <div className="stats-next-donut-card">
+                <div className="stats-next-donut" style={{ backgroundImage: donutGradient }}>
+                  <div className="stats-next-donut-hole">
+                    <strong>{categoryLegend.length}</strong>
+                    <span>segments</span>
                   </div>
-                  <small>{row.count}</small>
                 </div>
-              ))}
+              </div>
+              <div className="stats-next-list">
+                {categoryLegend.map((row, index) => (
+                  <div key={row.category} className="stats-next-row stats-next-row-donut">
+                    <p>
+                      <span
+                        className="stats-next-dot"
+                        style={{ backgroundColor: DONUT_COLORS[index % DONUT_COLORS.length] }}
+                      />
+                      {row.category}
+                    </p>
+                    <div className="stats-next-progress">
+                      <span style={{ width: `${ratioPercent(row.count, stats.totalItems || 1)}%` }} />
+                    </div>
+                    <small>{row.count}</small>
+                  </div>
+                ))}
+              </div>
             </div>
           ) : (
             <p className="stats-next-muted">No items yet.</p>

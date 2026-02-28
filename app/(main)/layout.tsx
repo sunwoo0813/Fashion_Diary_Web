@@ -1,4 +1,6 @@
 import { MainNav } from "@/components/common/main-nav";
+import { DarkModeToggle } from "@/components/common/dark-mode-toggle";
+import { LogoutImageButton } from "@/components/common/logout-image-button";
 import { requireUser } from "@/lib/auth";
 import Link from "next/link";
 
@@ -37,7 +39,9 @@ export default async function MainLayout({
               </div>
             </div>
           </Link>
+          <DarkModeToggle />
         </div>
+        <LogoutImageButton />
       </aside>
       <main className="app-main">{children}</main>
     </div>
