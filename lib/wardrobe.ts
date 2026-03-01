@@ -34,17 +34,20 @@ export function normalizePublicImagePath(path: string, bucketName?: string): str
   if (raw.startsWith("http://") || raw.startsWith("https://")) return raw;
 
   const supabaseUrl = getSupabaseUrl().replace(/\/+$/, "");
+  const bucket = toText(bucketName) || getSupabaseBucket();
   if (raw.startsWith("/storage/v1/object/public/")) {
     return `${supabaseUrl}${raw}`;
   }
   if (raw.startsWith("storage/v1/object/public/")) {
     return `${supabaseUrl}/${raw}`;
   }
+  if (raw.startsWith(`${bucket}/`)) {
+    return `${supabaseUrl}/storage/v1/object/public/${raw}`;
+  }
   if (raw.startsWith("uploads/") || raw.startsWith("product-assets/")) {
     return `${supabaseUrl}/storage/v1/object/public/${raw}`;
   }
 
-  const bucket = toText(bucketName) || getSupabaseBucket();
   return `${supabaseUrl}/storage/v1/object/public/${bucket}/${raw}`;
 }
 

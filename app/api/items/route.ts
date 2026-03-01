@@ -6,6 +6,7 @@ import { getSupabaseBucket } from "@/lib/env";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 import {
   coerceSizeDetail,
+  extractStorageObjectPath,
   makeDisplayName,
   normalizePublicImagePath,
   pickSizeValue,
@@ -18,12 +19,12 @@ function redirectWithMessage(requestUrl: string, path: string, key: "error" | "m
   return NextResponse.redirect(url, { status: 303 });
 }
 
-async function uploadItemImage(file: File) {
+async function uploadItemImage(file: File, saveAsStoragePath: boolean, appUserId: number) {
   const bucket = getSupabaseBucket();
   const admin = createServiceRoleSupabaseClient();
 
   const safeName = `${crypto.randomUUID().replace(/-/g, "")}${file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : ""}`;
-  const objectPath = `items/${safeName}`;
+  const objectPath = `items/${appUserId}/${safeName}`;
   const buffer = Buffer.from(await file.arrayBuffer());
   const contentType = toText(file.type) || "application/octet-stream";
 
@@ -35,8 +36,35 @@ async function uploadItemImage(file: File) {
     throw new Error(`Image upload failed: ${error.message}`);
   }
 
+  if (saveAsStoragePath) {
+    return `${bucket}/${objectPath}`;
+  }
+
   const { data } = admin.storage.from(bucket).getPublicUrl(objectPath);
   return toText(data.publicUrl);
+}
+
+function toStorageImagePath(value: string): string {
+  const raw = toText(value);
+  if (!raw) return "";
+
+  const itemBucket = getSupabaseBucket();
+  if (raw.startsWith(`${itemBucket}/`) || raw.startsWith("product-assets/")) {
+    return raw;
+  }
+
+  const objectPathInItemBucket = extractStorageObjectPath(raw, itemBucket);
+  if (objectPathInItemBucket) {
+    return `${itemBucket}/${objectPathInItemBucket}`;
+  }
+
+  const objectPathInProductBucket = extractStorageObjectPath(raw, "product-assets");
+  if (objectPathInProductBucket) {
+    return `product-assets/${objectPathInProductBucket}`;
+  }
+
+  // External images cannot be mapped to storage object paths.
+  return raw;
 }
 
 export async function POST(request: Request) {
@@ -47,24 +75,34 @@ export async function POST(request: Request) {
 
   try {
     const formData = await request.formData();
+    const inputMode = toText(formData.get("input_mode")).toLowerCase();
+    const isSearchMode = inputMode === "search";
+    const isUrlMode = inputMode === "url";
     const brand = toText(formData.get("brand"));
     const product = toText(formData.get("product"));
     const category = toText(formData.get("category"));
     const explicitSize = toText(formData.get("size"));
-    const sizeDetail = coerceSizeDetail(toText(formData.get("size_detail_json")));
+    const parsedSizeDetail = coerceSizeDetail(toText(formData.get("size_detail_json")));
+    const sizeDetail = parsedSizeDetail;
     const prefillImagePath = toText(formData.get("image_path_prefill"));
+    const appUserId = await getOrCreateAppUserId(authUser.email);
 
     const fileValue = formData.get("image");
     const file = fileValue instanceof File ? fileValue : null;
 
     let imagePath: string | null = null;
     if (file && file.size > 0) {
-      imagePath = await uploadItemImage(file);
+      imagePath = await uploadItemImage(file, !isUrlMode, appUserId);
     } else if (prefillImagePath) {
-      imagePath = normalizePublicImagePath(prefillImagePath);
+      if (isSearchMode) {
+        imagePath = toStorageImagePath(prefillImagePath);
+      } else if (isUrlMode) {
+        imagePath = prefillImagePath;
+      } else {
+        imagePath = normalizePublicImagePath(prefillImagePath);
+      }
     }
 
-    const appUserId = await getOrCreateAppUserId(authUser.email);
     const admin = createServiceRoleSupabaseClient();
 
     const payload = {

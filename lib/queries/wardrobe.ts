@@ -1,5 +1,5 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
-import { resolveCategoryFilter } from "@/lib/wardrobe";
+import { normalizePublicImagePath, resolveCategoryFilter } from "@/lib/wardrobe";
 
 export type WardrobeItem = {
   id: number;
@@ -121,7 +121,7 @@ export async function getWardrobePageData({
     category: row.category ? String(row.category) : null,
     size: row.size ? String(row.size) : null,
     size_detail: row.size_detail ?? null,
-    image_path: row.image_path ? String(row.image_path) : null,
+    image_path: row.image_path ? normalizePublicImagePath(String(row.image_path)) : null,
     created_at: row.created_at ? String(row.created_at) : null,
   }));
 

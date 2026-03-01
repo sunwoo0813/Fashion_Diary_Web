@@ -1,4 +1,5 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
+import { normalizePublicImagePath } from "@/lib/wardrobe";
 
 import type { WardrobeItem } from "./wardrobe";
 
@@ -127,7 +128,7 @@ export async function getUserWardrobeItems(appUserId: number): Promise<WardrobeI
     category: row.category ? String(row.category) : null,
     size: row.size ? String(row.size) : null,
     size_detail: row.size_detail ?? null,
-    image_path: row.image_path ? String(row.image_path) : null,
+    image_path: row.image_path ? normalizePublicImagePath(String(row.image_path)) : null,
     created_at: row.created_at ? String(row.created_at) : null,
   }));
 }

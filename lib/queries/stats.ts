@@ -1,4 +1,5 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
+import { normalizePublicImagePath } from "@/lib/wardrobe";
 
 const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const TEMP_BUCKET_ORDER = ["0-4C", "5-13C", "14-22C", "23-28C", "29C+"] as const;
@@ -250,7 +251,10 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
     id: toInt(row.id) ?? 0,
     name: typeof row.name === "string" && row.name.trim() ? row.name.trim() : "Item",
     category: typeof row.category === "string" && row.category.trim() ? row.category.trim() : null,
-    image_path: typeof row.image_path === "string" && row.image_path.trim() ? row.image_path.trim() : null,
+    image_path:
+      typeof row.image_path === "string" && row.image_path.trim()
+        ? normalizePublicImagePath(row.image_path.trim())
+        : null,
   }));
 
   const outfitRows: OutfitRow[] = (outfitRowsRaw || [])
