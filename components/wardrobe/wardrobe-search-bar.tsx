@@ -75,7 +75,6 @@ export function WardrobeSearchBar({ initialQuery, category, items }: WardrobeSea
             placeholder="Search..."
             autoComplete="off"
             aria-label="Search"
-            aria-expanded={showSuggestions ? "true" : "false"}
             aria-controls="wardrobe-search-suggestions"
           />
           {showSubmit ? (

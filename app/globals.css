@@ -2586,7 +2586,7 @@ button:hover,
 .diary-modal-head {
   display: flex;
   justify-content: space-between;
-  align-items: start;
+  align-items: flex-start;
   gap: 0.6rem;
 }
 
