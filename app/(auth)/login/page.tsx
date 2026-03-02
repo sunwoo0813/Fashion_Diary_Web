@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-import { loginAction } from "@/actions/auth";
+import { loginAction, signupAction } from "@/actions/auth";
 import { getCurrentUser } from "@/lib/auth";
 
 function readQueryValue(value: string | string[] | undefined): string {
@@ -22,81 +22,94 @@ export default async function LoginPage({
 
   const error = readQueryValue(searchParams?.error);
   const message = readQueryValue(searchParams?.message);
+  const mode = readQueryValue(searchParams?.mode) === "signup" ? "signup" : "login";
+  const isSignup = mode === "signup";
 
   return (
-    <main className="page">
-      <h1>Login</h1>
-      <p>Sign in with your Supabase account.</p>
+    <main className="auth-page login-page">
+      <section className="auth-card auth-card-login">
+        {error ? <p className="auth-notice is-error">{error}</p> : null}
+        {!error && message ? <p className="auth-notice is-success">{message}</p> : null}
 
-      {error ? (
-        <p
-          style={{
-            marginTop: "1rem",
-            padding: "0.75rem",
-            border: "1px solid #f2c2b2",
-            background: "#fff1ec",
-            borderRadius: "10px",
-            color: "#8e2d11",
-          }}
-        >
-          {error}
-        </p>
-      ) : null}
+        <h1 className="auth-brand-title">FASHION DIARY</h1>
 
-      {!error && message ? (
-        <p
-          style={{
-            marginTop: "1rem",
-            padding: "0.75rem",
-            border: "1px solid #c8e3cf",
-            background: "#effaf2",
-            borderRadius: "10px",
-            color: "#17693c",
-          }}
-        >
-          {message}
-        </p>
-      ) : null}
+        {isSignup ? (
+          <form action={signupAction} className="auth-form">
+            <label className="auth-field">
+              <input type="email" name="email" required placeholder=" " />
+              <span className="auth-field-label">Email</span>
+              <span className="auth-field-status" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </label>
+            <label className="auth-field">
+              <input type="password" name="password" required minLength={8} placeholder=" " />
+              <span className="auth-field-label">Password</span>
+              <span className="auth-field-status" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </label>
+            <label className="auth-field">
+              <input type="text" name="nickname" placeholder=" " />
+              <span className="auth-field-label">Name (Nickname)</span>
+              <span className="auth-field-status" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </label>
+            <label className="auth-field">
+              <input type="password" name="confirm_password" minLength={8} placeholder=" " />
+              <span className="auth-field-label">Confirm Password</span>
+              <span className="auth-field-status" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </label>
+            <button type="submit" className="solid-button auth-submit">
+              Sign Up
+            </button>
+          </form>
+        ) : (
+          <form action={loginAction} className="auth-form">
+            <label className="auth-field">
+              <input type="email" name="email" required placeholder=" " />
+              <span className="auth-field-label">Email</span>
+              <span className="auth-field-status" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </label>
+            <label className="auth-field">
+              <input type="password" name="password" required placeholder=" " />
+              <span className="auth-field-label">Password</span>
+              <span className="auth-field-status" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none">
+                  <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+            </label>
+            <button type="submit" className="solid-button auth-submit">
+              Log In
+            </button>
+          </form>
+        )}
 
-      <form action={loginAction} style={{ marginTop: "1rem", maxWidth: "420px", display: "grid", gap: "0.75rem" }}>
-        <label style={{ display: "grid", gap: "0.3rem" }}>
-          <span>Email</span>
-          <input
-            type="email"
-            name="email"
-            required
-            placeholder="name@example.com"
-            style={{ padding: "0.65rem 0.7rem", border: "1px solid var(--line)", borderRadius: "10px" }}
-          />
-        </label>
-        <label style={{ display: "grid", gap: "0.3rem" }}>
-          <span>Password</span>
-          <input
-            type="password"
-            name="password"
-            required
-            placeholder="Your password"
-            style={{ padding: "0.65rem 0.7rem", border: "1px solid var(--line)", borderRadius: "10px" }}
-          />
-        </label>
-        <button
-          type="submit"
-          style={{
-            padding: "0.7rem 0.9rem",
-            borderRadius: "10px",
-            border: "1px solid #8a4f33",
-            background: "var(--accent)",
-            color: "white",
-            cursor: "pointer",
-          }}
-        >
-          Log In
-        </button>
-      </form>
-
-      <p style={{ marginTop: "1rem", color: "var(--muted)" }}>
-        New here? <Link href="/signup">Create an account</Link>
-      </p>
+        <nav className={`auth-mode-toggle${isSignup ? " is-signup" : ""}`} aria-label="Authentication mode">
+          <Link href="/login" className={`auth-mode-pill${isSignup ? "" : " is-active"}`}>
+            Login
+          </Link>
+          <Link href="/login?mode=signup" className={`auth-mode-pill${isSignup ? " is-active" : ""}`}>
+            Sign Up
+          </Link>
+        </nav>
+      </section>
     </main>
   );
 }
