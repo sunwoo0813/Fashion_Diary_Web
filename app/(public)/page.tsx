@@ -17,6 +17,9 @@ export default async function LandingPage() {
       <header className="landing-topbar">
         <p className="landing-brand">Fashion Diary</p>
         <div className="landing-top-actions">
+          <Link href="https://size-picker.vercel.app/" className="ghost-button landing-size-picker-button">
+            Size Picker
+          </Link>
           <Link href={ctaHref} className="ghost-button">
             {ctaLabel}
           </Link>

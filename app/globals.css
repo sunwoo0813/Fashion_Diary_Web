@@ -197,12 +197,17 @@ button:hover,
   gap: 1rem;
   z-index: 80;
   overflow: hidden;
-  transition: width 0.2s ease, padding 0.2s ease;
+  transition:
+    width 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    padding 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.app-rail:hover {
+.app-rail.is-expanded {
   width: 240px;
   padding: 1rem 0.85rem;
+  transition:
+    width 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    padding 0.7s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .brand-text,
@@ -212,18 +217,30 @@ button:hover,
   opacity: 1;
   visibility: visible;
   overflow: hidden;
-  transition: opacity 0.18s ease, max-width 0.2s ease, visibility 0.2s ease;
+  transition:
+    opacity 0.5s ease,
+    max-width 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.8s ease;
 }
 
-.app-rail:not(:hover) .brand-text,
-.app-rail:not(:hover) .rail-user-meta,
-.app-rail:not(:hover) .app-link-text {
+.app-rail.is-expanded .brand-text,
+.app-rail.is-expanded .rail-user-meta,
+.app-rail.is-expanded .app-link-text {
+  transition:
+    opacity 0.45s ease,
+    max-width 0.7s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0.7s ease;
+}
+
+.app-rail:not(.is-expanded) .brand-text,
+.app-rail:not(.is-expanded) .rail-user-meta,
+.app-rail:not(.is-expanded) .app-link-text {
   max-width: 0;
   opacity: 0;
   visibility: hidden;
 }
 
-.app-rail:not(:hover) .brand-lockup {
+.app-rail:not(.is-expanded) .brand-lockup {
   width: 40px;
   height: 40px;
   justify-content: center;
@@ -234,7 +251,7 @@ button:hover,
   border-radius: 12px;
 }
 
-.app-rail:not(:hover) .rail-user {
+.app-rail:not(.is-expanded) .rail-user {
   width: 40px;
   height: 40px;
   grid-template-columns: 1fr;
@@ -245,7 +262,7 @@ button:hover,
   border-radius: 12px;
 }
 
-.app-rail:not(:hover) .app-link {
+.app-rail:not(.is-expanded) .app-link {
   display: grid;
   place-items: center;
   gap: 0;
@@ -257,49 +274,49 @@ button:hover,
   position: relative;
 }
 
-.app-rail:not(:hover) .topbar-right {
+.app-rail:not(.is-expanded) .topbar-right {
   justify-content: center;
 }
 
-.app-rail:not(:hover) .rail-logout-button img {
+.app-rail:not(.is-expanded) .rail-logout-button img {
   max-width: 40px;
 }
 
-.app-rail:not(:hover) .rail-logout-error {
+.app-rail:not(.is-expanded) .rail-logout-error {
   display: none;
 }
 
-.app-rail:not(:hover) .theme-toggle-card {
+.app-rail:not(.is-expanded) .theme-toggle-card {
   width: 40px;
   padding: 0.35rem;
   border-radius: 12px;
 }
 
-.app-rail:not(:hover) .theme-toggle-label {
+.app-rail:not(.is-expanded) .theme-toggle-label {
   display: none;
 }
 
-.app-rail:not(:hover) .theme-toggle-track {
+.app-rail:not(.is-expanded) .theme-toggle-track {
   height: 24px;
   padding: 2px;
 }
 
-.app-rail:not(:hover) .theme-toggle-thumb {
+.app-rail:not(.is-expanded) .theme-toggle-thumb {
   top: 2px;
   left: 2px;
   width: 20px;
   height: 20px;
 }
 
-.app-rail:not(:hover) .theme-toggle-switch.is-on .theme-toggle-thumb {
+.app-rail:not(.is-expanded) .theme-toggle-switch.is-on .theme-toggle-thumb {
   transform: translateX(12px);
 }
 
-.app-rail:not(:hover) .app-nav {
+.app-rail:not(.is-expanded) .app-nav {
   justify-items: center;
 }
 
-.app-rail:not(:hover) .app-link-icon {
+.app-rail:not(.is-expanded) .app-link-icon {
   position: absolute;
   inset: 0;
   margin: auto;
@@ -310,23 +327,23 @@ button:hover,
   flex: 0 0 24px;
 }
 
-.app-rail:not(:hover) .app-link-icon svg {
+.app-rail:not(.is-expanded) .app-link-icon svg {
   width: 18px;
   height: 18px;
 }
 
-.app-rail:not(:hover) .brand-logo {
+.app-rail:not(.is-expanded) .brand-logo {
   width: 24px;
   height: 24px;
   font-size: 0.68rem;
 }
 
-.app-rail:not(:hover) .topbar-profile-link {
+.app-rail:not(.is-expanded) .topbar-profile-link {
   width: 40px;
   display: block;
 }
 
-.app-rail:not(:hover) .rail-avatar {
+.app-rail:not(.is-expanded) .rail-avatar {
   width: 24px;
   height: 24px;
   font-size: 0.68rem;
@@ -933,6 +950,13 @@ button:hover,
 .landing-top-actions {
   display: flex;
   gap: 0.5rem;
+}
+
+.landing-size-picker-button {
+  color: #f97316;
+  background: #111827;
+  border-color: transparent;
+  margin-right: 1.5rem;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -3874,27 +3898,27 @@ button:hover,
     visibility: visible;
   }
 
-  .app-rail:not(:hover) .brand-lockup,
-  .app-rail:not(:hover) .rail-user,
-  .app-rail:not(:hover) .app-link {
+  .app-rail:not(.is-expanded) .brand-lockup,
+  .app-rail:not(.is-expanded) .rail-user,
+  .app-rail:not(.is-expanded) .app-link {
     justify-content: flex-start;
     justify-items: stretch;
   }
 
-  .app-rail:not(:hover) .brand-lockup {
+  .app-rail:not(.is-expanded) .brand-lockup {
     padding: 0.45rem 0.62rem;
   }
 
-  .app-rail:not(:hover) .rail-user {
+  .app-rail:not(.is-expanded) .rail-user {
     grid-template-columns: auto 1fr;
     padding: 0.65rem;
   }
 
-  .app-rail:not(:hover) .app-link {
+  .app-rail:not(.is-expanded) .app-link {
     padding: 0.56rem 0.72rem;
   }
 
-  .app-rail:not(:hover) .topbar-right {
+  .app-rail:not(.is-expanded) .topbar-right {
     justify-content: initial;
   }
 
@@ -4089,22 +4113,22 @@ button:hover,
     overflow: visible;
   }
 
-  .app-rail:hover {
+  .app-rail.is-expanded {
     width: 100%;
     padding: 0.8rem 0.7rem;
   }
 
-  .app-rail:not(:hover) .brand-text,
-  .app-rail:not(:hover) .rail-user-meta,
-  .app-rail:not(:hover) .app-link-text {
+  .app-rail:not(.is-expanded) .brand-text,
+  .app-rail:not(.is-expanded) .rail-user-meta,
+  .app-rail:not(.is-expanded) .app-link-text {
     max-width: none;
     opacity: 1;
     visibility: visible;
   }
 
-  .app-rail:not(:hover) .brand-lockup,
-  .app-rail:not(:hover) .rail-user,
-  .app-rail:not(:hover) .app-link {
+  .app-rail:not(.is-expanded) .brand-lockup,
+  .app-rail:not(.is-expanded) .rail-user,
+  .app-rail:not(.is-expanded) .app-link {
     width: auto;
     height: auto;
     margin-inline: 0;
@@ -4116,16 +4140,16 @@ button:hover,
     border-radius: 12px;
   }
 
-  .app-rail:not(:hover) .brand-lockup {
+  .app-rail:not(.is-expanded) .brand-lockup {
     padding: 0.45rem 0.62rem;
   }
 
-  .app-rail:not(:hover) .rail-user {
+  .app-rail:not(.is-expanded) .rail-user {
     grid-template-columns: auto 1fr;
     padding: 0.65rem;
   }
 
-  .app-rail:not(:hover) .app-link-icon {
+  .app-rail:not(.is-expanded) .app-link-icon {
     position: static;
     inset: auto;
     margin: 0;
@@ -4133,23 +4157,23 @@ button:hover,
     height: 20px;
   }
 
-  .app-rail:not(:hover) .app-link-icon svg {
+  .app-rail:not(.is-expanded) .app-link-icon svg {
     width: 16px;
     height: 16px;
   }
 
-  .app-rail:not(:hover) .brand-logo {
+  .app-rail:not(.is-expanded) .brand-logo {
     width: 30px;
     height: 30px;
     font-size: 0.75rem;
   }
 
-  .app-rail:not(:hover) .topbar-profile-link {
+  .app-rail:not(.is-expanded) .topbar-profile-link {
     width: 100%;
     display: block;
   }
 
-  .app-rail:not(:hover) .rail-avatar {
+  .app-rail:not(.is-expanded) .rail-avatar {
     width: 38px;
     height: 38px;
     font-size: 0.85rem;
