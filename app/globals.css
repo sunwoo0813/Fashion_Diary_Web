@@ -180,19 +180,20 @@ button:hover,
 
 .app-shell {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: 72px minmax(0, 1fr);
   min-height: 100vh;
 }
 
 .app-rail {
   --app-rail-collapsed-width: 72px;
   --app-rail-expanded-width: 240px;
-  position: fixed;
-  inset: 0 auto 0 0;
+  position: sticky;
+  top: 0;
   width: var(--app-rail-collapsed-width);
   height: 100vh;
   z-index: 80;
   overflow: visible;
+  align-self: start;
 }
 
 .app-rail-compact,
@@ -525,7 +526,6 @@ button:hover,
 .app-main {
   min-width: 0;
   padding: 1.2rem;
-  margin-left: var(--app-rail-collapsed-width);
 }
 
 .route-loading {
