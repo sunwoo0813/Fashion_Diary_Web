@@ -45,8 +45,8 @@ export default async function LoginPage({
               </span>
             </label>
             <label className="auth-field">
-              <input type="password" name="password" required minLength={8} placeholder=" " />
-              <span className="auth-field-label">Password</span>
+              <input type="text" name="nickname" placeholder=" " />
+              <span className="auth-field-label">Name (Nickname)</span>
               <span className="auth-field-status" aria-hidden="true">
                 <svg viewBox="0 0 16 16" fill="none">
                   <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
@@ -54,8 +54,8 @@ export default async function LoginPage({
               </span>
             </label>
             <label className="auth-field">
-              <input type="text" name="nickname" placeholder=" " />
-              <span className="auth-field-label">Name (Nickname)</span>
+              <input type="password" name="password" required minLength={8} placeholder=" " />
+              <span className="auth-field-label">Password</span>
               <span className="auth-field-status" aria-hidden="true">
                 <svg viewBox="0 0 16 16" fill="none">
                   <path d="M3.5 8.5 6.5 11.5 12.5 4.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
