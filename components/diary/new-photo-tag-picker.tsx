@@ -80,7 +80,7 @@ export function NewPhotoTagPicker({
   hiddenInputName,
   uploadedUrlsInputName,
   formId,
-  label = "Upload Photos",
+  label = "사진 업로드",
 }: NewPhotoTagPickerProps) {
   const [files, setFiles] = useState<FileView[]>([]);
   const [tagMap, setTagMap] = useState<Record<string, number[]>>({});
@@ -147,7 +147,7 @@ export function NewPhotoTagPicker({
             ? [ticketBody.ticket]
             : [];
         if (!ticketResponse.ok || !ticketBody.ok || ticketList.length !== files.length) {
-          throw new Error(ticketBody.error || "Failed to prepare photo upload.");
+          throw new Error("사진 업로드 준비에 실패했어요.");
         }
 
         const nextUrls: string[] = new Array(files.length);
@@ -157,7 +157,7 @@ export function NewPhotoTagPicker({
           const signedUrl = String(ticket?.signedUrl || "").trim();
           const publicUrl = String(ticket?.publicUrl || "").trim();
           if (!signedUrl || !publicUrl) {
-            throw new Error("Upload ticket is invalid.");
+            throw new Error("업로드 티켓 정보가 올바르지 않아요.");
           }
 
           const body = new FormData();
@@ -170,8 +170,7 @@ export function NewPhotoTagPicker({
             body,
           });
           if (!uploadResponse.ok) {
-            const text = await uploadResponse.text().catch(() => "");
-            throw new Error(text || `Photo upload failed with status ${uploadResponse.status}.`);
+            throw new Error(`사진 업로드에 실패했어요. (상태 코드: ${uploadResponse.status})`);
           }
 
           nextUrls[index] = publicUrl;
@@ -191,7 +190,7 @@ export function NewPhotoTagPicker({
           form.requestSubmit();
         }
       } catch (error) {
-        setUploadError(error instanceof Error ? error.message : "Photo upload failed.");
+        setUploadError(error instanceof Error ? error.message : "사진 업로드에 실패했어요.");
       } finally {
         setIsUploading(false);
       }
@@ -210,16 +209,16 @@ export function NewPhotoTagPicker({
 
     if (tooLargeFile) {
       setUploadError(
-        `${tooLargeFile.name} is ${formatSize(tooLargeFile.size)}. Each file must be ${formatSize(
+        `${tooLargeFile.name} 파일 크기는 ${formatSize(tooLargeFile.size)}입니다. 각 파일은 ${formatSize(
           MAX_SINGLE_FILE_BYTES,
-        )} or less.`,
+        )} 이하만 업로드할 수 있어요.`,
       );
       event.target.value = "";
       return;
     }
 
     if (totalBytes > MAX_TOTAL_FILE_BYTES) {
-      setUploadError(`Selected photos total ${formatSize(totalBytes)}. Limit is ${formatSize(MAX_TOTAL_FILE_BYTES)}.`);
+      setUploadError(`선택한 사진 총합은 ${formatSize(totalBytes)}입니다. 최대 ${formatSize(MAX_TOTAL_FILE_BYTES)}까지 가능해요.`);
       event.target.value = "";
       return;
     }
@@ -291,11 +290,11 @@ export function NewPhotoTagPicker({
 
       {isUploading ? (
         <p className="new-photo-status">
-          Uploading photos before submit... ({uploadProgress.done}/{uploadProgress.total})
+          제출 전에 사진을 업로드하고 있어요... ({uploadProgress.done}/{uploadProgress.total})
         </p>
       ) : null}
       {!isUploading && files.length > 0 && uploadedUrls.length === files.length ? (
-        <p className="new-photo-status">Photos uploaded. Ready to save.</p>
+        <p className="new-photo-status">사진 업로드가 완료되어 저장할 준비가 됐어요.</p>
       ) : null}
       {uploadError ? <p className="form-error">{uploadError}</p> : null}
 
@@ -319,7 +318,7 @@ export function NewPhotoTagPicker({
                       aria-expanded={isTagPanelOpen}
                       onClick={() => toggleTagPanel(file.key)}
                     >
-                      {isTagPanelOpen ? "상품태그 닫기" : "상품태그 추가"}
+                      {isTagPanelOpen ? "상품 태그 닫기" : "상품 태그 추가"}
                     </button>
                   </div>
 
@@ -347,7 +346,7 @@ export function NewPhotoTagPicker({
                     <p className="new-photo-tag-hint">
                       {selectedCount > 0
                         ? `${selectedCount}개 태그 선택됨`
-                        : "상품태그 추가 버튼을 눌러 내 옷장을 불러오세요."}
+                        : "상품 태그 추가 버튼을 눌러 옷장을 불러오세요."}
                     </p>
                   )}
                 </div>

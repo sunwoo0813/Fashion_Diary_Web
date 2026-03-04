@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Fashion Diary",
-  description: "Next.js migration scaffold for Fashion Diary Web",
+  title: "LAYERED",
+  description: "Next.js migration scaffold for LAYERED Web",
 };
 
 export default function RootLayout({

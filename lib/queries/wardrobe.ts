@@ -117,7 +117,7 @@ export async function getWardrobePageData({
   const items = (rawItems || []).map((row) => ({
     id: Number(row.id),
     user_id: Number(row.user_id),
-    name: String(row.name || "Untitled"),
+    name: String(row.name || "이름 없음"),
     category: row.category ? String(row.category) : null,
     size: row.size ? String(row.size) : null,
     size_detail: row.size_detail ?? null,

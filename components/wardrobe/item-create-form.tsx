@@ -202,7 +202,7 @@ function readFileAsDataUrl(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(new Error("Failed to read file."));
+    reader.onerror = () => reject(new Error("파일을 읽지 못했어요."));
     reader.readAsDataURL(file);
   });
 }
@@ -315,7 +315,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
         const body = (await response.json()) as { ok?: boolean; items?: ProductItem[]; error?: string };
         if (requestSeq !== searchRequestSeqRef.current) return;
         if (!response.ok || !body.ok) {
-          throw new Error(body.error || "Product search failed");
+          throw new Error("상품 검색에 실패했어요.");
         }
 
         setSearchResults(Array.isArray(body.items) ? body.items : []);
@@ -324,7 +324,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
         if (error instanceof Error && error.name === "AbortError") return;
         if (requestSeq !== searchRequestSeqRef.current) return;
         setSearchResults([]);
-        setSearchError(error instanceof Error ? error.message : "Product search failed");
+        setSearchError(error instanceof Error ? error.message : "상품 검색에 실패했어요.");
         setHasSearched(true);
       } finally {
         if (requestSeq === searchRequestSeqRef.current) {
@@ -473,7 +473,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
         optimizedDataUrl.match(/^data:(.*?);base64,/i)?.[1] || "image/jpeg";
       const base64 = optimizedDataUrl.split(",")[1] || "";
       if (!base64) {
-        throw new Error("Failed to encode size chart image.");
+        throw new Error("사이즈 표 이미지를 인코딩하지 못했어요.");
       }
 
       const response = await fetch("/api/size-table", {
@@ -492,13 +492,13 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       };
       if (requestSeq !== sizeTableRequestSeqRef.current) return;
       if (!response.ok || !payload.ok || !payload.data) {
-        throw new Error(payload.error || "Failed to extract size table.");
+        throw new Error("사이즈 표 추출에 실패했어요.");
       }
 
       const parsedGuideRaw = parseSizeGuide(payload.data);
       const parsedGuide = parsedGuideRaw ? ensureSizeFirstColumn(parsedGuideRaw) : null;
       if (!parsedGuide || parsedGuide.rows.length === 0) {
-        throw new Error("Failed to normalize extracted size table.");
+        throw new Error("추출된 사이즈 표를 정리하지 못했어요.");
       }
 
       const firstRow = parsedGuide.rows[0];
@@ -508,7 +508,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       setSelectedSizeRowIndex(0);
     } catch (error) {
       if (requestSeq !== sizeTableRequestSeqRef.current) return;
-      setSizeTableError(error instanceof Error ? error.message : "Failed to extract size table.");
+      setSizeTableError(error instanceof Error ? error.message : "사이즈 표 추출에 실패했어요.");
     } finally {
       if (requestSeq === sizeTableRequestSeqRef.current) {
         setSizeTableLoading(false);
@@ -519,7 +519,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   async function onFetchFromProductUrl() {
     const targetUrl = productUrl.trim();
     if (!targetUrl) {
-      setUrlFetchError("Please enter a product URL.");
+      setUrlFetchError("상품 주소를 입력해주세요.");
       return;
     }
     const requestSeq = urlFetchRequestSeqRef.current + 1;
@@ -551,7 +551,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       if (requestSeq !== urlFetchRequestSeqRef.current) return;
 
       if (!response.ok || !body.ok || !body.data) {
-        throw new Error(body.error || "Failed to fetch product metadata.");
+        throw new Error("상품 정보를 불러오지 못했어요.");
       }
 
       const extracted = body.data;
@@ -582,11 +582,11 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       setProductUrl(nextUrl);
 
       if (!extracted.brand && !extracted.name && !selectedCandidateUrl) {
-        setUrlFetchError("No autofill data was found for this URL.");
+        setUrlFetchError("이 주소에서 자동 입력 가능한 데이터를 찾지 못했어요.");
       }
     } catch (error) {
       if (requestSeq !== urlFetchRequestSeqRef.current) return;
-      setUrlFetchError(error instanceof Error ? error.message : "Failed to fetch product metadata.");
+      setUrlFetchError(error instanceof Error ? error.message : "상품 정보를 불러오지 못했어요.");
     } finally {
       if (requestSeq === urlFetchRequestSeqRef.current) {
         setUrlFetchLoading(false);
@@ -606,15 +606,15 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     <section className="item-new-page">
       <header className="item-new-header">
         <div>
-          <p className="item-new-kicker">Curate Collection</p>
-          <h1>Add New Item</h1>
+          <p className="item-new-kicker">컬렉션 관리</p>
+          <h1>새 아이템 추가</h1>
         </div>
         <div className="item-new-actions">
           <Link href="/wardrobe" className="ghost-button">
-            Cancel
+            취소
           </Link>
           <button type="submit" form="itemCreateForm" className="solid-button">
-            Save Item
+            아이템 저장
           </button>
         </div>
       </header>
@@ -627,32 +627,32 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           className={`item-input-mode-button${inputMode === "search" ? " is-active" : ""}`}
           onClick={() => onChangeInputMode("search")}
         >
-          Search
+          검색
         </button>
         <button
           type="button"
           className={`item-input-mode-button${inputMode === "url" ? " is-active" : ""}`}
           onClick={() => onChangeInputMode("url")}
         >
-          URL
+          주소
         </button>
         <button
           type="button"
           className={`item-input-mode-button${inputMode === "manual" ? " is-active" : ""}`}
           onClick={() => onChangeInputMode("manual")}
         >
-          Manual
+          직접 입력
         </button>
       </div>
 
       {inputMode === "search" ? (
-        <p className="item-input-mode-help">Search existing shared products and autofill quickly.</p>
+        <p className="item-input-mode-help">공유 상품을 검색해서 필드를 빠르게 자동 입력할 수 있어요.</p>
       ) : null}
       {inputMode === "url" ? (
-        <p className="item-input-mode-help">Paste a product URL to autofill brand, item name, and images.</p>
+        <p className="item-input-mode-help">상품 주소를 붙여넣으면 브랜드, 상품명, 이미지를 자동 입력해요.</p>
       ) : null}
       {inputMode === "manual" ? (
-        <p className="item-input-mode-help">Fill in the fields below directly when there is no source product.</p>
+        <p className="item-input-mode-help">원본 상품이 없으면 아래 필드를 직접 입력하세요.</p>
       ) : null}
 
       {inputMode === "search" ? (
@@ -662,13 +662,13 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               type="text"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="Type brand or product name"
+              placeholder="브랜드 또는 상품명을 입력하세요"
             />
           </div>
           {hasSearchResults ? (
             <div className="item-search-results">
               {searchError ? <p>{searchError}</p> : null}
-              {!searchError && searchResults.length === 0 && !searchLoading ? <p>No matching products</p> : null}
+              {!searchError && searchResults.length === 0 && !searchLoading ? <p>일치하는 상품이 없어요.</p> : null}
               {searchResults.map((item, index) => (
                 <button
                   type="button"
@@ -676,7 +676,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                   className="item-search-result"
                   onClick={() => applyProductItem(item)}
                 >
-                  <span>{item.name || "Untitled"}</span>
+                  <span>{item.name || "이름 없음"}</span>
                   <small>{[item.brand, item.category].filter(Boolean).join(" / ")}</small>
                 </button>
               ))}
@@ -694,7 +694,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                 setProductUrl(event.target.value);
                 setUrlFetchError("");
               }}
-              placeholder="Paste product URL"
+              placeholder="상품 주소를 붙여넣으세요"
             />
           </div>
           <div className="item-search-row">
@@ -704,7 +704,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               onClick={onFetchFromProductUrl}
               disabled={urlFetchLoading}
             >
-              {urlFetchLoading ? "Fetching..." : "Fetch Product Info"}
+              {urlFetchLoading ? "불러오는 중..." : "상품 정보 가져오기"}
             </button>
           </div>
           {urlFetchError ? <p className="item-url-error">{urlFetchError}</p> : null}
@@ -714,19 +714,19 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       <form id="itemCreateForm" action="/api/items" method="post" encType="multipart/form-data" className="item-form">
         <input type="hidden" name="input_mode" value={inputMode} />
         <div className="item-media-card">
-          <p>Item Image</p>
+          <p>아이템 이미지</p>
           <div className="item-image-preview">
             {previewSrc ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={previewSrc} alt="Item preview" />
+              <img src={previewSrc} alt="아이템 미리보기" />
             ) : (
-              <span>No image selected</span>
+              <span>선택된 이미지가 없어요</span>
             )}
           </div>
           <input ref={fileRef} type="file" name="image" accept="image/*" onChange={onFileChange} />
           {urlImageCandidates.length > 1 ? (
             <div className="item-image-candidates">
-              <p>Image candidates</p>
+              <p>이미지 후보</p>
               <div className="item-image-candidate-list">
                 {urlImageCandidates.slice(0, 4).map((candidateUrl, index) => {
                   const isSelected = imagePrefill === candidateUrl && !localImageUrl;
@@ -736,10 +736,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                       key={`${candidateUrl}-${index}`}
                       className={`item-image-candidate${isSelected ? " is-selected" : ""}`}
                       onClick={() => selectImageCandidate(candidateUrl)}
-                      aria-label={`Use image candidate ${index + 1}`}
+                      aria-label={`이미지 후보 ${index + 1} 사용`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={candidateUrl} alt={`Candidate ${index + 1}`} />
+                      <img src={candidateUrl} alt={`후보 ${index + 1}`} />
                     </button>
                   );
                 })}
@@ -751,39 +751,39 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
 
         <div className="item-fields-card">
           <label>
-            Brand
+            브랜드
             <input
               type="text"
               name="brand"
               value={brand}
               onChange={(event) => setBrand(event.target.value)}
-              placeholder="Celine"
+              placeholder="셀린느"
               required
             />
           </label>
           <label>
-            Item Name
+            아이템명
             <input
               type="text"
               name="product"
               value={product}
               onChange={(event) => setProduct(event.target.value)}
-              placeholder="Vintage Silk Blouse"
+              placeholder="빈티지 실크 블라우스"
               required
             />
           </label>
           <label>
-            Category
+            카테고리
             <input
               type="text"
               name="category"
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              placeholder="Category"
+              placeholder="카테고리"
             />
           </label>
           <label>
-            Size
+            사이즈
             <input
               type="text"
               name="size"
@@ -806,11 +806,11 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                 onChange={onSizeTableImageChange}
               />
               <label htmlFor="sizeTableImageInput" className="size-table-upload-box">
-                <strong>Size Table Image</strong>
+                <strong>사이즈 표 이미지</strong>
                 <span>
                   {sizeTableLoading
-                    ? "Analyzing size chart..."
-                    : sizeTableImageName || "Click here to upload a size chart image. We will analyze it automatically."}
+                    ? "사이즈 표 분석 중..."
+                    : sizeTableImageName || "클릭해서 사이즈 표 이미지를 업로드하세요. 자동으로 분석합니다."}
                 </span>
               </label>
               {sizeTableError ? <p className="item-url-error">{sizeTableError}</p> : null}
@@ -820,14 +820,14 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
 
           {sizeGuide ? (
             <div className="size-guide">
-              <p>Size table</p>
+              <p>사이즈 표</p>
               <div className="size-guide-table-wrap">
                 <table className="size-guide-table">
                   <thead>
                     <tr>
                       {sizeGuide.headers.map((header, index) => (
                         <th key={`${header}-${index}`} scope="col">
-                          {header || `Col ${index + 1}`}
+                          {header || `열 ${index + 1}`}
                         </th>
                       ))}
                     </tr>
@@ -859,8 +859,8 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           ) : null}
 
           <label>
-            Styling Notes
-            <textarea name="note" placeholder="Fit notes or styling ideas..." rows={4} />
+            스타일링 메모
+            <textarea name="note" placeholder="핏 메모나 스타일링 아이디어를 적어보세요..." rows={4} />
           </label>
         </div>
       </form>

@@ -31,7 +31,7 @@ export default async function LoginPage({
         {error ? <p className="auth-notice is-error">{error}</p> : null}
         {!error && message ? <p className="auth-notice is-success">{message}</p> : null}
 
-        <h1 className="auth-brand-title">FASHION DIARY</h1>
+        <h1 className="auth-brand-title">LAYERED</h1>
 
         {isSignup ? (
           <form action={signupAction} className="auth-form">

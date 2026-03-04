@@ -7,8 +7,8 @@ export default async function MainLayout({
   children: React.ReactNode;
 }) {
   const user = await requireUser();
-  const displayName = (user.email || "User").split("@")[0];
-  const initials = (displayName.slice(0, 2) || "U").toUpperCase();
+  const displayName = (user.email || "사용자").split("@")[0];
+  const initials = (displayName.slice(0, 2) || "사").toUpperCase();
 
   return (
     <div className="app-shell">

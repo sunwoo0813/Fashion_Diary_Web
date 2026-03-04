@@ -175,7 +175,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const confirm = toText(formData.get("confirm")).toUpperCase();
     if (confirm !== "DELETE") {
-      return redirectWithQuery(request, "/account", "error", "Type DELETE to confirm account deletion.");
+      return redirectWithQuery(request, "/account", "error", "계정 삭제 확인을 위해 DELETE를 입력해주세요.");
     }
 
     const appUser = await fetchAppUserByEmail(authUser.email);
@@ -191,8 +191,8 @@ export async function POST(request: Request) {
     }
     await clearSession();
 
-    return redirectWithQuery(request, "/login", "message", "Account deleted.");
+    return redirectWithQuery(request, "/login", "message", "계정이 삭제되었습니다.");
   } catch {
-    return redirectWithQuery(request, "/account", "error", "Account delete failed.");
+    return redirectWithQuery(request, "/account", "error", "계정 삭제에 실패했어요.");
   }
 }

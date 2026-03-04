@@ -20,7 +20,7 @@ type WeatherFieldsProps = {
 };
 
 export function WeatherFields({
-  defaultCity = "Seoul",
+  defaultCity = "서울",
   defaultTMin = 0,
   defaultTMax = 0,
   defaultHumidity = 0,
@@ -39,7 +39,7 @@ export function WeatherFields({
   async function handleFillWeather() {
     const trimmedCity = city.trim();
     if (!trimmedCity) {
-      setError("Enter a city to fetch weather.");
+      setError("날씨를 불러올 도시를 입력해주세요.");
       setMessage("");
       return;
     }
@@ -55,7 +55,7 @@ export function WeatherFields({
         | { ok: false; error?: string };
 
       if (!response.ok || !payload.ok) {
-        setError(payload.ok ? "Failed to fetch weather." : payload.error || "Failed to fetch weather.");
+        setError("날씨 정보를 불러오지 못했어요.");
         return;
       }
 
@@ -66,7 +66,7 @@ export function WeatherFields({
       if (rainRef.current) rainRef.current.value = weather.rain ? "1" : "0";
       setMessage(`${weather.city} · ${weather.desc} · ${weather.t_max}C / ${weather.t_min}C`);
     } catch {
-      setError("Failed to fetch weather.");
+      setError("날씨 정보를 불러오지 못했어요.");
     } finally {
       setIsLoading(false);
     }
@@ -76,16 +76,16 @@ export function WeatherFields({
     <section className="outfit-weather-panel">
       <div className="outfit-weather-head">
         <label className="outfit-city-field">
-          City
+          도시
           <input
             type="text"
             value={city}
             onChange={(event) => setCity(event.target.value)}
-            placeholder="Seoul"
+            placeholder="서울"
           />
         </label>
         <button type="button" className="ghost-button" onClick={handleFillWeather} disabled={isLoading}>
-          {isLoading ? "Loading..." : "Fill Weather"}
+          {isLoading ? "불러오는 중..." : "날씨 채우기"}
         </button>
       </div>
 
@@ -94,22 +94,22 @@ export function WeatherFields({
 
       <div className="outfit-weather-grid">
         <label>
-          Min Temp
+          최저 기온
           <input ref={tMinRef} type="number" step="0.1" name="t_min" defaultValue={String(defaultTMin)} />
         </label>
         <label>
-          Max Temp
+          최고 기온
           <input ref={tMaxRef} type="number" step="0.1" name="t_max" defaultValue={String(defaultTMax)} />
         </label>
         <label>
-          Humidity
+          습도
           <input ref={humidityRef} type="number" name="humidity" defaultValue={String(defaultHumidity)} />
         </label>
         <label>
-          Rain
+          강수
           <select ref={rainRef} name="rain" defaultValue={defaultRain ? "1" : "0"}>
-            <option value="0">No Rain</option>
-            <option value="1">Rain</option>
+            <option value="0">비 없음</option>
+            <option value="1">비</option>
           </select>
         </label>
       </div>

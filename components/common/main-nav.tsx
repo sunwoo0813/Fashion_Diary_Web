@@ -11,7 +11,7 @@ function isActive(pathname: string, link: AppNavLink): boolean {
   return pathname === link.href || pathname.startsWith(`${prefix}/`);
 }
 
-export function MainNav({ compact = false }: { compact?: boolean }) {
+export function MainNav({ compact = false, onLinkClick }: { compact?: boolean; onLinkClick?: () => void }) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -22,7 +22,7 @@ export function MainNav({ compact = false }: { compact?: boolean }) {
   }, [router]);
 
   return (
-    <nav className={`app-nav${compact ? " is-compact" : ""}`} aria-label="Main">
+    <nav className={`app-nav${compact ? " is-compact" : ""}`} aria-label="메인 메뉴">
       {APP_NAV_LINKS.map((link) => {
         const active = isActive(pathname, link);
         return (
@@ -32,11 +32,14 @@ export function MainNav({ compact = false }: { compact?: boolean }) {
             className={`app-link${compact ? " is-compact" : ""}${active ? " is-active" : ""}`}
             aria-current={active ? "page" : undefined}
             aria-label={compact ? link.label : undefined}
+            onClick={onLinkClick}
           >
             <span className="app-link-icon" aria-hidden>
               {link.icon}
             </span>
-            {!compact ? <span className="app-link-text">{link.label}</span> : null}
+            <span className="app-link-text" aria-hidden={compact}>
+              {link.label}
+            </span>
           </Link>
         );
       })}

@@ -194,7 +194,7 @@ async function updateOutfit(
     .eq("user_id", appUserId);
   if (updateError) {
     const url = new URL(`/outfits/${outfitId}/edit`, request.url);
-    url.searchParams.set("error", "Outfit update failed.");
+    url.searchParams.set("error", "코디 수정에 실패했어요.");
     return NextResponse.redirect(url, { status: 303 });
   }
 
@@ -283,7 +283,7 @@ async function updateOutfit(
 }
 
 export async function PATCH() {
-  return NextResponse.json({ ok: false, error: "Use POST multipart for update." }, { status: 405 });
+  return NextResponse.json({ ok: false, error: "수정은 POST multipart 방식으로 요청해주세요." }, { status: 405 });
 }
 
 export async function POST(

@@ -20,19 +20,19 @@ export default async function DiaryRootPage() {
   return (
     <section className="diary-feed-page">
       <header className="diary-feed-header">
-        <div className="diary-feed-title-wrap" aria-label={`Total posts ${sortedPosts.length}`}>
+        <div className="diary-feed-title-wrap" aria-label={`총 게시물 ${sortedPosts.length}개`}>
           <div className="diary-feed-title-copy">
-            <h1>OUTFIT</h1>
+            <h1>코디</h1>
             <div className="diary-feed-title-meta">
               <div className="diary-feed-title-icon">
                 <GridIcon size={18} />
               </div>
-              <p className="diary-feed-count">{sortedPosts.length} posts</p>
+              <p className="diary-feed-count">{sortedPosts.length}개 게시물</p>
             </div>
           </div>
         </div>
         <div className="diary-feed-actions">
-          <Link href={`/outfits/new?date=${todayIso}`} className="solid-button diary-icon-button" aria-label="Create entry">
+          <Link href={`/outfits/new?date=${todayIso}`} className="solid-button diary-icon-button" aria-label="기록 만들기">
             <PlusIcon size={18} />
           </Link>
         </div>
@@ -40,9 +40,9 @@ export default async function DiaryRootPage() {
 
       {sortedPosts.length === 0 ? (
         <div className="diary-empty">
-          <p>No posts uploaded yet.</p>
+          <p>아직 업로드된 게시물이 없어요.</p>
           <Link href={`/outfits/new?date=${todayIso}`} className="solid-button">
-            Create first post
+            첫 게시물 만들기
           </Link>
         </div>
       ) : (

@@ -7,7 +7,7 @@ import { normalizeProductSearchRows, toText } from "@/lib/wardrobe";
 export async function GET(request: Request) {
   const authUser = await getCurrentUser();
   if (!authUser) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "인증이 필요합니다." }, { status: 401 });
   }
 
   try {
@@ -26,11 +26,11 @@ export async function GET(request: Request) {
       .order("name")
       .limit(12);
     if (error) {
-      return NextResponse.json({ ok: false, error: "Product search failed" }, { status: 500 });
+      return NextResponse.json({ ok: false, error: "상품 검색에 실패했어요." }, { status: 500 });
     }
 
     return NextResponse.json({ ok: true, items: normalizeProductSearchRows(data || []) });
   } catch {
-    return NextResponse.json({ ok: false, error: "Product search failed" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "상품 검색에 실패했어요." }, { status: 500 });
   }
 }

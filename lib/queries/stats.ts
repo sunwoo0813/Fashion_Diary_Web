@@ -1,7 +1,7 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 import { normalizePublicImagePath } from "@/lib/wardrobe";
 
-const MONTH_LABELS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 const TEMP_BUCKET_ORDER = ["0-4C", "5-13C", "14-22C", "23-28C", "29C+"] as const;
 const CHUNK_SIZE = 200;
 
@@ -75,7 +75,7 @@ const statsPageCache = new Map<number, StatsCacheEntry>();
 
 function normalizeCategory(value: unknown): string {
   const text = typeof value === "string" ? value.trim() : "";
-  return text || "Unknown";
+  return text || "미분류";
 }
 
 function toNumber(value: unknown): number | null {
@@ -249,7 +249,7 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
 
   const itemRowsSafe = (itemRows || []).map((row) => ({
     id: toInt(row.id) ?? 0,
-    name: typeof row.name === "string" && row.name.trim() ? row.name.trim() : "Item",
+    name: typeof row.name === "string" && row.name.trim() ? row.name.trim() : "아이템",
     category: typeof row.category === "string" && row.category.trim() ? row.category.trim() : null,
     image_path:
       typeof row.image_path === "string" && row.image_path.trim()
@@ -354,7 +354,7 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
       const item = itemById[row.id];
       return {
         id: row.id,
-        name: item?.name || "Item",
+        name: item?.name || "아이템",
         category: item?.category || null,
         image_path: item?.image_path || null,
         count: row.count,
@@ -363,7 +363,7 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
 
   const efficiencyRate = totalItems > 0 ? Math.min(100, Math.round((totalOutfits / totalItems) * 100)) : 0;
   const curationPercent = totalItems > 0 ? Math.min(100, Math.round(60 + efficiencyRate * 0.4)) : 0;
-  const topCategory = categorySorted[0]?.category || "Unknown";
+  const topCategory = categorySorted[0]?.category || "미분류";
 
   const result: StatsPageData = {
     topItems,

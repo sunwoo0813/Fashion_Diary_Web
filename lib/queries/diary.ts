@@ -124,7 +124,7 @@ export async function getUserWardrobeItems(appUserId: number): Promise<WardrobeI
   return (data || []).map((row) => ({
     id: Number(row.id),
     user_id: Number(row.user_id),
-    name: String(row.name || "Untitled"),
+    name: String(row.name || "이름 없음"),
     category: row.category ? String(row.category) : null,
     size: row.size ? String(row.size) : null,
     size_detail: row.size_detail ?? null,
@@ -207,7 +207,7 @@ export async function getDiaryDayData(appUserId: number, isoDate: string): Promi
             const id = Number(row.id);
             acc[id] = {
               id,
-              name: String(row.name || "Item"),
+              name: String(row.name || "아이템"),
               category: row.category ? String(row.category) : null,
             };
             return acc;
@@ -319,7 +319,7 @@ export async function getDiaryFeedData(appUserId: number, maxPosts = 120): Promi
         const id = Number(row.id);
         acc[id] = {
           id,
-          name: String(row.name || "Item"),
+          name: String(row.name || "아이템"),
           category: row.category ? String(row.category) : null,
         };
         return acc;
@@ -434,7 +434,7 @@ export async function getOutfitEditData(appUserId: number, outfitId: number) {
           const id = Number(row.id);
           acc[id] = {
             id,
-            name: String(row.name || "Item"),
+            name: String(row.name || "아이템"),
             category: row.category ? String(row.category) : null,
           };
           return acc;

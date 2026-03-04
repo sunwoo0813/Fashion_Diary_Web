@@ -19,7 +19,7 @@ function addDays(isoDate: string, offset: number): string {
 }
 
 function displayDate(isoDate: string): string {
-  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("en-US", {
+  return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("ko-KR", {
     weekday: "short",
     month: "short",
     day: "numeric",
@@ -49,31 +49,31 @@ export default async function DiaryDatePage({
     <section className="diary-day-page">
       <header className="diary-day-header">
         <div>
-          <p className="diary-kicker">Style Archive</p>
+          <p className="diary-kicker">스타일 아카이브</p>
           <h1>{displayDate(isoDate)}</h1>
-          <p>Total outfits: {data.totalOutfits} | Total wardrobe items: {data.totalItems}</p>
+          <p>총 코디: {data.totalOutfits} | 총 옷장 아이템: {data.totalItems}</p>
         </div>
         <div className="diary-day-actions">
           <Link href={`/diary/${prevDate}`} className="ghost-button">
-            Previous Day
+            이전 날짜
           </Link>
           <Link href={`/diary/${nextDate}`} className="ghost-button">
-            Next Day
+            다음 날짜
           </Link>
           <Link href={`/diary/month?year=${monthYear}&month=${month}`} className="ghost-button">
-            Month View
+            월 보기
           </Link>
           <Link href={`/outfits/new?date=${isoDate}`} className="solid-button">
-            Create Entry
+            기록 작성
           </Link>
         </div>
       </header>
 
       {data.outfits.length === 0 ? (
         <div className="diary-empty">
-          <p>No outfit entries for this date.</p>
+          <p>이 날짜에 기록된 코디가 없어요.</p>
           <Link href={`/outfits/new?date=${isoDate}`} className="solid-button">
-            Add Outfit
+            코디 추가
           </Link>
         </div>
       ) : (
@@ -82,14 +82,14 @@ export default async function DiaryDatePage({
             <article key={outfit.id} className="diary-outfit-card">
               <div className="diary-outfit-head">
                 <div>
-                  <h2>{outfit.note || "Outfit Entry"}</h2>
+                  <h2>{outfit.note || "코디 기록"}</h2>
                   <p>
-                    {outfit.t_min ?? 0}C / {outfit.t_max ?? 0}C | humidity {outfit.humidity ?? 0}% |{" "}
-                    {outfit.rain ? "Rain" : "No rain"}
+                    {outfit.t_min ?? 0}C / {outfit.t_max ?? 0}C | 습도 {outfit.humidity ?? 0}% |{" "}
+                    {outfit.rain ? "비" : "비 없음"}
                   </p>
                 </div>
                 <Link href={`/outfits/${outfit.id}/edit`} className="ghost-button">
-                  Edit
+                  수정
                 </Link>
               </div>
 
@@ -98,7 +98,7 @@ export default async function DiaryDatePage({
                   {outfit.photos.map((photo) => (
                     <figure key={photo.id} className="diary-photo-card">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo.photo_path} alt={`Outfit ${outfit.id} photo ${photo.id}`} />
+                      <img src={photo.photo_path} alt={`코디 ${outfit.id} 사진 ${photo.id}`} />
                       <figcaption>
                         {photo.tag_items.length > 0 ? (
                           <div className="diary-tag-list">
@@ -107,14 +107,14 @@ export default async function DiaryDatePage({
                             ))}
                           </div>
                         ) : (
-                          <span className="diary-tag-empty">No tags</span>
+                          <span className="diary-tag-empty">태그 없음</span>
                         )}
                       </figcaption>
                     </figure>
                   ))}
                 </div>
               ) : (
-                <p className="diary-no-photo">No photos uploaded.</p>
+                <p className="diary-no-photo">업로드된 사진이 없어요.</p>
               )}
             </article>
           ))}

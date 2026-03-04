@@ -72,13 +72,13 @@ export function WardrobeSearchBar({ initialQuery, category, items }: WardrobeSea
             name="q"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search..."
+            placeholder="검색..."
             autoComplete="off"
-            aria-label="Search"
+            aria-label="검색"
             aria-controls="wardrobe-search-suggestions"
           />
           {showSubmit ? (
-            <button type="submit" className="wardrobe-search-submit" aria-label="Search">
+            <button type="submit" className="wardrobe-search-submit" aria-label="검색">
               <ArrowRightIcon size={16} />
             </button>
           ) : null}
@@ -102,7 +102,7 @@ export function WardrobeSearchBar({ initialQuery, category, items }: WardrobeSea
               </button>
             ))
           ) : (
-            <p className="wardrobe-search-empty">No related searches</p>
+            <p className="wardrobe-search-empty">관련 검색어가 없어요.</p>
           )}
         </div>
       ) : null}

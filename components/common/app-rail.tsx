@@ -1,10 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
-import { DarkModeToggle } from "@/components/common/dark-mode-toggle";
-import { LogoutImageButton } from "@/components/common/logout-image-button";
 import { MainNav } from "@/components/common/main-nav";
 
 type AppRailProps = {
@@ -13,117 +12,124 @@ type AppRailProps = {
   initials: string;
 };
 
-const COLLAPSE_DELAY_MS = 1000;
+type RailPanelContentProps = AppRailProps & {
+  expanded: boolean;
+  onNavigate?: () => void;
+};
+
+function MenuIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden focusable="false">
+      <path d="M4 7h16M4 12h16M4 17h16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CloseIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden focusable="false">
+      <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function RailPanelContent({ expanded, onNavigate, displayName, email, initials }: RailPanelContentProps) {
+  return (
+    <div className="app-rail-panel">
+      <div className="brand-lockup" aria-label="LAYERED logo">
+        <div className="brand-logo" aria-hidden>
+          LY
+        </div>
+        <div className="brand-text" aria-hidden={!expanded}>
+          <h2 className="brand-title">LAYERED</h2>
+        </div>
+      </div>
+      <MainNav onLinkClick={onNavigate} />
+
+      <div className="topbar-right">
+        <Link
+          href="/account"
+          className="topbar-profile-link"
+          aria-label="Open profile"
+          onClick={onNavigate}
+        >
+          <div className="rail-user">
+            <div className="rail-avatar" aria-hidden>
+              {initials}
+            </div>
+            <div className="rail-user-meta" aria-hidden={!expanded}>
+              <p className="rail-user-name">{displayName}</p>
+              <p className="rail-user-email">{email}</p>
+            </div>
+          </div>
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export function AppRail({ displayName, email, initials }: AppRailProps) {
+  const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isInstantClosing, setIsInstantClosing] = useState(false);
-  const railRef = useRef<HTMLElement | null>(null);
-  const collapseTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
-  const clearCollapseTimer = () => {
-    if (!collapseTimerRef.current) return;
-    clearTimeout(collapseTimerRef.current);
-    collapseTimerRef.current = null;
-  };
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   const openRail = () => {
-    clearCollapseTimer();
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 900px)").matches) return;
     setIsExpanded(true);
   };
 
-  const scheduleCloseRail = () => {
-    clearCollapseTimer();
-    collapseTimerRef.current = setTimeout(() => {
-      setIsExpanded(false);
-      collapseTimerRef.current = null;
-    }, COLLAPSE_DELAY_MS);
-  };
-
-  const closeRailImmediately = () => {
-    clearCollapseTimer();
-    setIsInstantClosing(true);
+  const closeRail = () => {
     setIsExpanded(false);
-    window.setTimeout(() => {
-      setIsInstantClosing(false);
-    }, 0);
   };
 
-  useEffect(() => clearCollapseTimer, []);
+  const openMobileRail = () => {
+    setIsMobileOpen(true);
+  };
 
-  useEffect(() => {
-    const handlePointerDown = (event: PointerEvent) => {
-      if (!isExpanded) return;
-      const target = event.target as Node | null;
-      if (target && railRef.current?.contains(target)) return;
-      closeRailImmediately();
-    };
-
-    document.addEventListener("pointerdown", handlePointerDown);
-    return () => {
-      document.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [isExpanded]);
+  const closeMobileRail = () => {
+    setIsMobileOpen(false);
+  };
 
   return (
     <aside
-      ref={railRef}
-      className={`app-rail${isExpanded ? " is-expanded" : ""}${isInstantClosing ? " is-instant-closing" : ""}`}
+      className={`app-rail${isExpanded || isMobileOpen ? " is-expanded" : ""}`}
       onMouseEnter={openRail}
-      onMouseLeave={scheduleCloseRail}
+      onMouseLeave={closeRail}
       onFocusCapture={openRail}
       onBlurCapture={(event) => {
         const nextFocusTarget = event.relatedTarget as Node | null;
         if (nextFocusTarget && event.currentTarget.contains(nextFocusTarget)) return;
-        scheduleCloseRail();
+        closeRail();
       }}
     >
-      <div className="app-rail-compact" aria-hidden={isExpanded}>
-        <div className="brand-lockup is-compact" aria-label="Fashion Diary logo">
-          <div className="brand-logo" aria-hidden>
-            FD
-          </div>
-        </div>
-        <MainNav compact />
-        <div className="topbar-right is-compact">
-          <Link href="/account" className="topbar-profile-link is-compact" aria-label="Open profile">
-            <div className="rail-user is-compact">
-              <div className="rail-avatar" aria-hidden>
-                {initials}
-              </div>
-            </div>
-          </Link>
-        </div>
+      <div className="app-rail-desktop">
+        <RailPanelContent expanded={isExpanded} displayName={displayName} email={email} initials={initials} />
       </div>
 
-      <div className="app-rail-panel">
-        <div className="brand-lockup" aria-label="Fashion Diary logo">
-          <div className="brand-logo" aria-hidden>
-            FD
-          </div>
-          <div className="brand-text">
-            <p className="brand-kicker">Fashion Diary</p>
-            <h2 className="brand-title">Wardrobe OS</h2>
-          </div>
-        </div>
-        <MainNav />
-
-        <div className="topbar-right">
-          <Link href="/account" className="topbar-profile-link" aria-label="Open profile">
-            <div className="rail-user">
-              <div className="rail-avatar" aria-hidden>
-                {initials}
-              </div>
-              <div className="rail-user-meta">
-                <p className="rail-user-name">{displayName}</p>
-                <p className="rail-user-email">{email}</p>
-              </div>
-            </div>
-          </Link>
-          <DarkModeToggle />
-        </div>
-        <LogoutImageButton />
+      <div className="app-rail-mobile-bar">
+        <button
+          type="button"
+          className="app-rail-mobile-trigger"
+          aria-label="메뉴 열기"
+          aria-expanded={isMobileOpen}
+          onClick={openMobileRail}
+        >
+          <MenuIcon />
+        </button>
       </div>
+
+      {isMobileOpen ? (
+        <div className="app-rail-mobile-overlay" role="dialog" aria-modal="true" aria-label="모바일 메뉴">
+          <button type="button" className="app-rail-mobile-close" aria-label="메뉴 닫기" onClick={closeMobileRail}>
+            <CloseIcon />
+          </button>
+          <RailPanelContent expanded displayName={displayName} email={email} initials={initials} onNavigate={closeMobileRail} />
+        </div>
+      ) : null}
     </aside>
   );
 }

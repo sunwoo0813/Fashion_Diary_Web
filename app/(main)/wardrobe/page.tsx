@@ -13,12 +13,12 @@ type WardrobeCategoryFilter = {
 };
 
 const CATEGORY_FILTERS: WardrobeCategoryFilter[] = [
-  { label: "All pieces", value: "" },
-  { label: "Outerwear", value: "Outerwear" },
-  { label: "Top", value: "Top", aliases: ["Tops"] },
-  { label: "Bottom", value: "Bottom", aliases: ["Bottoms"] },
-  { label: "Footwear", value: "Footwear" },
-  { label: "Accessories", value: "Accessories" },
+  { label: "전체", value: "" },
+  { label: "아우터", value: "Outerwear" },
+  { label: "상의", value: "Top", aliases: ["Tops"] },
+  { label: "하의", value: "Bottom", aliases: ["Bottoms"] },
+  { label: "신발", value: "Footwear" },
+  { label: "액세서리", value: "Accessories" },
 ];
 
 function readParam(value: string | string[] | undefined): string {
@@ -60,18 +60,18 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
     <section className="wardrobe-page">
       <header className="wardrobe-header">
         <div>
-          <p className="wardrobe-kicker">Digital Archive</p>
-          <h1>My Closet</h1>
+          <p className="wardrobe-kicker">디지털 아카이브</p>
+          <h1>내 옷장</h1>
         </div>
         <div className="wardrobe-header-actions">
           <WardrobeSearchBar initialQuery={q} category={category} items={data.items} />
-          <Link href="/wardrobe/new" className="solid-button diary-icon-button" aria-label="Add new item">
+          <Link href="/wardrobe/new" className="solid-button diary-icon-button" aria-label="새 아이템 추가">
             <PlusIcon size={18} />
           </Link>
         </div>
       </header>
 
-      <nav className="wardrobe-filter-form" aria-label="Wardrobe categories">
+      <nav className="wardrobe-filter-form" aria-label="옷장 카테고리">
         {CATEGORY_FILTERS.map((filter) => {
           const active = isCategoryActive(category, filter);
           return (

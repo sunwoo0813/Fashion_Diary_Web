@@ -115,7 +115,7 @@ export async function POST(request: Request) {
       .select("id,date")
       .single();
     if (insertError || !outfitRow?.id) {
-      return redirectToNew("Outfit save failed.");
+      return redirectToNew("코디 저장에 실패했어요.");
     }
 
     const outfitId = Number(outfitRow.id);
@@ -164,6 +164,6 @@ export async function POST(request: Request) {
 
     return NextResponse.redirect(new URL("/diary", request.url), { status: 303 });
   } catch {
-    return redirectToNew("Outfit save failed.");
+    return redirectToNew("코디 저장에 실패했어요.");
   }
 }

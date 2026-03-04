@@ -45,7 +45,7 @@ export default async function DiaryMonthPage({ searchParams }: DiaryMonthPagePro
   const nextYear = month < 12 ? year : year + 1;
   const nextMonth = month < 12 ? month + 1 : 1;
 
-  const monthLabel = new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("en-US", {
+  const monthLabel = new Date(Date.UTC(year, month - 1, 1)).toLocaleDateString("ko-KR", {
     year: "numeric",
     month: "long",
     timeZone: "UTC",
@@ -55,31 +55,31 @@ export default async function DiaryMonthPage({ searchParams }: DiaryMonthPagePro
     <section className="diary-month-page">
       <header className="diary-month-header">
         <div>
-          <p className="diary-kicker">Outfit Diary</p>
+          <p className="diary-kicker">코디 다이어리</p>
           <h1>{monthLabel}</h1>
-          <p>{outfitCount} entries recorded this month.</p>
+          <p>이번 달 기록 {outfitCount}개</p>
         </div>
         <div className="diary-month-actions">
           <Link
             href={`/diary/month?year=${prevYear}&month=${prevMonth}`}
             className="ghost-button"
           >
-            Previous
+            이전
           </Link>
           <Link
             href={`/diary/month?year=${nextYear}&month=${nextMonth}`}
             className="ghost-button"
           >
-            Next
+            다음
           </Link>
           <Link href={`/outfits/new?date=${new Date().toISOString().slice(0, 10)}`} className="solid-button">
-            Create Entry
+            기록 작성
           </Link>
         </div>
       </header>
 
       <div className="diary-weekday-row">
-        {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
+        {["일", "월", "화", "수", "목", "금", "토"].map((day) => (
           <span key={day}>{day}</span>
         ))}
       </div>

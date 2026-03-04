@@ -17,7 +17,7 @@ export function LogoutImageButton() {
       });
 
       if (!response.ok) {
-        throw new Error("Logout failed");
+        throw new Error("로그아웃에 실패했어요.");
       }
 
       startTransition(() => {
@@ -25,7 +25,7 @@ export function LogoutImageButton() {
         router.refresh();
       });
     } catch {
-      setError("Logout failed");
+      setError("로그아웃에 실패했어요.");
     }
   }
 
@@ -34,7 +34,7 @@ export function LogoutImageButton() {
       <button
         type="button"
         className="rail-logout-button"
-        aria-label="Log out"
+        aria-label="로그아웃"
         onClick={handleLogout}
         disabled={isPending}
       >

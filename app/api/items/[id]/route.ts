@@ -20,12 +20,12 @@ export async function PATCH(
 ) {
   const authUser = await getCurrentUser();
   if (!authUser?.email) {
-    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "인증이 필요합니다." }, { status: 401 });
   }
 
   const itemId = Number(params.id);
   if (!Number.isInteger(itemId) || itemId <= 0) {
-    return NextResponse.json({ ok: false, error: "Invalid item id" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "잘못된 아이템 ID입니다." }, { status: 400 });
   }
 
   try {
@@ -66,14 +66,14 @@ export async function PATCH(
       .maybeSingle();
 
     if (error) {
-      return NextResponse.json({ ok: false, error: "Item update failed" }, { status: 500 });
+      return NextResponse.json({ ok: false, error: "아이템 수정에 실패했어요." }, { status: 500 });
     }
     if (!data) {
-      return NextResponse.json({ ok: false, error: "Item not found" }, { status: 404 });
+      return NextResponse.json({ ok: false, error: "아이템을 찾을 수 없어요." }, { status: 404 });
     }
 
     return NextResponse.json({ ok: true, item: data });
   } catch {
-    return NextResponse.json({ ok: false, error: "Item update failed" }, { status: 500 });
+    return NextResponse.json({ ok: false, error: "아이템 수정에 실패했어요." }, { status: 500 });
   }
 }

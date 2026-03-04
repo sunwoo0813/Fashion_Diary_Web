@@ -9,7 +9,18 @@ function ratioPercent(value: number, max: number): number {
 }
 
 function formatCount(value: number): string {
-  return new Intl.NumberFormat("en-US").format(value);
+  return new Intl.NumberFormat("ko-KR").format(value);
+}
+
+function toCategoryLabel(category: string | null): string {
+  const value = String(category || "").trim().toLowerCase();
+  if (!value) return "미분류";
+  if (["outerwear", "아우터"].includes(value)) return "아우터";
+  if (["top", "tops", "상의"].includes(value)) return "상의";
+  if (["bottom", "bottoms", "하의"].includes(value)) return "하의";
+  if (["footwear", "신발"].includes(value)) return "신발";
+  if (["accessories", "accessory", "액세서리"].includes(value)) return "액세서리";
+  return category || "미분류";
 }
 
 function todayIso(): string {
@@ -47,25 +58,25 @@ export default async function StatsPage() {
     <section className="stats-next-page">
       <header className="stats-next-header">
         <div>
-          <p className="diary-kicker">Analytics &amp; Trends</p>
-          <h1>Wardrobe Insights</h1>
+          <p className="diary-kicker">분석 및 트렌드</p>
+          <h1>옷장 인사이트</h1>
           <p>
-            {stats.currentYear} summary based on your logged outfits, tags, and weather records.
+            {stats.currentYear}년 코디 기록, 태그, 날씨 데이터를 기반으로 한 요약입니다.
           </p>
         </div>
         <div className="stats-next-head-metrics">
-          <span>Items {formatCount(stats.totalItems)}</span>
-          <span>Outfits {formatCount(stats.totalOutfits)}</span>
-          <span>Photos {formatCount(stats.totalPhotos)}</span>
-          <span>Rain Ratio {stats.rainRatio}%</span>
+          <span>아이템 {formatCount(stats.totalItems)}</span>
+          <span>코디 {formatCount(stats.totalOutfits)}</span>
+          <span>사진 {formatCount(stats.totalPhotos)}</span>
+          <span>강수 비율 {stats.rainRatio}%</span>
         </div>
       </header>
 
       <div className="stats-next-grid">
         <article className="stats-next-card stats-next-top">
           <div className="stats-next-card-head">
-            <h2>Top 5 Most Worn</h2>
-            <span>Past 30 Days</span>
+            <h2>가장 자주 입은 상위 5개</h2>
+            <span>최근 30일</span>
           </div>
           {stats.topItems.length > 0 ? (
             <div className="stats-next-top-grid">
@@ -76,19 +87,19 @@ export default async function StatsPage() {
                       // eslint-disable-next-line @next/next/no-img-element
                       <img src={item.image_path} alt={item.name} />
                     ) : (
-                      <div className="stats-next-top-photo-empty">No Photo</div>
+                      <div className="stats-next-top-photo-empty">사진 없음</div>
                     )}
                   </div>
                   <p>{item.name}</p>
-                  <small>{item.count} wears</small>
+                  <small>{item.count}회 착용</small>
                 </div>
               ))}
             </div>
           ) : (
             <div className="stats-next-empty">
-              <p>No wear data yet.</p>
+              <p>아직 착용 데이터가 없어요.</p>
               <Link href="/outfits/new" className="solid-button">
-                Add today&apos;s look
+                오늘 코디 추가
               </Link>
             </div>
           )}
@@ -96,7 +107,7 @@ export default async function StatsPage() {
 
         <article className="stats-next-card stats-next-month">
           <div className="stats-next-card-head">
-            <h2>Monthly Style Trend</h2>
+            <h2>월별 스타일 추이</h2>
             <span>{stats.currentYear}</span>
           </div>
           <div className="stats-next-month-bars">
@@ -112,23 +123,23 @@ export default async function StatsPage() {
           <div className="stats-next-summary-row">
             <div>
               <strong>{formatCount(stats.totalOutfits)}</strong>
-              <small>Logged Outfits</small>
+              <small>기록된 코디</small>
             </div>
             <div>
               <strong>{stats.efficiencyRate}%</strong>
-              <small>Efficiency Rate</small>
+              <small>효율 지수</small>
             </div>
             <div>
               <strong>{stats.curationPercent}%</strong>
-              <small>Curation Level</small>
+              <small>큐레이션 수준</small>
             </div>
           </div>
         </article>
 
         <article className="stats-next-card">
           <div className="stats-next-card-head">
-            <h2>Category Focus</h2>
-            <span>Top {Math.min(stats.categorySorted.length, 6)}</span>
+            <h2>카테고리 집중도</h2>
+            <span>상위 {Math.min(stats.categorySorted.length, 6)}</span>
           </div>
           {stats.categorySorted.length > 0 ? (
             <div className="stats-next-donut-wrap">
@@ -136,7 +147,7 @@ export default async function StatsPage() {
                 <div className="stats-next-donut" style={{ backgroundImage: donutGradient }}>
                   <div className="stats-next-donut-hole">
                     <strong>{categoryLegend.length}</strong>
-                    <span>segments</span>
+                    <span>구간</span>
                   </div>
                 </div>
               </div>
@@ -148,7 +159,7 @@ export default async function StatsPage() {
                         className="stats-next-dot"
                         style={{ backgroundColor: DONUT_COLORS[index % DONUT_COLORS.length] }}
                       />
-                      {row.category}
+                      {toCategoryLabel(row.category)}
                     </p>
                     <div className="stats-next-progress">
                       <span style={{ width: `${ratioPercent(row.count, stats.totalItems || 1)}%` }} />
@@ -159,19 +170,19 @@ export default async function StatsPage() {
               </div>
             </div>
           ) : (
-            <p className="stats-next-muted">No items yet.</p>
+            <p className="stats-next-muted">아이템이 아직 없어요.</p>
           )}
         </article>
 
         <article className="stats-next-card">
           <div className="stats-next-card-head">
-            <h2>Weather Distribution</h2>
-            <span>{stats.weatherTotal} outfits</span>
+            <h2>날씨 분포</h2>
+            <span>{stats.weatherTotal}개 코디</span>
           </div>
           <div className="stats-next-weather-summary">
-            <p>Rain {stats.rainCount}</p>
-            <p>Clear {stats.clearCount}</p>
-            <p>Rain Ratio {stats.rainRatio}%</p>
+            <p>비 {stats.rainCount}</p>
+            <p>맑음 {stats.clearCount}</p>
+            <p>강수 비율 {stats.rainRatio}%</p>
           </div>
           <div className="stats-next-list">
             {stats.tempBuckets.map((bucket) => (
@@ -187,17 +198,17 @@ export default async function StatsPage() {
         </article>
 
         <article className="stats-next-card stats-next-highlight">
-          <h2>Style Arch</h2>
+          <h2>스타일 아카이브</h2>
           <p>
-            Your signature category is <strong>{stats.topCategory}</strong>, with {formatCount(stats.totalOutfits)}{" "}
-            outfits logged in {stats.currentYear}.
+            대표 카테고리는 <strong>{toCategoryLabel(stats.topCategory)}</strong>이며, {stats.currentYear}년에{" "}
+            {formatCount(stats.totalOutfits)}개의 코디가 기록되었어요.
           </p>
           <div className="stats-next-actions">
             <Link href={diaryHref} className="ghost-button">
-              View Diary
+              다이어리 보기
             </Link>
             <Link href="/wardrobe" className="ghost-button">
-              Open Wardrobe
+              옷장 열기
             </Link>
           </div>
         </article>

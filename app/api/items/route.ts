@@ -116,11 +116,11 @@ export async function POST(request: Request) {
 
     const { error } = await admin.from("item").insert(payload);
     if (error) {
-      return redirectWithMessage(request.url, "/wardrobe/new", "error", "Item save failed.");
+      return redirectWithMessage(request.url, "/wardrobe/new", "error", "아이템 저장에 실패했어요.");
     }
 
     return NextResponse.redirect(new URL("/wardrobe", request.url), { status: 303 });
   } catch {
-    return redirectWithMessage(request.url, "/wardrobe/new", "error", "Item save failed.");
+    return redirectWithMessage(request.url, "/wardrobe/new", "error", "아이템 저장에 실패했어요.");
   }
 }

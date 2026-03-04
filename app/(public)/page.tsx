@@ -15,7 +15,7 @@ export default async function LandingPage() {
   return (
     <main className="landing-page">
       <header className="landing-topbar">
-        <p className="landing-brand">Fashion Diary</p>
+        <p className="landing-brand">LAYERED</p>
         <div className="landing-top-actions">
           <Link href="https://size-picker.vercel.app/" className="ghost-button landing-size-picker-button">
             Size Picker

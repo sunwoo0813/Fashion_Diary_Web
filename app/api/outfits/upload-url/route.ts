@@ -65,23 +65,23 @@ function parseUploadFiles(payload: Record<string, unknown>): UploadFileInput[] {
 export async function POST(request: Request) {
   const authUser = await getCurrentUser();
   if (!authUser?.email) {
-    return NextResponse.json({ ok: false, error: "Unauthorized." }, { status: 401 });
+    return NextResponse.json({ ok: false, error: "인증이 필요합니다." }, { status: 401 });
   }
 
   let payload: Record<string, unknown>;
   try {
     payload = (await request.json()) as Record<string, unknown>;
   } catch {
-    return NextResponse.json({ ok: false, error: "Invalid request body." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "요청 본문 형식이 올바르지 않아요." }, { status: 400 });
   }
 
   const files = parseUploadFiles(payload);
   if (files.length === 0) {
-    return NextResponse.json({ ok: false, error: "At least one file is required." }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "최소 한 개 이상의 파일이 필요해요." }, { status: 400 });
   }
   if (files.length > MAX_FILES_PER_REQUEST) {
     return NextResponse.json(
-      { ok: false, error: `You can upload up to ${MAX_FILES_PER_REQUEST} photos at once.` },
+      { ok: false, error: `사진은 한 번에 최대 ${MAX_FILES_PER_REQUEST}개까지 업로드할 수 있어요.` },
       { status: 400 },
     );
   }
@@ -90,13 +90,13 @@ export async function POST(request: Request) {
     const file = files[index];
     if (!file.contentType.startsWith("image/")) {
       return NextResponse.json(
-        { ok: false, error: `Only image files are supported. (file #${index + 1})` },
+        { ok: false, error: `이미지 파일만 업로드할 수 있어요. (파일 #${index + 1})` },
         { status: 400 },
       );
     }
     if (file.fileSize != null && file.fileSize > MAX_OUTFIT_PHOTO_BYTES) {
       return NextResponse.json(
-        { ok: false, error: `Each photo must be ${Math.round(MAX_OUTFIT_PHOTO_BYTES / (1024 * 1024))}MB or less.` },
+        { ok: false, error: `각 사진은 ${Math.round(MAX_OUTFIT_PHOTO_BYTES / (1024 * 1024))}MB 이하여야 해요.` },
         { status: 413 },
       );
     }
@@ -112,17 +112,17 @@ export async function POST(request: Request) {
       const objectPath = `outfits/${authUserIdSegment}/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
       const { data, error } = await admin.storage.from(bucket).createSignedUploadUrl(objectPath);
       if (error || !data?.token) {
-        throw new Error(error?.message || "Failed to create signed upload URL.");
+        throw new Error(error?.message || "서명 업로드 URL 생성에 실패했어요.");
       }
       const signedUrl = toText(data.signedUrl);
       if (!signedUrl) {
-        throw new Error("Failed to create signed upload URL.");
+        throw new Error("서명 업로드 URL 생성에 실패했어요.");
       }
 
       const { data: publicData } = admin.storage.from(bucket).getPublicUrl(data.path || objectPath);
       const publicUrl = toText(publicData.publicUrl);
       if (!publicUrl) {
-        throw new Error("Failed to resolve public URL.");
+        throw new Error("공개 URL을 확인하지 못했어요.");
       }
 
       return {
@@ -144,7 +144,7 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ok: false,
-        error: error instanceof Error ? error.message : "Failed to prepare upload.",
+        error: error instanceof Error ? error.message : "업로드 준비에 실패했어요.",
       },
       { status: 500 },
     );

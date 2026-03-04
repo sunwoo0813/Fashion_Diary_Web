@@ -40,15 +40,15 @@ export default async function OutfitEditPage({
     <section className="outfit-edit-page">
       <header className="outfit-header">
         <div>
-          <p className="diary-kicker">Edit Entry</p>
-          <h1>Outfit #{outfit.id}</h1>
+          <p className="diary-kicker">기록 수정</p>
+          <h1>코디 #{outfit.id}</h1>
         </div>
         <div className="outfit-header-actions">
           <Link href={`/diary/${outfit.date}`} className="ghost-button">
-            Back to Day
+            해당 날짜로
           </Link>
           <button type="submit" form="outfitEditForm" className="solid-button">
-            Save Changes
+            변경 저장
           </button>
         </div>
       </header>
@@ -59,16 +59,16 @@ export default async function OutfitEditPage({
         <input type="hidden" name="_action" value="update" />
 
         <label>
-          Date
+          날짜
           <input type="date" name="date" defaultValue={outfit.date} required />
         </label>
         <label>
-          Note
+          메모
           <textarea name="note" defaultValue={outfit.note || ""} rows={4} />
         </label>
 
         <WeatherFields
-          defaultCity="Seoul"
+          defaultCity="서울"
           defaultTMin={outfit.t_min ?? 0}
           defaultTMax={outfit.t_max ?? 0}
           defaultHumidity={outfit.humidity ?? 0}
@@ -76,9 +76,9 @@ export default async function OutfitEditPage({
         />
 
         <section className="existing-photo-section">
-          <h2>Existing Photos</h2>
+          <h2>기존 사진</h2>
           {outfit.photos.length === 0 ? (
-            <p className="diary-no-photo">No photos attached.</p>
+            <p className="diary-no-photo">첨부된 사진이 없어요.</p>
           ) : (
             <div className="existing-photo-list">
               {outfit.photos.map((photo) => {
@@ -87,11 +87,11 @@ export default async function OutfitEditPage({
                   <article key={photo.id} className="existing-photo-card">
                     <div className="existing-photo-preview">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo.photo_path} alt={`Photo ${photo.id}`} />
+                      <img src={photo.photo_path} alt={`사진 ${photo.id}`} />
                     </div>
                     <label className="existing-photo-delete">
                       <input type="checkbox" name="delete_photo_ids" value={photo.id} />
-                      Delete this photo
+                      이 사진 삭제
                     </label>
                     <div className="existing-photo-tags">
                       {items.map((item) => (
@@ -119,14 +119,14 @@ export default async function OutfitEditPage({
           hiddenInputName="photo_tags_new_json"
           uploadedUrlsInputName="photo_urls_new_json"
           formId="outfitEditForm"
-          label="Add New Photos"
+          label="새 사진 추가"
         />
       </form>
 
       <form action={`/api/outfits/${outfit.id}`} method="post">
         <input type="hidden" name="_action" value="delete" />
         <button type="submit" className="danger-button">
-          Delete Outfit
+          코디 삭제
         </button>
       </form>
     </section>

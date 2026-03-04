@@ -28,12 +28,12 @@ export function DarkModeToggle() {
 
   return (
     <div className="theme-toggle-card">
-      <p className="theme-toggle-label">DARK MODE</p>
+      <p className="theme-toggle-label">다크 모드</p>
       <button
         type="button"
         className={`theme-toggle-switch${isDark ? " is-on" : ""}`}
         aria-pressed={isDark}
-        aria-label="Toggle dark mode"
+        aria-label="다크 모드 전환"
         onClick={() => setIsDark((current) => !current)}
       >
         <span className="theme-toggle-track">

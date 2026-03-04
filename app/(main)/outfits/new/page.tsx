@@ -31,15 +31,15 @@ export default async function OutfitNewPage({ searchParams }: OutfitNewPageProps
     <section className="outfit-new-page">
       <header className="outfit-header">
         <div>
-          <p className="diary-kicker">New Entry</p>
-          <h1>Today&apos;s Look</h1>
+          <p className="diary-kicker">새 기록</p>
+          <h1>오늘의 코디</h1>
         </div>
         <div className="outfit-header-actions">
           <Link href={`/diary/${defaultDate}`} className="ghost-button">
-            Cancel
+            취소
           </Link>
           <button type="submit" form="outfitCreateForm" className="solid-button">
-            Publish
+            등록
           </button>
         </div>
       </header>
@@ -48,15 +48,15 @@ export default async function OutfitNewPage({ searchParams }: OutfitNewPageProps
 
       <form id="outfitCreateForm" action="/api/outfits" method="post" encType="multipart/form-data" className="outfit-form">
         <label>
-          Date
+          날짜
           <input type="date" name="date" defaultValue={defaultDate} required />
         </label>
         <label>
-          Note
-          <textarea name="note" placeholder="How did this outfit make you feel?" rows={4} />
+          메모
+          <textarea name="note" placeholder="오늘 코디 느낌을 남겨보세요." rows={4} />
         </label>
 
-        <WeatherFields defaultCity="Seoul" defaultTMin={0} defaultTMax={0} defaultHumidity={0} defaultRain={false} />
+        <WeatherFields defaultCity="서울" defaultTMin={0} defaultTMax={0} defaultHumidity={0} defaultRain={false} />
 
         <NewPhotoTagPicker
           items={items.map((item) => ({ id: item.id, name: item.name, category: item.category }))}
@@ -64,7 +64,7 @@ export default async function OutfitNewPage({ searchParams }: OutfitNewPageProps
           hiddenInputName="photo_tags_json"
           uploadedUrlsInputName="photo_urls_json"
           formId="outfitCreateForm"
-          label="Upload Outfit Photos"
+          label="코디 사진 업로드"
         />
       </form>
     </section>

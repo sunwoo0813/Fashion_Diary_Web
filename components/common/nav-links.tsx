@@ -16,31 +16,31 @@ export type AppNavLink = {
 export const APP_NAV_LINKS: AppNavLink[] = [
   {
     href: "/dashboard",
-    label: "Dashboard",
+    label: "대시보드",
     icon: <DashboardIcon size={16} />,
     matchPrefix: "/dashboard",
   },
   {
     href: "/wardrobe",
-    label: "Wardrobe",
+    label: "옷장",
     icon: <WardrobeIcon size={16} />,
     matchPrefix: "/wardrobe",
   },
   {
     href: "/try-on",
-    label: "Try-on",
+    label: "가상 피팅",
     icon: <TryOnIcon size={16} />,
     matchPrefix: "/try-on",
   },
   {
     href: "/diary",
-    label: "Diary",
+    label: "다이어리",
     icon: <DiaryIcon size={16} />,
     matchPrefix: "/diary",
   },
   {
     href: "/stats",
-    label: "Stats",
+    label: "통계",
     icon: <StatsIcon size={16} />,
     matchPrefix: "/stats",
   },
