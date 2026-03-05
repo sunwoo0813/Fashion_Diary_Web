@@ -37,6 +37,27 @@ function itemCountText(count: number) {
   return `${count}회 착용`;
 }
 
+const MULTI_WORD_BRANDS = [
+  "surface edition",
+];
+const MULTI_WORD_BRAND_TOKENS = MULTI_WORD_BRANDS.map((brand) =>
+  brand
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean),
+).sort((a, b) => b.length - a.length);
+
+function detectBrandWordCount(parts: string[]): number {
+  if (parts.length < 2) return 1;
+  const lowerParts = parts.map((part) => part.toLowerCase());
+  for (const tokens of MULTI_WORD_BRAND_TOKENS) {
+    if (tokens.length > lowerParts.length) continue;
+    const matches = tokens.every((token, index) => lowerParts[index] === token);
+    if (matches) return tokens.length;
+  }
+  return 1;
+}
+
 function toCategoryLabel(category: string | null): string {
   const value = String(category || "").trim().toLowerCase();
   if (!value) return "아이템";
@@ -55,9 +76,10 @@ function splitName(name: string): { brand: string; product: string } {
   if (!text) return { brand: "-", product: "이름 없음" };
   const parts = text.split(/\s+/);
   if (parts.length === 1) return { brand: parts[0], product: parts[0] };
+  const brandWordCount = detectBrandWordCount(parts);
   return {
-    brand: parts[0],
-    product: parts.slice(1).join(" ") || text,
+    brand: parts.slice(0, brandWordCount).join(" "),
+    product: parts.slice(brandWordCount).join(" ") || text,
   };
 }
 
@@ -66,7 +88,11 @@ function parseName(name: string): { brand: string; itemName: string } {
   if (!text) return { brand: "-", itemName: "이름 없음" };
   const parts = text.split(/\s+/);
   if (parts.length < 2) return { brand: "-", itemName: text };
-  return { brand: parts[0], itemName: parts.slice(1).join(" ") || text };
+  const brandWordCount = detectBrandWordCount(parts);
+  return {
+    brand: parts.slice(0, brandWordCount).join(" "),
+    itemName: parts.slice(brandWordCount).join(" ") || text,
+  };
 }
 
 function getDetailValue(detail: unknown, keys: string[]): string {

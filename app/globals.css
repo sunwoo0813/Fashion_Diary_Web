@@ -186,13 +186,13 @@ button:hover,
 }
 
 .app-shell:has(.app-rail.is-expanded) {
-  grid-template-columns: 300px minmax(0, 1fr);
+  grid-template-columns: 210px minmax(0, 1fr);
 }
 
 .app-rail {
   --app-sidebar-icon-size: 16px;
   --app-rail-collapsed-width: 60px;
-  --app-rail-expanded-width: 300px;
+  --app-rail-expanded-width: 210px;
   position: sticky;
   top: 0;
   width: var(--app-rail-collapsed-width);
@@ -502,6 +502,24 @@ button:hover,
 .app-nav {
   display: grid;
   gap: 0.5rem;
+}
+
+.app-nav-theme-toggle {
+  margin-top: 2vh;
+  display: flex;
+  align-items: center;
+}
+
+.app-nav-theme-toggle .theme-toggle-card {
+  justify-items: flex-start;
+}
+
+.app-rail.is-expanded .app-nav-theme-toggle {
+  justify-content: center;
+}
+
+.app-rail.is-expanded .app-nav-theme-toggle .theme-toggle-card {
+  justify-items: center;
 }
 
 .app-nav.is-compact {
@@ -824,7 +842,7 @@ button:hover,
   width: max-content;
   position: fixed;
   left: 50%;
-  top: calc(50% + 5vh);
+  top: calc(50% + 8vh);
   transform: translate(-50%, -50%);
   align-items: center;
   justify-content: center;
@@ -1029,6 +1047,20 @@ button:hover,
 
 .login-page .auth-form .auth-submit {
   margin-top: 5vh;
+}
+
+.auth-loading-indicator {
+  position: fixed;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  z-index: 60;
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #0d1b23;
+  pointer-events: none;
 }
 
 .landing-page {
@@ -1769,9 +1801,18 @@ button:hover,
 
 .wardrobe-card {
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: 20px;
   background: white;
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
   overflow: hidden;
+}
+
+.wardrobe-card:hover {
+  box-shadow:
+    0 20px 25px -5px rgba(0, 0, 0, 0.3),
+    inset 0 1px 1px rgba(255, 255, 255, 0.05);
 }
 
 .wardrobe-page .wardrobe-card {
@@ -2242,7 +2283,6 @@ button:hover,
 }
 
 :root[data-theme="dark"] .app-link:hover,
-:root[data-theme="dark"] .wardrobe-card:hover,
 :root[data-theme="dark"] .stats-next-card:hover,
 :root[data-theme="dark"] .item-search-result:hover,
 :root[data-theme="dark"] .diary-post-card:hover {
@@ -4048,8 +4088,9 @@ button:hover,
 
   .app-rail-mobile-bar {
     display: flex;
+    position: relative;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: flex-start;
     border-bottom: 1px solid var(--line);
     background: rgba(255, 255, 255, 0.9);
     backdrop-filter: blur(8px);
@@ -4059,6 +4100,20 @@ button:hover,
 
   .app-rail-mobile-trigger {
     cursor: pointer;
+  }
+
+  .app-rail-mobile-logo {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    margin: 0;
+    font-family: sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    font-weight: 700;
+    line-height: 1;
+    pointer-events: none;
   }
 
   .app-rail-mobile-overlay {
@@ -4076,7 +4131,7 @@ button:hover,
   .app-rail-mobile-close {
     position: absolute;
     top: 0.9rem;
-    right: 0.9rem;
+    left: 0.9rem;
     cursor: pointer;
   }
 

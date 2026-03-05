@@ -1,4 +1,3 @@
-import { DarkModeToggle } from "@/components/common/dark-mode-toggle";
 import { LogoutImageButton } from "@/components/common/logout-image-button";
 import { requireUser } from "@/lib/auth";
 
@@ -67,9 +66,6 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
       </div>
 
       <div className="account-logout">
-        <div className="account-theme-toggle">
-          <DarkModeToggle />
-        </div>
         <div className="account-logout-button">
           <LogoutImageButton />
         </div>

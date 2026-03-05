@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+import { DarkModeToggle } from "@/components/common/dark-mode-toggle";
 import { APP_NAV_LINKS, type AppNavLink } from "@/components/common/nav-links";
 
 function isActive(pathname: string, link: AppNavLink): boolean {
@@ -43,6 +44,9 @@ export function MainNav({ compact = false, onLinkClick }: { compact?: boolean; o
           </Link>
         );
       })}
+      <div className="app-nav-theme-toggle">
+        <DarkModeToggle />
+      </div>
     </nav>
   );
 }

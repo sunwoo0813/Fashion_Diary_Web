@@ -120,6 +120,9 @@ export function AppRail({ displayName, email, initials }: AppRailProps) {
         >
           <MenuIcon />
         </button>
+        <p className="app-rail-mobile-logo" aria-hidden>
+          LAYERED
+        </p>
       </div>
 
       {isMobileOpen ? (

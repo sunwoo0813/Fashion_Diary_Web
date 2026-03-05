@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { loginAction, signupAction } from "@/actions/auth";
+import { LoginSubmitButton } from "@/components/auth/login-submit-button";
 import { getCurrentUser } from "@/lib/auth";
 
 function readQueryValue(value: string | string[] | undefined): string {
@@ -95,9 +96,7 @@ export default async function LoginPage({
                 </svg>
               </span>
             </label>
-            <button type="submit" className="solid-button auth-submit">
-              Log In
-            </button>
+            <LoginSubmitButton />
           </form>
         )}
 
