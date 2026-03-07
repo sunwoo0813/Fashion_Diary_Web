@@ -6,6 +6,7 @@ const STORAGE_KEY = "fashion-diary-theme";
 
 function applyTheme(isDark: boolean) {
   document.documentElement.dataset.theme = isDark ? "dark" : "light";
+  document.documentElement.classList.toggle("dark", isDark);
 }
 
 export function DarkModeToggle() {

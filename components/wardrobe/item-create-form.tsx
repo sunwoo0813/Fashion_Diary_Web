@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+
+import { useImageUpload } from "@/components/wardrobe/use-image-upload";
 
 type SizeGuide = {
   headers: string[];
@@ -21,6 +23,41 @@ type ItemCreateFormProps = {
 };
 
 type InputMode = "search" | "url" | "manual";
+
+function ImagePlusIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M15 8h.01" />
+      <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" />
+      <path d="m4 15 4-4c.6-.6 1.4-.6 2 0l5 5" />
+      <path d="m14 13 1-1c.6-.6 1.4-.6 2 0l3 3" />
+      <path d="M12 8v6" />
+      <path d="M9 11h6" />
+    </svg>
+  );
+}
+
+function UploadIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M12 16V6" />
+      <path d="m7 11 5-5 5 5" />
+      <path d="M5 20h14" />
+    </svg>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 13H6L5 6" />
+      <path d="M10 10v6" />
+      <path d="M14 10v6" />
+    </svg>
+  );
+}
 
 function normalizeCategory(value: string): string {
   const raw = value.trim().toLowerCase();
@@ -269,14 +306,64 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   const [selectedSizeRowIndex, setSelectedSizeRowIndex] = useState<number | null>(null);
 
   const [imagePrefill, setImagePrefill] = useState("");
-  const [localImageUrl, setLocalImageUrl] = useState("");
-  const fileRef = useRef<HTMLInputElement | null>(null);
+  const [isDraggingImage, setIsDraggingImage] = useState(false);
   const searchRequestSeqRef = useRef(0);
   const urlFetchRequestSeqRef = useRef(0);
   const sizeTableRequestSeqRef = useRef(0);
   const suppressNextAutoSearchRef = useRef(false);
 
+  const {
+    previewUrl: localImageUrl,
+    fileInputRef,
+    handleThumbnailClick,
+    handleFileChange,
+    handleRemove,
+  } = useImageUpload({
+    onUpload: () => {
+      setImagePrefill("");
+      setUrlImageCandidates([]);
+    },
+  });
+
   const previewSrc = localImageUrl || imagePrefill;
+
+  const handleImageDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  }, []);
+
+  const handleImageDragEnter = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDraggingImage(true);
+  }, []);
+
+  const handleImageDragLeave = useCallback((event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDraggingImage(false);
+  }, []);
+
+  const handleImageDrop = useCallback(
+    (event: React.DragEvent<HTMLDivElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsDraggingImage(false);
+
+      const file = event.dataTransfer.files?.[0];
+      if (!file || !file.type.startsWith("image/")) return;
+
+      setUrlImageCandidates([]);
+      setImagePrefill("");
+      const fakeEvent = {
+        target: {
+          files: [file],
+        },
+      } as unknown as React.ChangeEvent<HTMLInputElement>;
+      handleFileChange(fakeEvent);
+    },
+    [handleFileChange],
+  );
 
   useEffect(() => {
     if (inputMode !== "search") {
@@ -340,10 +427,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   }, [inputMode, searchQuery]);
 
   function resetVisibleState() {
-    if (localImageUrl) {
-      URL.revokeObjectURL(localImageUrl);
-    }
-    if (fileRef.current) fileRef.current.value = "";
+    handleRemove();
 
     searchRequestSeqRef.current += 1;
     urlFetchRequestSeqRef.current += 1;
@@ -374,7 +458,6 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     setSelectedSizeRowIndex(null);
 
     setImagePrefill("");
-    setLocalImageUrl("");
   }
 
   function onChangeInputMode(nextMode: InputMode) {
@@ -406,33 +489,15 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       setSelectedSizeRowIndex(null);
     }
 
+    handleRemove();
     setImagePrefill(item.image_path || "");
     setUrlImageCandidates(item.image_path ? [item.image_path] : []);
-    if (localImageUrl) {
-      URL.revokeObjectURL(localImageUrl);
-      setLocalImageUrl("");
-    }
-    if (fileRef.current) fileRef.current.value = "";
 
     suppressNextAutoSearchRef.current = true;
     setSearchResults([]);
     setSearchError("");
     setHasSearched(false);
     setSearchQuery(item.name || "");
-  }
-
-  function onFileChange(event: ChangeEvent<HTMLInputElement>) {
-    const file = event.target.files?.[0];
-    if (localImageUrl) {
-      URL.revokeObjectURL(localImageUrl);
-    }
-    setUrlImageCandidates([]);
-    if (!file) {
-      setLocalImageUrl("");
-      return;
-    }
-    setImagePrefill("");
-    setLocalImageUrl(URL.createObjectURL(file));
   }
 
   function selectSizeGuideRow(rowIndex: number) {
@@ -448,13 +513,9 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     const normalized = candidateUrl.trim();
     if (!normalized) return;
 
+    handleRemove();
     setImagePrefill(normalized);
     setUrlFetchError("");
-    if (localImageUrl) {
-      URL.revokeObjectURL(localImageUrl);
-      setLocalImageUrl("");
-    }
-    if (fileRef.current) fileRef.current.value = "";
   }
 
   async function onSizeTableImageChange(event: ChangeEvent<HTMLInputElement>) {
@@ -473,7 +534,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
         optimizedDataUrl.match(/^data:(.*?);base64,/i)?.[1] || "image/jpeg";
       const base64 = optimizedDataUrl.split(",")[1] || "";
       if (!base64) {
-        throw new Error("사이즈 표 이미지를 인코딩하지 못했어요.");
+        throw new Error("사이즈표 이미지를 인코딩하지 못했어요.");
       }
 
       const response = await fetch("/api/size-table", {
@@ -492,13 +553,13 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       };
       if (requestSeq !== sizeTableRequestSeqRef.current) return;
       if (!response.ok || !payload.ok || !payload.data) {
-        throw new Error("사이즈 표 추출에 실패했어요.");
+        throw new Error("사이즈 추출에 실패했어요.");
       }
 
       const parsedGuideRaw = parseSizeGuide(payload.data);
       const parsedGuide = parsedGuideRaw ? ensureSizeFirstColumn(parsedGuideRaw) : null;
       if (!parsedGuide || parsedGuide.rows.length === 0) {
-        throw new Error("추출된 사이즈 표를 정리하지 못했어요.");
+        throw new Error("추출한 사이즈표를 정리하지 못했어요.");
       }
 
       const firstRow = parsedGuide.rows[0];
@@ -508,7 +569,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       setSelectedSizeRowIndex(0);
     } catch (error) {
       if (requestSeq !== sizeTableRequestSeqRef.current) return;
-      setSizeTableError(error instanceof Error ? error.message : "사이즈 표 추출에 실패했어요.");
+      setSizeTableError(error instanceof Error ? error.message : "사이즈 추출에 실패했어요.");
     } finally {
       if (requestSeq === sizeTableRequestSeqRef.current) {
         setSizeTableLoading(false);
@@ -519,7 +580,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   async function onFetchFromProductUrl() {
     const targetUrl = productUrl.trim();
     if (!targetUrl) {
-      setUrlFetchError("상품 주소를 입력해주세요.");
+      setUrlFetchError("상품 주소를 입력해 주세요.");
       return;
     }
     const requestSeq = urlFetchRequestSeqRef.current + 1;
@@ -561,11 +622,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       ]).slice(0, 4);
       const selectedCandidateUrl = candidateUrls[0] || "";
 
-      if (localImageUrl) {
-        URL.revokeObjectURL(localImageUrl);
-        setLocalImageUrl("");
-      }
-      if (fileRef.current) fileRef.current.value = "";
+      handleRemove();
 
       if (selectedCandidateUrl) {
         setImagePrefill(selectedCandidateUrl);
@@ -649,10 +706,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
         <p className="item-input-mode-help">공유 상품을 검색해서 필드를 빠르게 자동 입력할 수 있어요.</p>
       ) : null}
       {inputMode === "url" ? (
-        <p className="item-input-mode-help">상품 주소를 붙여넣으면 브랜드, 상품명, 이미지를 자동 입력해요.</p>
+        <p className="item-input-mode-help">상품 주소를 붙여 넣으면 브랜드, 상품명, 이미지를 자동으로 입력해요.</p>
       ) : null}
       {inputMode === "manual" ? (
-        <p className="item-input-mode-help">원본 상품이 없으면 아래 필드를 직접 입력하세요.</p>
+        <p className="item-input-mode-help">원하는 상품이 없으면 아래 필드를 직접 입력해 주세요.</p>
       ) : null}
 
       {inputMode === "search" ? (
@@ -662,7 +719,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               type="text"
               value={searchQuery}
               onChange={(event) => setSearchQuery(event.target.value)}
-              placeholder="브랜드 또는 상품명을 입력하세요"
+              placeholder="브랜드 또는 상품명을 입력해 주세요"
             />
           </div>
           {hasSearchResults ? (
@@ -694,7 +751,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                 setProductUrl(event.target.value);
                 setUrlFetchError("");
               }}
-              placeholder="상품 주소를 붙여넣으세요"
+              placeholder="상품 주소를 붙여 넣어 주세요"
             />
           </div>
           <div className="item-search-row">
@@ -714,16 +771,59 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       <form id="itemCreateForm" action="/api/items" method="post" encType="multipart/form-data" className="item-form">
         <input type="hidden" name="input_mode" value={inputMode} />
         <div className="item-media-card">
-          <p>아이템 이미지</p>
-          <div className="item-image-preview">
-            {previewSrc ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={previewSrc} alt="아이템 미리보기" />
-            ) : (
-              <span>선택된 이미지가 없어요</span>
-            )}
+          <p>상품 사진</p>
+          {!previewSrc ? (
+            <div
+              className={`item-image-preview item-image-dropzone${isDraggingImage ? " is-dragging" : ""}`}
+              onClick={handleThumbnailClick}
+              onDragOver={handleImageDragOver}
+              onDragEnter={handleImageDragEnter}
+              onDragLeave={handleImageDragLeave}
+              onDrop={handleImageDrop}
+            >
+              <span className="item-image-empty">
+                <strong className="item-image-empty-icon">
+                  <ImagePlusIcon />
+                </strong>
+                <em>클릭해서 이미지를 첨부하세요.</em>
+                <small>또는 파일을 여기로 드래그하세요.</small>
+              </span>
+            </div>
+          ) : (
+            <div className="item-image-preview item-image-preview-filled">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={previewSrc} alt="상품 이미지 미리보기" />
+              <div className="item-image-overlay">
+                <button type="button" className="item-image-overlay-button" onClick={handleThumbnailClick}>
+                  <UploadIcon />
+                </button>
+                <button
+                  type="button"
+                  className="item-image-overlay-button is-danger"
+                  onClick={() => {
+                    handleRemove();
+                    setImagePrefill("");
+                  }}
+                >
+                  <TrashIcon />
+                </button>
+              </div>
+            </div>
+          )}
+          <input
+            ref={fileInputRef}
+            type="file"
+            name="image"
+            accept="image/*"
+            onChange={(event) => {
+              setUrlImageCandidates([]);
+              setImagePrefill("");
+              handleFileChange(event);
+            }}
+          />
+          <div className="item-image-meta">
+            <span>{imagePrefill && !localImageUrl ? "외부 이미지 선택됨" : ""}</span>
           </div>
-          <input ref={fileRef} type="file" name="image" accept="image/*" onChange={onFileChange} />
           {urlImageCandidates.length > 1 ? (
             <div className="item-image-candidates">
               <p>이미지 후보</p>
@@ -736,10 +836,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                       key={`${candidateUrl}-${index}`}
                       className={`item-image-candidate${isSelected ? " is-selected" : ""}`}
                       onClick={() => selectImageCandidate(candidateUrl)}
-                      aria-label={`이미지 후보 ${index + 1} 사용`}
+                      aria-label={`이미지 후보 ${index + 1} 선택`}
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={candidateUrl} alt={`후보 ${index + 1}`} />
+                      <img src={candidateUrl} alt={`후보 이미지 ${index + 1}`} />
                     </button>
                   );
                 })}
@@ -757,7 +857,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               name="brand"
               value={brand}
               onChange={(event) => setBrand(event.target.value)}
-              placeholder="셀린느"
+              placeholder="예: 리바이스"
               required
             />
           </label>
@@ -768,7 +868,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               name="product"
               value={product}
               onChange={(event) => setProduct(event.target.value)}
-              placeholder="빈티지 실크 블라우스"
+              placeholder="예: 빈티지 실크 블라우스"
               required
             />
           </label>
@@ -779,7 +879,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               name="category"
               value={category}
               onChange={(event) => setCategory(event.target.value)}
-              placeholder="카테고리"
+              placeholder="예: 상의"
             />
           </label>
           <label>
@@ -806,11 +906,11 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                 onChange={onSizeTableImageChange}
               />
               <label htmlFor="sizeTableImageInput" className="size-table-upload-box">
-                <strong>사이즈 표 이미지</strong>
+                <strong>사이즈표 이미지</strong>
                 <span>
                   {sizeTableLoading
-                    ? "사이즈 표 분석 중..."
-                    : sizeTableImageName || "클릭해서 사이즈 표 이미지를 업로드하세요. 자동으로 분석합니다."}
+                    ? "사이즈표 분석 중..."
+                    : sizeTableImageName || "클릭해서 사이즈표 이미지를 업로드해 주세요. 자동으로 분석합니다."}
                 </span>
               </label>
               {sizeTableError ? <p className="item-url-error">{sizeTableError}</p> : null}
@@ -820,7 +920,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
 
           {sizeGuide ? (
             <div className="size-guide">
-              <p>사이즈 표</p>
+              <p>사이즈표</p>
               <div className="size-guide-table-wrap">
                 <table className="size-guide-table">
                   <thead>
@@ -859,8 +959,8 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           ) : null}
 
           <label>
-            스타일링 메모
-            <textarea name="note" placeholder="핏 메모나 스타일링 아이디어를 적어보세요..." rows={4} />
+            스타일 메모
+            <textarea name="note" placeholder="코디 메모나 스타일링 아이디어를 적어 보세요." rows={4} />
           </label>
         </div>
       </form>
