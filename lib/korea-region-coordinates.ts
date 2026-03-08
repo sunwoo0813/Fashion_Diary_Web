@@ -1,0 +1,1639 @@
+﻿/* eslint-disable */
+
+export type RegionCoordinateOption = {
+  id: string;
+  name: string;
+  lat: number;
+  lon: number;
+};
+
+export type RegionCoordinateGroup = {
+  id: string;
+  name: string;
+  children: RegionCoordinateOption[];
+};
+
+export const KOREA_REGION_COORDINATES: RegionCoordinateGroup[] = [
+    {
+        "id":  "region-001",
+        "name":  "강원특별자치도",
+        "children":  [
+                         {
+                             "id":  "region-001-option-001",
+                             "name":  "양양군",
+                             "lat":  38.075493,
+                             "lon":  128.619145
+                         },
+                         {
+                             "id":  "region-001-option-002",
+                             "name":  "고성군",
+                             "lat":  38.3806154,
+                             "lon":  128.4678625
+                         },
+                         {
+                             "id":  "region-001-option-003",
+                             "name":  "인제군",
+                             "lat":  38.069732,
+                             "lon":  128.170352
+                         },
+                         {
+                             "id":  "region-001-option-004",
+                             "name":  "양구군",
+                             "lat":  38.109992,
+                             "lon":  127.99
+                         },
+                         {
+                             "id":  "region-001-option-005",
+                             "name":  "화천군",
+                             "lat":  38.106181,
+                             "lon":  127.708216
+                         },
+                         {
+                             "id":  "region-001-option-006",
+                             "name":  "철원군",
+                             "lat":  38.146861,
+                             "lon":  127.313472
+                         },
+                         {
+                             "id":  "region-001-option-007",
+                             "name":  "정선군",
+                             "lat":  37.380609,
+                             "lon":  128.660871
+                         },
+                         {
+                             "id":  "region-001-option-008",
+                             "name":  "평창군",
+                             "lat":  37.37077,
+                             "lon":  128.390193
+                         },
+                         {
+                             "id":  "region-001-option-009",
+                             "name":  "영월군",
+                             "lat":  37.183774,
+                             "lon":  128.46185
+                         },
+                         {
+                             "id":  "region-001-option-010",
+                             "name":  "횡성군",
+                             "lat":  37.491803,
+                             "lon":  127.985022
+                         },
+                         {
+                             "id":  "region-001-option-011",
+                             "name":  "홍천군",
+                             "lat":  37.697207,
+                             "lon":  127.888518
+                         },
+                         {
+                             "id":  "region-001-option-012",
+                             "name":  "삼척시",
+                             "lat":  37.4499354,
+                             "lon":  129.1651479
+                         },
+                         {
+                             "id":  "region-001-option-013",
+                             "name":  "속초시",
+                             "lat":  38.207169,
+                             "lon":  128.59184
+                         },
+                         {
+                             "id":  "region-001-option-014",
+                             "name":  "태백시",
+                             "lat":  37.164132,
+                             "lon":  128.985735
+                         },
+                         {
+                             "id":  "region-001-option-015",
+                             "name":  "동해시",
+                             "lat":  37.5247583,
+                             "lon":  129.1142625
+                         },
+                         {
+                             "id":  "region-001-option-016",
+                             "name":  "강릉시",
+                             "lat":  37.752175,
+                             "lon":  128.875836
+                         },
+                         {
+                             "id":  "region-001-option-017",
+                             "name":  "원주시",
+                             "lat":  37.3423179,
+                             "lon":  127.9199688
+                         },
+                         {
+                             "id":  "region-001-option-018",
+                             "name":  "춘천시",
+                             "lat":  37.8813739,
+                             "lon":  127.7300034
+                         }
+                     ]
+    },
+    {
+        "id":  "region-002",
+        "name":  "경기도",
+        "children":  [
+                         {
+                             "id":  "region-002-option-001",
+                             "name":  "양평군",
+                             "lat":  37.491791,
+                             "lon":  127.487597
+                         },
+                         {
+                             "id":  "region-002-option-002",
+                             "name":  "가평군",
+                             "lat":  37.831508,
+                             "lon":  127.509541
+                         },
+                         {
+                             "id":  "region-002-option-003",
+                             "name":  "연천군",
+                             "lat":  38.096738,
+                             "lon":  127.074755
+                         },
+                         {
+                             "id":  "region-002-option-004",
+                             "name":  "포천시",
+                             "lat":  37.894867,
+                             "lon":  127.2002404
+                         },
+                         {
+                             "id":  "region-002-option-005",
+                             "name":  "양주시",
+                             "lat":  37.785329,
+                             "lon":  127.045847
+                         },
+                         {
+                             "id":  "region-002-option-006",
+                             "name":  "광주시",
+                             "lat":  37.4294306,
+                             "lon":  127.2550476
+                         },
+                         {
+                             "id":  "region-002-option-007",
+                             "name":  "화성시",
+                             "lat":  37.199565,
+                             "lon":  126.831405
+                         },
+                         {
+                             "id":  "region-002-option-008",
+                             "name":  "김포시",
+                             "lat":  37.61535,
+                             "lon":  126.715544
+                         },
+                         {
+                             "id":  "region-002-option-009",
+                             "name":  "안성시",
+                             "lat":  37.0080546,
+                             "lon":  127.2797732
+                         },
+                         {
+                             "id":  "region-002-option-010",
+                             "name":  "이천시",
+                             "lat":  37.272342,
+                             "lon":  127.435034
+                         },
+                         {
+                             "id":  "region-002-option-011",
+                             "name":  "파주시",
+                             "lat":  37.760186,
+                             "lon":  126.779883
+                         },
+                         {
+                             "id":  "region-002-option-012",
+                             "name":  "용인시",
+                             "lat":  37.2412522,
+                             "lon":  127.1774916
+                         },
+                         {
+                             "id":  "region-002-option-013",
+                             "name":  "하남시",
+                             "lat":  37.5393014,
+                             "lon":  127.2148742
+                         },
+                         {
+                             "id":  "region-002-option-014",
+                             "name":  "의왕시",
+                             "lat":  37.3448869,
+                             "lon":  126.9682786
+                         },
+                         {
+                             "id":  "region-002-option-015",
+                             "name":  "군포시",
+                             "lat":  37.361523,
+                             "lon":  126.935338
+                         },
+                         {
+                             "id":  "region-002-option-016",
+                             "name":  "시흥시",
+                             "lat":  37.380177,
+                             "lon":  126.802934
+                         },
+                         {
+                             "id":  "region-002-option-017",
+                             "name":  "오산시",
+                             "lat":  37.149887,
+                             "lon":  127.077462
+                         },
+                         {
+                             "id":  "region-002-option-018",
+                             "name":  "남양주시",
+                             "lat":  37.635985,
+                             "lon":  127.216467
+                         },
+                         {
+                             "id":  "region-002-option-019",
+                             "name":  "구리시",
+                             "lat":  37.594266,
+                             "lon":  127.129632
+                         },
+                         {
+                             "id":  "region-002-option-020",
+                             "name":  "과천시",
+                             "lat":  37.4292013,
+                             "lon":  126.987675
+                         },
+                         {
+                             "id":  "region-002-option-021",
+                             "name":  "고양시",
+                             "lat":  37.6583981,
+                             "lon":  126.8319831
+                         },
+                         {
+                             "id":  "region-002-option-022",
+                             "name":  "안산시",
+                             "lat":  37.3219123,
+                             "lon":  126.8308176
+                         },
+                         {
+                             "id":  "region-002-option-023",
+                             "name":  "동두천시",
+                             "lat":  37.903662,
+                             "lon":  127.060671
+                         },
+                         {
+                             "id":  "region-002-option-024",
+                             "name":  "평택시",
+                             "lat":  36.9923537,
+                             "lon":  127.1126947
+                         },
+                         {
+                             "id":  "region-002-option-025",
+                             "name":  "광명시",
+                             "lat":  37.4786176,
+                             "lon":  126.8646504
+                         },
+                         {
+                             "id":  "region-002-option-026",
+                             "name":  "부천시",
+                             "lat":  37.5035917,
+                             "lon":  126.766
+                         },
+                         {
+                             "id":  "region-002-option-027",
+                             "name":  "안양시",
+                             "lat":  37.3942905,
+                             "lon":  126.9567534
+                         },
+                         {
+                             "id":  "region-002-option-028",
+                             "name":  "의정부시",
+                             "lat":  37.738083,
+                             "lon":  127.033753
+                         },
+                         {
+                             "id":  "region-002-option-029",
+                             "name":  "성남시",
+                             "lat":  37.4200267,
+                             "lon":  127.1267772
+                         },
+                         {
+                             "id":  "region-002-option-030",
+                             "name":  "수원시",
+                             "lat":  37.263476,
+                             "lon":  127.028646
+                         }
+                     ]
+    },
+    {
+        "id":  "region-003",
+        "name":  "경상남도",
+        "children":  [
+                         {
+                             "id":  "region-003-option-001",
+                             "name":  "합천군",
+                             "lat":  35.56666,
+                             "lon":  128.165799
+                         },
+                         {
+                             "id":  "region-003-option-002",
+                             "name":  "거창군",
+                             "lat":  35.686698,
+                             "lon":  127.909538
+                         },
+                         {
+                             "id":  "region-003-option-003",
+                             "name":  "함양군",
+                             "lat":  35.520536,
+                             "lon":  127.725245
+                         },
+                         {
+                             "id":  "region-003-option-004",
+                             "name":  "산청군",
+                             "lat":  35.415557,
+                             "lon":  127.873458
+                         },
+                         {
+                             "id":  "region-003-option-005",
+                             "name":  "하동군",
+                             "lat":  35.067333,
+                             "lon":  127.751275
+                         },
+                         {
+                             "id":  "region-003-option-006",
+                             "name":  "남해군",
+                             "lat":  34.837707,
+                             "lon":  127.892475
+                         },
+                         {
+                             "id":  "region-003-option-007",
+                             "name":  "고성군",
+                             "lat":  34.9730975,
+                             "lon":  128.3222643
+                         },
+                         {
+                             "id":  "region-003-option-008",
+                             "name":  "창녕군",
+                             "lat":  35.544611,
+                             "lon":  128.492346
+                         },
+                         {
+                             "id":  "region-003-option-009",
+                             "name":  "함안군",
+                             "lat":  35.272315,
+                             "lon":  128.406595
+                         },
+                         {
+                             "id":  "region-003-option-010",
+                             "name":  "의령군",
+                             "lat":  35.3222239,
+                             "lon":  128.261676
+                         },
+                         {
+                             "id":  "region-003-option-011",
+                             "name":  "양산시",
+                             "lat":  35.335049,
+                             "lon":  129.037339
+                         },
+                         {
+                             "id":  "region-003-option-012",
+                             "name":  "거제시",
+                             "lat":  34.8804572,
+                             "lon":  128.6211703
+                         },
+                         {
+                             "id":  "region-003-option-013",
+                             "name":  "밀양시",
+                             "lat":  35.503856,
+                             "lon":  128.746712
+                         },
+                         {
+                             "id":  "region-003-option-014",
+                             "name":  "김해시",
+                             "lat":  35.228574,
+                             "lon":  128.889322
+                         },
+                         {
+                             "id":  "region-003-option-015",
+                             "name":  "사천시",
+                             "lat":  35.0034774,
+                             "lon":  128.0638649
+                         },
+                         {
+                             "id":  "region-003-option-016",
+                             "name":  "통영시",
+                             "lat":  34.85439,
+                             "lon":  128.433112
+                         },
+                         {
+                             "id":  "region-003-option-017",
+                             "name":  "진주시",
+                             "lat":  35.180325,
+                             "lon":  128.107646
+                         },
+                         {
+                             "id":  "region-003-option-018",
+                             "name":  "창원시",
+                             "lat":  35.2278771,
+                             "lon":  128.6818746
+                         }
+                     ]
+    },
+    {
+        "id":  "region-004",
+        "name":  "경상북도",
+        "children":  [
+                         {
+                             "id":  "region-004-option-001",
+                             "name":  "울릉군",
+                             "lat":  37.484455,
+                             "lon":  130.905697
+                         },
+                         {
+                             "id":  "region-004-option-002",
+                             "name":  "울진군",
+                             "lat":  36.993087,
+                             "lon":  129.400394
+                         },
+                         {
+                             "id":  "region-004-option-003",
+                             "name":  "봉화군",
+                             "lat":  36.893114,
+                             "lon":  128.732503
+                         },
+                         {
+                             "id":  "region-004-option-004",
+                             "name":  "예천군",
+                             "lat":  36.6468844,
+                             "lon":  128.4373552
+                         },
+                         {
+                             "id":  "region-004-option-005",
+                             "name":  "칠곡군",
+                             "lat":  35.9955753,
+                             "lon":  128.401679
+                         },
+                         {
+                             "id":  "region-004-option-006",
+                             "name":  "성주군",
+                             "lat":  35.919175,
+                             "lon":  128.282959
+                         },
+                         {
+                             "id":  "region-004-option-007",
+                             "name":  "고령군",
+                             "lat":  35.725968,
+                             "lon":  128.262688
+                         },
+                         {
+                             "id":  "region-004-option-008",
+                             "name":  "청도군",
+                             "lat":  35.647399,
+                             "lon":  128.733988
+                         },
+                         {
+                             "id":  "region-004-option-009",
+                             "name":  "영덕군",
+                             "lat":  36.415034,
+                             "lon":  129.365267
+                         },
+                         {
+                             "id":  "region-004-option-010",
+                             "name":  "영양군",
+                             "lat":  36.6667174,
+                             "lon":  129.1123839
+                         },
+                         {
+                             "id":  "region-004-option-011",
+                             "name":  "청송군",
+                             "lat":  36.4362793,
+                             "lon":  129.0571263
+                         },
+                         {
+                             "id":  "region-004-option-012",
+                             "name":  "의성군",
+                             "lat":  36.3527158,
+                             "lon":  128.6971711
+                         },
+                         {
+                             "id":  "region-004-option-013",
+                             "name":  "군위군",
+                             "lat":  36.242945,
+                             "lon":  128.572657
+                         },
+                         {
+                             "id":  "region-004-option-014",
+                             "name":  "경산시",
+                             "lat":  35.82509,
+                             "lon":  128.741201
+                         },
+                         {
+                             "id":  "region-004-option-015",
+                             "name":  "문경시",
+                             "lat":  36.586522,
+                             "lon":  128.186787
+                         },
+                         {
+                             "id":  "region-004-option-016",
+                             "name":  "상주시",
+                             "lat":  36.411002,
+                             "lon":  128.159229
+                         },
+                         {
+                             "id":  "region-004-option-017",
+                             "name":  "영천시",
+                             "lat":  35.97326,
+                             "lon":  128.938613
+                         },
+                         {
+                             "id":  "region-004-option-018",
+                             "name":  "영주시",
+                             "lat":  36.805667,
+                             "lon":  128.624063
+                         },
+                         {
+                             "id":  "region-004-option-019",
+                             "name":  "구미시",
+                             "lat":  36.1195987,
+                             "lon":  128.3443
+                         },
+                         {
+                             "id":  "region-004-option-020",
+                             "name":  "안동시",
+                             "lat":  36.568425,
+                             "lon":  128.7295375
+                         },
+                         {
+                             "id":  "region-004-option-021",
+                             "name":  "김천시",
+                             "lat":  36.1397714,
+                             "lon":  128.1136148
+                         },
+                         {
+                             "id":  "region-004-option-022",
+                             "name":  "경주시",
+                             "lat":  35.856242,
+                             "lon":  129.224784
+                         },
+                         {
+                             "id":  "region-004-option-023",
+                             "name":  "포항시",
+                             "lat":  36.0190333,
+                             "lon":  129.3433898
+                         }
+                     ]
+    },
+    {
+        "id":  "region-005",
+        "name":  "광주광역시",
+        "children":  [
+                         {
+                             "id":  "region-005-option-001",
+                             "name":  "광산구",
+                             "lat":  35.1395085,
+                             "lon":  126.7936834
+                         },
+                         {
+                             "id":  "region-005-option-002",
+                             "name":  "북구",
+                             "lat":  35.17406,
+                             "lon":  126.911963
+                         },
+                         {
+                             "id":  "region-005-option-003",
+                             "name":  "남구",
+                             "lat":  35.1330039,
+                             "lon":  126.902402
+                         },
+                         {
+                             "id":  "region-005-option-004",
+                             "name":  "서구",
+                             "lat":  35.151969,
+                             "lon":  126.890272
+                         },
+                         {
+                             "id":  "region-005-option-005",
+                             "name":  "동구",
+                             "lat":  35.1460818,
+                             "lon":  126.9232859
+                         }
+                     ]
+    },
+    {
+        "id":  "region-006",
+        "name":  "대구광역시",
+        "children":  [
+                         {
+                             "id":  "region-006-option-001",
+                             "name":  "달성군",
+                             "lat":  35.7746,
+                             "lon":  128.431445
+                         },
+                         {
+                             "id":  "region-006-option-002",
+                             "name":  "달서구",
+                             "lat":  35.8298667,
+                             "lon":  128.5327375
+                         },
+                         {
+                             "id":  "region-006-option-003",
+                             "name":  "수성구",
+                             "lat":  35.8581654,
+                             "lon":  128.630625
+                         },
+                         {
+                             "id":  "region-006-option-004",
+                             "name":  "북구",
+                             "lat":  35.885684,
+                             "lon":  128.582947
+                         },
+                         {
+                             "id":  "region-006-option-005",
+                             "name":  "남구",
+                             "lat":  35.846,
+                             "lon":  128.597486
+                         },
+                         {
+                             "id":  "region-006-option-006",
+                             "name":  "서구",
+                             "lat":  35.871757,
+                             "lon":  128.559175
+                         },
+                         {
+                             "id":  "region-006-option-007",
+                             "name":  "동구",
+                             "lat":  35.886664,
+                             "lon":  128.635609
+                         },
+                         {
+                             "id":  "region-006-option-008",
+                             "name":  "중구",
+                             "lat":  35.8693404,
+                             "lon":  128.6062
+                         }
+                     ]
+    },
+    {
+        "id":  "region-007",
+        "name":  "대전광역시",
+        "children":  [
+                         {
+                             "id":  "region-007-option-001",
+                             "name":  "대덕구",
+                             "lat":  36.346735,
+                             "lon":  127.415502
+                         },
+                         {
+                             "id":  "region-007-option-002",
+                             "name":  "유성구",
+                             "lat":  36.3623219,
+                             "lon":  127.3562683
+                         },
+                         {
+                             "id":  "region-007-option-003",
+                             "name":  "서구",
+                             "lat":  36.355504,
+                             "lon":  127.383844
+                         },
+                         {
+                             "id":  "region-007-option-004",
+                             "name":  "중구",
+                             "lat":  36.3256594,
+                             "lon":  127.4215464
+                         },
+                         {
+                             "id":  "region-007-option-005",
+                             "name":  "동구",
+                             "lat":  36.312169,
+                             "lon":  127.454884
+                         }
+                     ]
+    },
+    {
+        "id":  "region-008",
+        "name":  "부산광역시",
+        "children":  [
+                         {
+                             "id":  "region-008-option-001",
+                             "name":  "기장군",
+                             "lat":  35.244498,
+                             "lon":  129.222312
+                         },
+                         {
+                             "id":  "region-008-option-002",
+                             "name":  "사상구",
+                             "lat":  35.152624,
+                             "lon":  128.99125
+                         },
+                         {
+                             "id":  "region-008-option-003",
+                             "name":  "수영구",
+                             "lat":  35.145694,
+                             "lon":  129.113186
+                         },
+                         {
+                             "id":  "region-008-option-004",
+                             "name":  "연제구",
+                             "lat":  35.176242,
+                             "lon":  129.079764
+                         },
+                         {
+                             "id":  "region-008-option-005",
+                             "name":  "강서구",
+                             "lat":  35.2122179,
+                             "lon":  128.98045
+                         },
+                         {
+                             "id":  "region-008-option-006",
+                             "name":  "금정구",
+                             "lat":  35.243068,
+                             "lon":  129.0921
+                         },
+                         {
+                             "id":  "region-008-option-007",
+                             "name":  "사하구",
+                             "lat":  35.104585,
+                             "lon":  128.974817
+                         },
+                         {
+                             "id":  "region-008-option-008",
+                             "name":  "해운대구",
+                             "lat":  35.163177,
+                             "lon":  129.163634
+                         },
+                         {
+                             "id":  "region-008-option-009",
+                             "name":  "북구",
+                             "lat":  35.197185,
+                             "lon":  128.990438
+                         },
+                         {
+                             "id":  "region-008-option-010",
+                             "name":  "남구",
+                             "lat":  35.136577,
+                             "lon":  129.084163
+                         },
+                         {
+                             "id":  "region-008-option-011",
+                             "name":  "동래구",
+                             "lat":  35.1964382,
+                             "lon":  129.0938569
+                         },
+                         {
+                             "id":  "region-008-option-012",
+                             "name":  "부산진구",
+                             "lat":  35.162913,
+                             "lon":  129.053157
+                         },
+                         {
+                             "id":  "region-008-option-013",
+                             "name":  "영도구",
+                             "lat":  35.091199,
+                             "lon":  129.067875
+                         },
+                         {
+                             "id":  "region-008-option-014",
+                             "name":  "동구",
+                             "lat":  35.1292746,
+                             "lon":  129.0453253
+                         },
+                         {
+                             "id":  "region-008-option-015",
+                             "name":  "서구",
+                             "lat":  35.0979321,
+                             "lon":  129.0244125
+                         },
+                         {
+                             "id":  "region-008-option-016",
+                             "name":  "중구",
+                             "lat":  35.106214,
+                             "lon":  129.032352
+                         }
+                     ]
+    },
+    {
+        "id":  "region-009",
+        "name":  "서울특별시",
+        "children":  [
+                         {
+                             "id":  "region-009-option-001",
+                             "name":  "강동구",
+                             "lat":  37.530126,
+                             "lon":  127.1237708
+                         },
+                         {
+                             "id":  "region-009-option-002",
+                             "name":  "송파구",
+                             "lat":  37.5145636,
+                             "lon":  127.1059186
+                         },
+                         {
+                             "id":  "region-009-option-003",
+                             "name":  "강남구",
+                             "lat":  37.517305,
+                             "lon":  127.047502
+                         },
+                         {
+                             "id":  "region-009-option-004",
+                             "name":  "서초구",
+                             "lat":  37.483569,
+                             "lon":  127.032598
+                         },
+                         {
+                             "id":  "region-009-option-005",
+                             "name":  "관악구",
+                             "lat":  37.4781549,
+                             "lon":  126.9514847
+                         },
+                         {
+                             "id":  "region-009-option-006",
+                             "name":  "동작구",
+                             "lat":  37.51245,
+                             "lon":  126.9395
+                         },
+                         {
+                             "id":  "region-009-option-007",
+                             "name":  "영등포구",
+                             "lat":  37.526436,
+                             "lon":  126.896004
+                         },
+                         {
+                             "id":  "region-009-option-008",
+                             "name":  "금천구",
+                             "lat":  37.4568644,
+                             "lon":  126.8955105
+                         },
+                         {
+                             "id":  "region-009-option-009",
+                             "name":  "구로구",
+                             "lat":  37.495472,
+                             "lon":  126.887536
+                         },
+                         {
+                             "id":  "region-009-option-010",
+                             "name":  "강서구",
+                             "lat":  37.550937,
+                             "lon":  126.849642
+                         },
+                         {
+                             "id":  "region-009-option-011",
+                             "name":  "양천구",
+                             "lat":  37.517016,
+                             "lon":  126.866642
+                         },
+                         {
+                             "id":  "region-009-option-012",
+                             "name":  "마포구",
+                             "lat":  37.5663245,
+                             "lon":  126.901491
+                         },
+                         {
+                             "id":  "region-009-option-013",
+                             "name":  "서대문구",
+                             "lat":  37.579225,
+                             "lon":  126.9368
+                         },
+                         {
+                             "id":  "region-009-option-014",
+                             "name":  "은평구",
+                             "lat":  37.602784,
+                             "lon":  126.929164
+                         },
+                         {
+                             "id":  "region-009-option-015",
+                             "name":  "노원구",
+                             "lat":  37.654358,
+                             "lon":  127.056473
+                         },
+                         {
+                             "id":  "region-009-option-016",
+                             "name":  "도봉구",
+                             "lat":  37.668768,
+                             "lon":  127.047163
+                         },
+                         {
+                             "id":  "region-009-option-017",
+                             "name":  "강북구",
+                             "lat":  37.6397819,
+                             "lon":  127.0256135
+                         },
+                         {
+                             "id":  "region-009-option-018",
+                             "name":  "성북구",
+                             "lat":  37.5894,
+                             "lon":  127.016749
+                         },
+                         {
+                             "id":  "region-009-option-019",
+                             "name":  "중랑구",
+                             "lat":  37.6063242,
+                             "lon":  127.0925842
+                         },
+                         {
+                             "id":  "region-009-option-020",
+                             "name":  "동대문구",
+                             "lat":  37.574524,
+                             "lon":  127.03965
+                         },
+                         {
+                             "id":  "region-009-option-021",
+                             "name":  "광진구",
+                             "lat":  37.538617,
+                             "lon":  127.082375
+                         },
+                         {
+                             "id":  "region-009-option-022",
+                             "name":  "성동구",
+                             "lat":  37.563456,
+                             "lon":  127.036821
+                         },
+                         {
+                             "id":  "region-009-option-023",
+                             "name":  "용산구",
+                             "lat":  37.532527,
+                             "lon":  126.99049
+                         },
+                         {
+                             "id":  "region-009-option-024",
+                             "name":  "중구",
+                             "lat":  37.563843,
+                             "lon":  126.997602
+                         },
+                         {
+                             "id":  "region-009-option-025",
+                             "name":  "종로구",
+                             "lat":  37.5735207,
+                             "lon":  126.9788345
+                         }
+                     ]
+    },
+    {
+        "id":  "region-010",
+        "name":  "세종특별자치시",
+        "children":  [
+                         {
+                             "id":  "region-010-option-001",
+                             "name":  "어진동",
+                             "lat":  36.501231,
+                             "lon":  127.263996
+                         },
+                         {
+                             "id":  "region-010-option-002",
+                             "name":  "다정동",
+                             "lat":  36.4946068,
+                             "lon":  127.2451531
+                         },
+                         {
+                             "id":  "region-010-option-003",
+                             "name":  "나성동",
+                             "lat":  36.4863275,
+                             "lon":  127.2641329
+                         },
+                         {
+                             "id":  "region-010-option-004",
+                             "name":  "가람동",
+                             "lat":  36.4703553,
+                             "lon":  127.2462177
+                         },
+                         {
+                             "id":  "region-010-option-005",
+                             "name":  "반곡동",
+                             "lat":  36.4919967,
+                             "lon":  127.3114842
+                         },
+                         {
+                             "id":  "region-010-option-006",
+                             "name":  "대평동",
+                             "lat":  36.4711408,
+                             "lon":  127.2795149
+                         },
+                         {
+                             "id":  "region-010-option-007",
+                             "name":  "보람동",
+                             "lat":  36.4789158,
+                             "lon":  127.2906429
+                         },
+                         {
+                             "id":  "region-010-option-008",
+                             "name":  "소담동",
+                             "lat":  36.4839559,
+                             "lon":  127.3004148
+                         },
+                         {
+                             "id":  "region-010-option-009",
+                             "name":  "고운동",
+                             "lat":  36.519747,
+                             "lon":  127.2366679
+                         },
+                         {
+                             "id":  "region-010-option-010",
+                             "name":  "종촌동",
+                             "lat":  36.5045299,
+                             "lon":  127.2469119
+                         },
+                         {
+                             "id":  "region-010-option-011",
+                             "name":  "아름동",
+                             "lat":  36.5122202,
+                             "lon":  127.2468996
+                         },
+                         {
+                             "id":  "region-010-option-012",
+                             "name":  "도담동",
+                             "lat":  36.5154464,
+                             "lon":  127.2617335
+                         },
+                         {
+                             "id":  "region-010-option-013",
+                             "name":  "새롬동",
+                             "lat":  36.4848559,
+                             "lon":  127.2518046
+                         },
+                         {
+                             "id":  "region-010-option-014",
+                             "name":  "한솔동",
+                             "lat":  36.4790874,
+                             "lon":  127.2546861
+                         },
+                         {
+                             "id":  "region-010-option-015",
+                             "name":  "소정면",
+                             "lat":  36.722325,
+                             "lon":  127.1582557
+                         },
+                         {
+                             "id":  "region-010-option-016",
+                             "name":  "전동면",
+                             "lat":  36.662731,
+                             "lon":  127.2336903
+                         },
+                         {
+                             "id":  "region-010-option-017",
+                             "name":  "전의면",
+                             "lat":  36.6814441,
+                             "lon":  127.1959556
+                         },
+                         {
+                             "id":  "region-010-option-018",
+                             "name":  "연서면",
+                             "lat":  36.592587,
+                             "lon":  127.2716217
+                         },
+                         {
+                             "id":  "region-010-option-019",
+                             "name":  "장군면",
+                             "lat":  36.4966971,
+                             "lon":  127.2056329
+                         },
+                         {
+                             "id":  "region-010-option-020",
+                             "name":  "금남면",
+                             "lat":  36.463826,
+                             "lon":  127.28035
+                         },
+                         {
+                             "id":  "region-010-option-021",
+                             "name":  "부강면",
+                             "lat":  36.5297262,
+                             "lon":  127.37092
+                         },
+                         {
+                             "id":  "region-010-option-022",
+                             "name":  "연동면",
+                             "lat":  36.5551646,
+                             "lon":  127.3274048
+                         },
+                         {
+                             "id":  "region-010-option-023",
+                             "name":  "연기면",
+                             "lat":  36.5418737,
+                             "lon":  127.2737741
+                         },
+                         {
+                             "id":  "region-010-option-024",
+                             "name":  "조치원읍",
+                             "lat":  36.6045664,
+                             "lon":  127.2984279
+                         }
+                     ]
+    },
+    {
+        "id":  "region-011",
+        "name":  "울산광역시",
+        "children":  [
+                         {
+                             "id":  "region-011-option-001",
+                             "name":  "울주군",
+                             "lat":  35.5220885,
+                             "lon":  129.2422295
+                         },
+                         {
+                             "id":  "region-011-option-002",
+                             "name":  "북구",
+                             "lat":  35.582709,
+                             "lon":  129.361313
+                         },
+                         {
+                             "id":  "region-011-option-003",
+                             "name":  "동구",
+                             "lat":  35.504844,
+                             "lon":  129.416632
+                         },
+                         {
+                             "id":  "region-011-option-004",
+                             "name":  "남구",
+                             "lat":  35.543798,
+                             "lon":  129.330109
+                         },
+                         {
+                             "id":  "region-011-option-005",
+                             "name":  "중구",
+                             "lat":  35.56945,
+                             "lon":  129.3327
+                         }
+                     ]
+    },
+    {
+        "id":  "region-012",
+        "name":  "인천광역시",
+        "children":  [
+                         {
+                             "id":  "region-012-option-001",
+                             "name":  "옹진군",
+                             "lat":  37.446607,
+                             "lon":  126.63676
+                         },
+                         {
+                             "id":  "region-012-option-002",
+                             "name":  "강화군",
+                             "lat":  37.746498,
+                             "lon":  126.488052
+                         },
+                         {
+                             "id":  "region-012-option-003",
+                             "name":  "서구",
+                             "lat":  37.545449,
+                             "lon":  126.675994
+                         },
+                         {
+                             "id":  "region-012-option-004",
+                             "name":  "계양구",
+                             "lat":  37.5374147,
+                             "lon":  126.7377757
+                         },
+                         {
+                             "id":  "region-012-option-005",
+                             "name":  "부평구",
+                             "lat":  37.5070563,
+                             "lon":  126.7218378
+                         },
+                         {
+                             "id":  "region-012-option-006",
+                             "name":  "남동구",
+                             "lat":  37.447342,
+                             "lon":  126.731488
+                         },
+                         {
+                             "id":  "region-012-option-007",
+                             "name":  "연수구",
+                             "lat":  37.4101675,
+                             "lon":  126.67828
+                         },
+                         {
+                             "id":  "region-012-option-008",
+                             "name":  "미추홀구",
+                             "lat":  37.4635229,
+                             "lon":  126.6505841
+                         },
+                         {
+                             "id":  "region-012-option-009",
+                             "name":  "동구",
+                             "lat":  37.4738846,
+                             "lon":  126.6432125
+                         },
+                         {
+                             "id":  "region-012-option-010",
+                             "name":  "중구",
+                             "lat":  37.473781,
+                             "lon":  126.621588
+                         }
+                     ]
+    },
+    {
+        "id":  "region-013",
+        "name":  "전라남도",
+        "children":  [
+                         {
+                             "id":  "region-013-option-001",
+                             "name":  "신안군",
+                             "lat":  34.833626,
+                             "lon":  126.351124
+                         },
+                         {
+                             "id":  "region-013-option-002",
+                             "name":  "진도군",
+                             "lat":  34.486818,
+                             "lon":  126.263475
+                         },
+                         {
+                             "id":  "region-013-option-003",
+                             "name":  "완도군",
+                             "lat":  34.3110391,
+                             "lon":  126.7548524
+                         },
+                         {
+                             "id":  "region-013-option-004",
+                             "name":  "장성군",
+                             "lat":  35.301943,
+                             "lon":  126.784814
+                         },
+                         {
+                             "id":  "region-013-option-005",
+                             "name":  "영광군",
+                             "lat":  35.2772127,
+                             "lon":  126.5120143
+                         },
+                         {
+                             "id":  "region-013-option-006",
+                             "name":  "함평군",
+                             "lat":  35.065929,
+                             "lon":  126.5165816
+                         },
+                         {
+                             "id":  "region-013-option-007",
+                             "name":  "무안군",
+                             "lat":  34.9904886,
+                             "lon":  126.4817117
+                         },
+                         {
+                             "id":  "region-013-option-008",
+                             "name":  "영암군",
+                             "lat":  34.8001638,
+                             "lon":  126.6967961
+                         },
+                         {
+                             "id":  "region-013-option-009",
+                             "name":  "해남군",
+                             "lat":  34.573558,
+                             "lon":  126.599225
+                         },
+                         {
+                             "id":  "region-013-option-010",
+                             "name":  "강진군",
+                             "lat":  34.64209,
+                             "lon":  126.7672
+                         },
+                         {
+                             "id":  "region-013-option-011",
+                             "name":  "장흥군",
+                             "lat":  34.681622,
+                             "lon":  126.9070507
+                         },
+                         {
+                             "id":  "region-013-option-012",
+                             "name":  "화순군",
+                             "lat":  35.0645238,
+                             "lon":  126.9864771
+                         },
+                         {
+                             "id":  "region-013-option-013",
+                             "name":  "보성군",
+                             "lat":  34.771458,
+                             "lon":  127.080088
+                         },
+                         {
+                             "id":  "region-013-option-014",
+                             "name":  "고흥군",
+                             "lat":  34.6047049,
+                             "lon":  127.275507
+                         },
+                         {
+                             "id":  "region-013-option-015",
+                             "name":  "구례군",
+                             "lat":  35.2025096,
+                             "lon":  127.4629375
+                         },
+                         {
+                             "id":  "region-013-option-016",
+                             "name":  "곡성군",
+                             "lat":  35.2820169,
+                             "lon":  127.2919779
+                         },
+                         {
+                             "id":  "region-013-option-017",
+                             "name":  "담양군",
+                             "lat":  35.321175,
+                             "lon":  126.988175
+                         },
+                         {
+                             "id":  "region-013-option-018",
+                             "name":  "광양시",
+                             "lat":  34.9406575,
+                             "lon":  127.6958987
+                         },
+                         {
+                             "id":  "region-013-option-019",
+                             "name":  "나주시",
+                             "lat":  35.015814,
+                             "lon":  126.710814
+                         },
+                         {
+                             "id":  "region-013-option-020",
+                             "name":  "순천시",
+                             "lat":  34.9506984,
+                             "lon":  127.487243
+                         },
+                         {
+                             "id":  "region-013-option-021",
+                             "name":  "여수시",
+                             "lat":  34.760425,
+                             "lon":  127.662313
+                         },
+                         {
+                             "id":  "region-013-option-022",
+                             "name":  "목포시",
+                             "lat":  34.811875,
+                             "lon":  126.3923375
+                         }
+                     ]
+    },
+    {
+        "id":  "region-014",
+        "name":  "전북특별자치도",
+        "children":  [
+                         {
+                             "id":  "region-014-option-001",
+                             "name":  "부안군",
+                             "lat":  35.731755,
+                             "lon":  126.733199
+                         },
+                         {
+                             "id":  "region-014-option-002",
+                             "name":  "고창군",
+                             "lat":  35.435836,
+                             "lon":  126.701973
+                         },
+                         {
+                             "id":  "region-014-option-003",
+                             "name":  "순창군",
+                             "lat":  35.374476,
+                             "lon":  127.137489
+                         },
+                         {
+                             "id":  "region-014-option-004",
+                             "name":  "임실군",
+                             "lat":  35.6178286,
+                             "lon":  127.2890774
+                         },
+                         {
+                             "id":  "region-014-option-005",
+                             "name":  "장수군",
+                             "lat":  35.647366,
+                             "lon":  127.5215208
+                         },
+                         {
+                             "id":  "region-014-option-006",
+                             "name":  "무주군",
+                             "lat":  36.00681,
+                             "lon":  127.660818
+                         },
+                         {
+                             "id":  "region-014-option-007",
+                             "name":  "진안군",
+                             "lat":  35.7917621,
+                             "lon":  127.424875
+                         },
+                         {
+                             "id":  "region-014-option-008",
+                             "name":  "완주군",
+                             "lat":  35.904708,
+                             "lon":  127.162019
+                         },
+                         {
+                             "id":  "region-014-option-009",
+                             "name":  "김제시",
+                             "lat":  35.8035917,
+                             "lon":  126.8808375
+                         },
+                         {
+                             "id":  "region-014-option-010",
+                             "name":  "남원시",
+                             "lat":  35.416432,
+                             "lon":  127.390438
+                         },
+                         {
+                             "id":  "region-014-option-011",
+                             "name":  "정읍시",
+                             "lat":  35.569867,
+                             "lon":  126.856038
+                         },
+                         {
+                             "id":  "region-014-option-012",
+                             "name":  "익산시",
+                             "lat":  35.948295,
+                             "lon":  126.957786
+                         },
+                         {
+                             "id":  "region-014-option-013",
+                             "name":  "군산시",
+                             "lat":  35.9676263,
+                             "lon":  126.736875
+                         },
+                         {
+                             "id":  "region-014-option-014",
+                             "name":  "전주시",
+                             "lat":  35.824171,
+                             "lon":  127.14805
+                         }
+                     ]
+    },
+    {
+        "id":  "region-015",
+        "name":  "제주특별자치도",
+        "children":  [
+                         {
+                             "id":  "region-015-option-001",
+                             "name":  "서귀포시",
+                             "lat":  33.253925,
+                             "lon":  126.5597875
+                         },
+                         {
+                             "id":  "region-015-option-002",
+                             "name":  "제주시",
+                             "lat":  33.499568,
+                             "lon":  126.531138
+                         }
+                     ]
+    },
+    {
+        "id":  "region-016",
+        "name":  "충청남도",
+        "children":  [
+                         {
+                             "id":  "region-016-option-001",
+                             "name":  "태안군",
+                             "lat":  36.74561,
+                             "lon":  126.297913
+                         },
+                         {
+                             "id":  "region-016-option-002",
+                             "name":  "예산군",
+                             "lat":  36.6808995,
+                             "lon":  126.8447382
+                         },
+                         {
+                             "id":  "region-016-option-003",
+                             "name":  "홍성군",
+                             "lat":  36.601324,
+                             "lon":  126.660775
+                         },
+                         {
+                             "id":  "region-016-option-004",
+                             "name":  "청양군",
+                             "lat":  36.459151,
+                             "lon":  126.802238
+                         },
+                         {
+                             "id":  "region-016-option-005",
+                             "name":  "서천군",
+                             "lat":  36.080286,
+                             "lon":  126.6917418
+                         },
+                         {
+                             "id":  "region-016-option-006",
+                             "name":  "부여군",
+                             "lat":  36.275658,
+                             "lon":  126.909775
+                         },
+                         {
+                             "id":  "region-016-option-007",
+                             "name":  "금산군",
+                             "lat":  36.108857,
+                             "lon":  127.488213
+                         },
+                         {
+                             "id":  "region-016-option-008",
+                             "name":  "당진시",
+                             "lat":  36.8899744,
+                             "lon":  126.6459003
+                         },
+                         {
+                             "id":  "region-016-option-009",
+                             "name":  "계룡시",
+                             "lat":  36.274554,
+                             "lon":  127.248633
+                         },
+                         {
+                             "id":  "region-016-option-010",
+                             "name":  "논산시",
+                             "lat":  36.1872399,
+                             "lon":  127.0986227
+                         },
+                         {
+                             "id":  "region-016-option-011",
+                             "name":  "서산시",
+                             "lat":  36.7849216,
+                             "lon":  126.4502766
+                         },
+                         {
+                             "id":  "region-016-option-012",
+                             "name":  "아산시",
+                             "lat":  36.790013,
+                             "lon":  127.002474
+                         },
+                         {
+                             "id":  "region-016-option-013",
+                             "name":  "보령시",
+                             "lat":  36.333452,
+                             "lon":  126.612803
+                         },
+                         {
+                             "id":  "region-016-option-014",
+                             "name":  "공주시",
+                             "lat":  36.446556,
+                             "lon":  127.11904
+                         },
+                         {
+                             "id":  "region-016-option-015",
+                             "name":  "천안시",
+                             "lat":  36.815147,
+                             "lon":  127.113892
+                         }
+                     ]
+    },
+    {
+        "id":  "region-017",
+        "name":  "충청북도",
+        "children":  [
+                         {
+                             "id":  "region-017-option-001",
+                             "name":  "단양군",
+                             "lat":  36.984539,
+                             "lon":  128.365589
+                         },
+                         {
+                             "id":  "region-017-option-002",
+                             "name":  "음성군",
+                             "lat":  36.940282,
+                             "lon":  127.690487
+                         },
+                         {
+                             "id":  "region-017-option-003",
+                             "name":  "괴산군",
+                             "lat":  36.815381,
+                             "lon":  127.786704
+                         },
+                         {
+                             "id":  "region-017-option-004",
+                             "name":  "진천군",
+                             "lat":  36.85542,
+                             "lon":  127.435602
+                         },
+                         {
+                             "id":  "region-017-option-005",
+                             "name":  "증평군",
+                             "lat":  36.785345,
+                             "lon":  127.581507
+                         },
+                         {
+                             "id":  "region-017-option-006",
+                             "name":  "영동군",
+                             "lat":  36.175047,
+                             "lon":  127.783423
+                         },
+                         {
+                             "id":  "region-017-option-007",
+                             "name":  "옥천군",
+                             "lat":  36.3064369,
+                             "lon":  127.5714191
+                         },
+                         {
+                             "id":  "region-017-option-008",
+                             "name":  "보은군",
+                             "lat":  36.489455,
+                             "lon":  127.729485
+                         },
+                         {
+                             "id":  "region-017-option-009",
+                             "name":  "제천시",
+                             "lat":  37.132646,
+                             "lon":  128.191037
+                         },
+                         {
+                             "id":  "region-017-option-010",
+                             "name":  "충주시",
+                             "lat":  36.991105,
+                             "lon":  127.926012
+                         },
+                         {
+                             "id":  "region-017-option-011",
+                             "name":  "청주시",
+                             "lat":  36.6424987,
+                             "lon":  127.488975
+                         }
+                     ]
+    }
+]
+;
+
+export function findRegionCoordinate(sido: string, sigungu: string) {
+  const group = KOREA_REGION_COORDINATES.find((entry) => entry.name === sido);
+  if (!group) return null;
+  const region = group.children.find((entry) => entry.name === sigungu);
+  if (!region) return null;
+  return {
+    lat: region.lat,
+    lon: region.lon,
+    displayName: `${sido} ${sigungu}`,
+  };
+}
+

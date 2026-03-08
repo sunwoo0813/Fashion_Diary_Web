@@ -3991,71 +3991,63 @@ textarea:focus-visible {
   background: var(--surface);
 }
 
-.theme-toggle-card {
-  width: 100%;
-  display: grid;
-  justify-items: center;
-}
-
-.theme-toggle-label {
-  margin: 0 0 0.18rem;
-  font-family: var(--font-serif);
-  font-size: 0.46rem;
-  font-weight: 300;
-  letter-spacing: 0.12em;
-  color: var(--foreground);
-  text-align: center;
-}
-
-.theme-toggle-switch {
-  width: 40px;
-  border: 0;
-  padding: 0;
-  background: transparent;
-  display: inline-flex;
-  justify-content: center;
-}
-
-.theme-toggle-track {
+.theme-switch-button {
   position: relative;
-  width: 100%;
-  height: 22px;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
   border-radius: 999px;
-  padding: 2px;
-  background: var(--surface);
-  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.28);
-  transition: background-color 0.24s ease;
+  background: transparent;
+  color: var(--text);
+  overflow: hidden;
+  opacity: 1;
 }
 
-.theme-toggle-switch.is-on .theme-toggle-track {
-  background: var(--primary);
+.theme-switch-button:hover {
+  opacity: 0.8;
+  box-shadow: none;
+  transform: none;
 }
 
-.theme-toggle-thumb {
+.theme-switch-button:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16);
+}
+
+.theme-switch-icon {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  background: var(--primary);
-  box-shadow:
-    0 6px 16px rgba(0, 0, 0, 0.22),
-    0 1px 2px rgba(255, 255, 255, 0.05) inset;
-  transform: translateX(0);
-  transition: transform 0.34s cubic-bezier(0.22, 1.2, 0.36, 1);
+  width: 20px;
+  height: 20px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(20px) scale(0.5);
+  opacity: 0;
+  transition:
+    transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+    opacity 0.3s ease;
 }
 
-.theme-toggle-switch.is-on .theme-toggle-thumb {
-  transform: translateX(18px);
+.theme-switch-icon svg {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
-:root:is([data-theme="dark"], .dark) .theme-toggle-label {
-  color: #fff;
+.theme-switch-icon.is-active {
+  transform: translateY(0) scale(1);
+  opacity: 1;
 }
 
-:root:is([data-theme="dark"], .dark) .theme-toggle-thumb {
-  background: var(--background);
+.app-nav-theme-toggle {
+  margin-top: 2vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 :root:is([data-theme="dark"], .dark) .app-rail,
@@ -5511,6 +5503,97 @@ textarea:focus-visible {
   margin: 0;
   color: var(--muted-foreground);
   font-size: 0.82rem;
+}
+
+.dashboard-region-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-region-field {
+  min-width: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dashboard-region-label {
+  display: block;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.dashboard-region-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: #666666;
+}
+
+:root:is([data-theme="dark"], .dark) .dashboard-region-select-wrap {
+  color: #a1a1a1;
+}
+
+.dashboard-region-select-wrap:hover {
+  color: #171717;
+}
+
+:root:is([data-theme="dark"], .dark) .dashboard-region-select-wrap:hover {
+  color: #ededed;
+}
+
+.dashboard-region-select {
+  appearance: none;
+  width: 100%;
+  height: 2.5rem;
+  border: 1px solid rgba(var(--foreground-rgb), 0.14);
+  border-radius: 5px;
+  background: rgba(var(--surface-rgb), 0.96);
+  color: var(--text);
+  padding: 0 2.25rem 0 0.75rem;
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(var(--foreground-rgb), 0.04);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.dashboard-region-select:focus {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16);
+}
+
+.dashboard-region-select:disabled {
+  cursor: not-allowed;
+  color: var(--muted-foreground);
+  background: rgba(var(--foreground-rgb), 0.06);
+  border-color: rgba(var(--foreground-rgb), 0.08);
+}
+
+.dashboard-region-select-icon {
+  position: absolute;
+  right: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  line-height: 0;
+}
+
+.dashboard-region-select-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .dashboard-region-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 .new-photo-picker {
