@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
@@ -23,6 +23,85 @@ type ItemCreateFormProps = {
 };
 
 type InputMode = "search" | "url" | "manual";
+
+const CATEGORY_OPTIONS = [
+  { value: "Top", label: "상의" },
+  { value: "Outer", label: "아우터" },
+  { value: "Bottom", label: "하의" },
+  { value: "Shoes", label: "신발" },
+  { value: "ACC", label: "악세서리" },
+] as const;
+const DETAIL_CATEGORY_OPTIONS = {
+  Top: [
+    { value: "short_sleeve_tshirt", label: "반팔" },
+    { value: "long_sleeve_tshirt", label: "긴팔" },
+    { value: "shirt", label: "셔츠" },
+    { value: "polo_shirt", label: "카라티" },
+    { value: "sweatshirt", label: "맨투맨" },
+    { value: "hoodie", label: "후드티" },
+    { value: "knit", label: "니트" },
+    { value: "sleeveless", label: "슬리브" },
+    { value: "vest", label: "조끼" },
+    { value: "blouse", label: "블라우스" },
+  ],
+  Outer: [
+    { value: "cardigan", label: "가디건" },
+    { value: "hood_zipup", label: "후드집업" },
+    { value: "jacket", label: "자켓" },
+    { value: "blazer", label: "블레이저" },
+    { value: "leather_jacket", label: "가죽자켓" },
+    { value: "windbreaker", label: "바람막이" },
+    { value: "coat", label: "코트" },
+    { value: "padding", label: "패딩" },
+    { value: "fleece", label: "플리스" },
+  ],
+  Bottom: [
+    { value: "shorts", label: "반바지" },
+    { value: "jeans", label: "청바지" },
+    { value: "slacks", label: "슬랙스" },
+    { value: "cotton_pants", label: "면바지/치노팬츠류" },
+    { value: "jogger_pants", label: "조거팬츠/트레이닝팬츠" },
+    { value: "leggings", label: "레깅스" },
+    { value: "skirt", label: "스커트" },
+  ],
+} as const;
+const SEASON_OPTIONS = [
+  { value: "spring", label: "Spring" },
+  { value: "summer", label: "Summer" },
+  { value: "fall", label: "Fall" },
+  { value: "winter", label: "Winter" },
+] as const;
+const COLOR_OPTIONS = [
+  { value: "black", label: "블랙" },
+  { value: "white", label: "화이트" },
+  { value: "gray", label: "그레이" },
+  { value: "navy", label: "네이비" },
+  { value: "blue", label: "블루" },
+  { value: "beige", label: "베이지" },
+  { value: "brown", label: "브라운" },
+  { value: "khaki", label: "카키" },
+  { value: "green", label: "그린" },
+  { value: "red", label: "레드" },
+  { value: "pink", label: "핑크" },
+  { value: "yellow", label: "옐로우" },
+  { value: "purple", label: "퍼플" },
+  { value: "orange", label: "오렌지" },
+  { value: "ivory", label: "아이보리" },
+] as const;
+const DENIM_COLOR_OPTIONS = [
+  { value: "light_blue_denim", label: "연청" },
+  { value: "medium_blue_denim", label: "중청" },
+  { value: "dark_blue_denim", label: "진청" },
+  { value: "raw_denim", label: "생지" },
+  { value: "black_denim", label: "흑청" },
+  { value: "gray_denim", label: "그레이 데님" },
+  { value: "white_denim", label: "화이트 데님" },
+] as const;
+const THICKNESS_OPTIONS = [
+  { value: "light", label: "얇음" },
+  { value: "medium", label: "보통" },
+  { value: "heavy", label: "두꺼움" },
+] as const;
 
 function ImagePlusIcon() {
   return (
@@ -63,19 +142,19 @@ function normalizeCategory(value: string): string {
   const raw = value.trim().toLowerCase();
   if (!raw) return "";
   if (["tops", "top", "blouse", "shirt", "tee", "knit", "sweater"].some((key) => raw.includes(key))) {
-    return "Tops";
+    return "Top";
   }
   if (["bottoms", "bottom", "pants", "jeans", "skirt", "shorts"].some((key) => raw.includes(key))) {
-    return "Bottoms";
+    return "Bottom";
   }
   if (["outerwear", "coat", "jacket", "padding", "parka", "cardigan"].some((key) => raw.includes(key))) {
-    return "Outerwear";
+    return "Outer";
   }
   if (["footwear", "shoe", "sneaker", "boot", "loafer", "sandals"].some((key) => raw.includes(key))) {
-    return "Footwear";
+    return "Shoes";
   }
   if (["accessories", "accessory", "bag", "hat", "belt", "jewelry", "scarf"].some((key) => raw.includes(key))) {
-    return "Accessories";
+    return "ACC";
   }
   return "";
 }
@@ -300,6 +379,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   const [product, setProduct] = useState("");
   const [brand, setBrand] = useState("");
   const [category, setCategory] = useState("");
+  const [detailCategory, setDetailCategory] = useState("");
+  const [color, setColor] = useState("");
+  const [seasons, setSeasons] = useState<string[]>([]);
+  const [thickness, setThickness] = useState("");
   const [size, setSize] = useState("");
   const [sizeDetailJson, setSizeDetailJson] = useState("");
   const [sizeGuide, setSizeGuide] = useState<SizeGuide | null>(null);
@@ -326,6 +409,12 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   });
 
   const previewSrc = localImageUrl || imagePrefill;
+  const showDetailCategory = category === "Outer" || category === "Top" || category === "Bottom";
+  const detailCategoryOptions =
+    category === "Top" || category === "Outer" || category === "Bottom"
+      ? DETAIL_CATEGORY_OPTIONS[category]
+      : [];
+  const colorOptions = detailCategory === "jeans" ? DENIM_COLOR_OPTIONS : COLOR_OPTIONS;
 
   const handleImageDragOver = useCallback((event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
@@ -426,6 +515,18 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     };
   }, [inputMode, searchQuery]);
 
+  useEffect(() => {
+    if (showDetailCategory) return;
+    if (!detailCategory) return;
+    setDetailCategory("");
+  }, [detailCategory, showDetailCategory]);
+
+  useEffect(() => {
+    if (detailCategory === "jeans") return;
+    if (!DENIM_COLOR_OPTIONS.some((option) => option.value === color)) return;
+    setColor("");
+  }, [color, detailCategory]);
+
   function resetVisibleState() {
     handleRemove();
 
@@ -452,6 +553,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     setProduct("");
     setBrand("");
     setCategory("");
+    setDetailCategory("");
+    setColor("");
+    setSeasons([]);
+    setThickness("");
     setSize("");
     setSizeDetailJson("");
     setSizeGuide(null);
@@ -464,6 +569,14 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     if (nextMode === inputMode) return;
     resetVisibleState();
     setInputMode(nextMode);
+  }
+
+  function toggleSeason(nextSeason: string) {
+    setSeasons((current) =>
+      current.includes(nextSeason)
+        ? current.filter((season) => season !== nextSeason)
+        : [...current, nextSeason],
+    );
   }
 
   function applyProductItem(item: ProductItem) {
@@ -874,13 +987,70 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           </label>
           <label>
             카테고리
-            <input
-              type="text"
-              name="category"
-              value={category}
-              onChange={(event) => setCategory(event.target.value)}
-              placeholder="예: 상의"
-            />
+            <select name="category" value={category} onChange={(event) => setCategory(event.target.value)}>
+              <option value="">카테고리를 선택해 주세요</option>
+              {CATEGORY_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {showDetailCategory ? (
+            <label>
+              세부 카테고리
+              <select
+                name="detail_category"
+                value={detailCategory}
+                onChange={(event) => setDetailCategory(event.target.value)}
+              >
+                <option value="">세부 카테고리를 선택해 주세요</option>
+                {detailCategoryOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <label>
+            색상
+            <select name="color" value={color} onChange={(event) => setColor(event.target.value)}>
+              <option value="">색상을 선택해 주세요</option>
+              {colorOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            시즌
+            <div className="item-checkbox-group" role="group" aria-label="시즌 선택">
+              {SEASON_OPTIONS.map((option) => (
+                <label key={option.value} className="item-checkbox-option">
+                  <input
+                    type="checkbox"
+                    name="season"
+                    value={option.value}
+                    checked={seasons.includes(option.value)}
+                    onChange={() => toggleSeason(option.value)}
+                  />
+                  <span>{option.label}</span>
+                </label>
+              ))}
+            </div>
+          </label>
+          <label>
+            두께
+            <select name="thickness" value={thickness} onChange={(event) => setThickness(event.target.value)}>
+              <option value="">두께를 선택해 주세요</option>
+              {THICKNESS_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
           </label>
           <label>
             사이즈
@@ -958,10 +1128,6 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
             </div>
           ) : null}
 
-          <label>
-            스타일 메모
-            <textarea name="note" placeholder="코디 메모나 스타일링 아이디어를 적어 보세요." rows={4} />
-          </label>
         </div>
       </form>
     </section>

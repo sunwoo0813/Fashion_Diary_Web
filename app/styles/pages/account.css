@@ -1,0 +1,195 @@
+/* Account page */
+
+.account-page {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(var(--surface-rgb), 0.86);
+  padding: 1.2rem;
+  min-height: calc(100vh - 2.8rem);
+}
+
+.account-page h1 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.8rem;
+}
+
+.account-subtitle {
+  margin: 0.45rem 0 0;
+  color: var(--muted-foreground);
+}
+
+.account-grid {
+  margin-top: 1rem;
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.account-logout {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.9rem;
+}
+
+.account-theme-toggle .theme-toggle-card {
+  width: auto;
+  justify-items: start;
+}
+
+.account-theme-toggle .theme-toggle-label {
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+}
+
+.account-logout-button .rail-logout-wrap {
+  margin-top: 0;
+  width: auto;
+  justify-items: end;
+}
+
+.account-logout-button .rail-logout-button img {
+  max-width: 110px;
+}
+
+.account-card {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  padding: 1rem;
+}
+
+.account-card h2 {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+}
+
+.account-card p {
+  margin: 0.5rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.account-card.profile {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.account-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: white;
+  background: linear-gradient(150deg, var(--primary), var(--accent-deep));
+  font-size: 1rem;
+  font-weight: 800;
+}
+
+.account-label {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.account-value {
+  margin: 0.16rem 0 0;
+  font-weight: 700;
+  font-size: 0.92rem;
+}
+
+.account-row {
+  margin-top: 0.55rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--muted-foreground);
+  font-size: 0.9rem;
+}
+
+.account-row strong {
+  color: var(--text);
+}
+
+.account-card.danger {
+  border-color: #f2d2c4;
+  background: #fff8f4;
+}
+
+.account-success {
+  margin: 0.7rem 0 0;
+  border: 1px solid #c8e3cf;
+  border-radius: 12px;
+  background: #effaf2;
+  color: #17693c;
+  padding: 0.62rem 0.72rem;
+  font-size: 0.85rem;
+}
+
+.account-danger-form {
+  margin-top: 0.7rem;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.account-danger-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.83rem;
+}
+
+.account-danger-form input {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.56rem 0.65rem;
+  font: inherit;
+  color: inherit;
+}
+
+
+:root:is([data-theme="dark"], .dark) .account-page {
+  background: rgba(var(--surface-rgb), 0.86);
+}
+
+@media (max-width: 900px) {
+  .account-page {
+    min-height: auto;
+  }
+
+  .account-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-logout {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .account-page {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .account-page {
+    padding: 0.9rem;
+    border-radius: 18px;
+  }
+}
+
+@media (max-width: 480px) {
+  .account-page {
+    padding: 0.8rem;
+  }
+}

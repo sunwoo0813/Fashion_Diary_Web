@@ -7,7 +7,6 @@ import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 import {
   coerceSizeDetail,
   extractStorageObjectPath,
-  makeDisplayName,
   normalizePublicImagePath,
   pickSizeValue,
   toText,
@@ -81,6 +80,12 @@ export async function POST(request: Request) {
     const brand = toText(formData.get("brand"));
     const product = toText(formData.get("product"));
     const category = toText(formData.get("category"));
+    const detailCategory = toText(formData.get("detail_category"));
+    const color = toText(formData.get("color"));
+    const seasons = Array.from(
+      new Set(formData.getAll("season").map((value) => toText(value)).filter(Boolean)),
+    );
+    const thickness = toText(formData.get("thickness"));
     const explicitSize = toText(formData.get("size"));
     const parsedSizeDetail = coerceSizeDetail(toText(formData.get("size_detail_json")));
     const sizeDetail = parsedSizeDetail;
@@ -107,11 +112,17 @@ export async function POST(request: Request) {
 
     const payload = {
       user_id: appUserId,
-      name: makeDisplayName(brand, product),
+      brand: brand || null,
+      product_name: product || null,
       category: category || null,
+      detail_category: detailCategory || null,
+      color: color || null,
+      season: seasons.length > 0 ? seasons : null,
+      thickness: thickness || null,
       size: pickSizeValue(explicitSize, sizeDetail),
       size_detail: sizeDetail,
       image_path: imagePath,
+      created_at: new Date().toISOString(),
     };
 
     const { error } = await admin.from("item").insert(payload);

@@ -1,5 +1,5 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
-import { normalizePublicImagePath } from "@/lib/wardrobe";
+import { makeDisplayNameFromFields, normalizePublicImagePath } from "@/lib/wardrobe";
 
 const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
 const TEMP_BUCKET_ORDER = ["0-4C", "5-13C", "14-22C", "23-28C", "29C+"] as const;
@@ -232,7 +232,7 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
 
   const [{ data: itemRows, error: itemError }, { data: outfitRowsRaw, error: outfitError }] =
     await Promise.all([
-      admin.from("item").select("id,name,category,image_path").eq("user_id", appUserId),
+      admin.from("item").select("id,brand,product_name,category,image_path").eq("user_id", appUserId),
       admin
         .from("outfit")
         .select("id,date,t_min,t_max,humidity,rain")
@@ -249,7 +249,7 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
 
   const itemRowsSafe = (itemRows || []).map((row) => ({
     id: toInt(row.id) ?? 0,
-    name: typeof row.name === "string" && row.name.trim() ? row.name.trim() : "아이템",
+    name: makeDisplayNameFromFields(row.brand, row.product_name),
     category: typeof row.category === "string" && row.category.trim() ? row.category.trim() : null,
     image_path:
       typeof row.image_path === "string" && row.image_path.trim()

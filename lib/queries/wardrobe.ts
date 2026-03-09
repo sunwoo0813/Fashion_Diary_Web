@@ -1,5 +1,5 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
-import { normalizePublicImagePath, resolveCategoryFilter } from "@/lib/wardrobe";
+import { makeDisplayNameFromFields, normalizePublicImagePath, resolveCategoryFilter } from "@/lib/wardrobe";
 
 export type WardrobeItem = {
   id: number;
@@ -89,13 +89,13 @@ export async function getWardrobePageData({
 
   let itemsQuery = admin
     .from("item")
-    .select("id,user_id,name,category,size,size_detail,image_path,created_at")
+    .select("id,user_id,brand,product_name,category,size,size_detail,image_path,created_at")
     .eq("user_id", appUserId)
     .order("created_at", { ascending: false });
 
   if (normalizedQuery) {
     const escaped = normalizedQuery.replace(/,/g, "\\,");
-    itemsQuery = itemsQuery.or(`name.ilike.%${escaped}%,category.ilike.%${escaped}%`);
+    itemsQuery = itemsQuery.or(`brand.ilike.%${escaped}%,product_name.ilike.%${escaped}%,category.ilike.%${escaped}%`);
   }
 
   if (normalizedCategory) {
@@ -117,7 +117,7 @@ export async function getWardrobePageData({
   const items = (rawItems || []).map((row) => ({
     id: Number(row.id),
     user_id: Number(row.user_id),
-    name: String(row.name || "이름 없음"),
+    name: makeDisplayNameFromFields(row.brand, row.product_name),
     category: row.category ? String(row.category) : null,
     size: row.size ? String(row.size) : null,
     size_detail: row.size_detail ?? null,

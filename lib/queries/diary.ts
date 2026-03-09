@@ -1,5 +1,5 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
-import { normalizePublicImagePath } from "@/lib/wardrobe";
+import { makeDisplayNameFromFields, normalizePublicImagePath } from "@/lib/wardrobe";
 
 import type { WardrobeItem } from "./wardrobe";
 
@@ -114,7 +114,7 @@ export async function getUserWardrobeItems(appUserId: number): Promise<WardrobeI
   const admin = createServiceRoleSupabaseClient();
   const { data, error } = await admin
     .from("item")
-    .select("id,user_id,name,category,size,size_detail,image_path,created_at")
+    .select("id,user_id,brand,product_name,category,size,size_detail,image_path,created_at")
     .eq("user_id", appUserId)
     .order("created_at", { ascending: false });
   if (error) {
@@ -124,7 +124,7 @@ export async function getUserWardrobeItems(appUserId: number): Promise<WardrobeI
   return (data || []).map((row) => ({
     id: Number(row.id),
     user_id: Number(row.user_id),
-    name: String(row.name || "이름 없음"),
+    name: makeDisplayNameFromFields(row.brand, row.product_name),
     category: row.category ? String(row.category) : null,
     size: row.size ? String(row.size) : null,
     size_detail: row.size_detail ?? null,
@@ -196,7 +196,7 @@ export async function getDiaryDayData(appUserId: number, isoDate: string): Promi
       if (itemIds.length > 0) {
         const { data: itemRows, error: itemError } = await admin
           .from("item")
-          .select("id,name,category,user_id")
+          .select("id,brand,product_name,category,user_id")
           .eq("user_id", appUserId)
           .in("id", itemIds);
         if (itemError) {
@@ -207,7 +207,7 @@ export async function getDiaryDayData(appUserId: number, isoDate: string): Promi
             const id = Number(row.id);
             acc[id] = {
               id,
-              name: String(row.name || "아이템"),
+              name: makeDisplayNameFromFields(row.brand, row.product_name),
               category: row.category ? String(row.category) : null,
             };
             return acc;
@@ -307,7 +307,7 @@ export async function getDiaryFeedData(appUserId: number, maxPosts = 120): Promi
   if (itemIds.length > 0) {
     const { data: itemRows, error: itemError } = await admin
       .from("item")
-      .select("id,name,category,user_id")
+      .select("id,brand,product_name,category,user_id")
       .eq("user_id", appUserId)
       .in("id", itemIds);
     if (itemError) {
@@ -319,7 +319,7 @@ export async function getDiaryFeedData(appUserId: number, maxPosts = 120): Promi
         const id = Number(row.id);
         acc[id] = {
           id,
-          name: String(row.name || "아이템"),
+          name: makeDisplayNameFromFields(row.brand, row.product_name),
           category: row.category ? String(row.category) : null,
         };
         return acc;
@@ -422,7 +422,7 @@ export async function getOutfitEditData(appUserId: number, outfitId: number) {
     if (itemIds.length > 0) {
       const { data: tagItemRows, error: tagItemError } = await admin
         .from("item")
-        .select("id,name,category,user_id")
+        .select("id,brand,product_name,category,user_id")
         .eq("user_id", appUserId)
         .in("id", itemIds);
       if (tagItemError) {
@@ -434,7 +434,7 @@ export async function getOutfitEditData(appUserId: number, outfitId: number) {
           const id = Number(row.id);
           acc[id] = {
             id,
-            name: String(row.name || "아이템"),
+            name: makeDisplayNameFromFields(row.brand, row.product_name),
             category: row.category ? String(row.category) : null,
           };
           return acc;

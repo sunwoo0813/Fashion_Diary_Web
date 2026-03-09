@@ -82,6 +82,10 @@ export function makeDisplayName(brand: string, product: string): string {
   return value || "Untitled";
 }
 
+export function makeDisplayNameFromFields(brand: unknown, productName: unknown): string {
+  return makeDisplayName(toText(brand), toText(productName));
+}
+
 export function coerceSizeDetail(value: string): Record<string, unknown> | null {
   const raw = value.trim();
   if (!raw) return null;

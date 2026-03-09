@@ -33,6 +33,33 @@ type WeatherDetails = {
   precipitation_amount: string;
 };
 
+type RecommendationPart = {
+  slot: "Top" | "Bottom" | "Outer" | "Shoes" | "ACC";
+  item: {
+    id: number;
+    name: string;
+    category: string | null;
+    detail_category: string | null;
+    color: string | null;
+    thickness: string | null;
+    season: string[];
+    image_path: string | null;
+  };
+  reasons: string[];
+};
+
+type RecommendationData = {
+  summary: string;
+  context: {
+    effectiveTemp: number;
+    tempBand: string;
+    isRainy: boolean;
+    regionLabel: string;
+  };
+  parts: RecommendationPart[];
+  missingSlots: string[];
+};
+
 function SelectArrow() {
   return (
     <svg aria-hidden="true" height="16" viewBox="0 0 16 16" width="16">
@@ -41,6 +68,74 @@ function SelectArrow() {
         fill="currentColor"
       />
     </svg>
+  );
+}
+
+function RecommendLoader() {
+  return (
+    <>
+      <span
+        aria-hidden="true"
+        style={{
+          position: "relative",
+          display: "inline-block",
+          width: "20px",
+          aspectRatio: "1 / 1",
+          flexShrink: 0,
+        }}
+      >
+        <span
+          style={{
+            position: "absolute",
+            inset: "0 11px 11px 0",
+            borderRadius: "999px",
+            boxShadow: "inset 0 0 0 2px currentColor",
+            animation: "recommendLoaderAnim 2.5s infinite",
+          }}
+        />
+        <span
+          style={{
+            position: "absolute",
+            inset: "0 11px 11px 0",
+            borderRadius: "999px",
+            boxShadow: "inset 0 0 0 2px currentColor",
+            animation: "recommendLoaderAnim 2.5s infinite",
+            animationDelay: "-1.25s",
+          }}
+        />
+      </span>
+      <style jsx>{`
+        @keyframes recommendLoaderAnim {
+          0% {
+            inset: 0 11px 11px 0;
+          }
+          12.5% {
+            inset: 0 11px 0 0;
+          }
+          25% {
+            inset: 11px 11px 0 0;
+          }
+          37.5% {
+            inset: 11px 0 0 0;
+          }
+          50% {
+            inset: 11px 0 0 11px;
+          }
+          62.5% {
+            inset: 0 0 0 11px;
+          }
+          75% {
+            inset: 0 0 11px 11px;
+          }
+          87.5% {
+            inset: 0 0 11px 0;
+          }
+          100% {
+            inset: 0 11px 11px 0;
+          }
+        }
+      `}</style>
+    </>
   );
 }
 
@@ -54,6 +149,14 @@ function regionLabel(group?: RegionGroup, option?: RegionOption): string {
   return `${group.name} ${option.name}`;
 }
 
+function slotLabel(slot: RecommendationPart["slot"]) {
+  if (slot === "Top") return "상의";
+  if (slot === "Bottom") return "하의";
+  if (slot === "Outer") return "아우터";
+  if (slot === "Shoes") return "신발";
+  return "악세서리";
+}
+
 export function BlurFadeTextDemo() {
   const [isOpen, setIsOpen] = useState(false);
   const [regions, setRegions] = useState<RegionGroup[]>([]);
@@ -64,37 +167,36 @@ export function BlurFadeTextDemo() {
   const [appliedSidoId, setAppliedSidoId] = useState("");
   const [appliedSigunguId, setAppliedSigunguId] = useState("");
   const [weather, setWeather] = useState<WeatherDetails | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [weatherLoading, setWeatherLoading] = useState(false);
+  const [weatherError, setWeatherError] = useState("");
+  const [recommendation, setRecommendation] = useState<RecommendationData | null>(null);
+  const [recommendLoading, setRecommendLoading] = useState(false);
+  const [recommendError, setRecommendError] = useState("");
 
   const draftSido = useMemo(
     () => regions.find((region) => region.id === draftSidoId),
     [regions, draftSidoId],
   );
-  const draftSigunguOptions = draftSido?.children ?? [];
+  const draftSigunguOptions = useMemo(() => draftSido?.children ?? [], [draftSido]);
   const draftSigungu = useMemo(
     () => draftSigunguOptions.find((region) => region.id === draftSigunguId),
-    [draftSigunguOptions, draftSigunguId],
+    [draftSigunguId, draftSigunguOptions],
   );
 
   const appliedSido = useMemo(
     () => regions.find((region) => region.id === appliedSidoId),
     [regions, appliedSidoId],
   );
-  const appliedSigunguOptions = appliedSido?.children ?? [];
+  const appliedSigunguOptions = useMemo(() => appliedSido?.children ?? [], [appliedSido]);
   const appliedSigungu = useMemo(
     () => appliedSigunguOptions.find((region) => region.id === appliedSigunguId),
-    [appliedSigunguOptions, appliedSigunguId],
+    [appliedSigunguId, appliedSigunguOptions],
   );
 
   const selectedRegionLabel = regionLabel(appliedSido, appliedSigungu);
   const draftRegionLabel = regionLabel(draftSido, draftSigungu);
   const WeatherIcon = weather
-    ? getWeatherIconComponent(
-        weather.desc,
-        weather.precipitation_type,
-        weather.precipitation_amount,
-      )
+    ? getWeatherIconComponent(weather.desc, weather.precipitation_type, weather.precipitation_amount)
     : null;
 
   useEffect(() => {
@@ -118,10 +220,6 @@ export function BlurFadeTextDemo() {
         }
 
         setRegions(payload.data);
-        setDraftSidoId("");
-        setDraftSigunguId("");
-        setAppliedSidoId("");
-        setAppliedSigunguId("");
       } catch {
         if (!active) return;
         setRegions([]);
@@ -143,18 +241,21 @@ export function BlurFadeTextDemo() {
   useEffect(() => {
     if (!appliedSido || !appliedSigungu) {
       setWeather(null);
-      setError("");
-      setIsLoading(false);
+      setWeatherError("");
+      setWeatherLoading(false);
+      setRecommendation(null);
+      setRecommendError("");
+      setRecommendLoading(false);
       return;
     }
-
-    const region = appliedSigungu;
 
     let active = true;
 
     async function fetchWeather() {
-      setIsLoading(true);
-      setError("");
+      setWeatherLoading(true);
+      setWeatherError("");
+      setRecommendation(null);
+      setRecommendError("");
 
       try {
         const params = new URLSearchParams({
@@ -162,9 +263,9 @@ export function BlurFadeTextDemo() {
           displayName: selectedRegionLabel,
         });
 
-        if (typeof region.lat === "number" && typeof region.lon === "number") {
-          params.set("lat", String(region.lat));
-          params.set("lon", String(region.lon));
+        if (typeof appliedSigungu.lat === "number" && typeof appliedSigungu.lon === "number") {
+          params.set("lat", String(appliedSigungu.lat));
+          params.set("lon", String(appliedSigungu.lon));
         }
 
         const response = await fetch(`/api/weather?${params.toString()}`);
@@ -173,10 +274,9 @@ export function BlurFadeTextDemo() {
           | { ok: false; error?: string };
 
         if (!active) return;
-
         if (!response.ok || !payload.ok) {
           setWeather(null);
-          setError("날씨 정보를 불러오지 못했습니다.");
+          setWeatherError("날씨 정보를 불러오지 못했습니다.");
           return;
         }
 
@@ -184,10 +284,10 @@ export function BlurFadeTextDemo() {
       } catch {
         if (!active) return;
         setWeather(null);
-        setError("날씨 정보를 불러오지 못했습니다.");
+        setWeatherError("날씨 정보를 불러오지 못했습니다.");
       } finally {
         if (active) {
-          setIsLoading(false);
+          setWeatherLoading(false);
         }
       }
     }
@@ -197,7 +297,7 @@ export function BlurFadeTextDemo() {
     return () => {
       active = false;
     };
-  }, [selectedRegionLabel, appliedSido, appliedSigungu]);
+  }, [appliedSido, appliedSigungu, selectedRegionLabel]);
 
   function handleSidoChange(value: string) {
     setDraftSidoId(value);
@@ -209,8 +309,47 @@ export function BlurFadeTextDemo() {
     setAppliedSidoId(draftSidoId);
     setAppliedSigunguId(draftSigunguId);
     setWeather(null);
-    setError("");
+    setWeatherError("");
+    setRecommendation(null);
+    setRecommendError("");
     setIsOpen(false);
+  }
+
+  async function handleRecommendOutfit() {
+    if (!weather) return;
+
+    setRecommendLoading(true);
+    setRecommendError("");
+    setRecommendation(null);
+
+    try {
+      const response = await fetch("/api/outfits/recommend", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          regionLabel: selectedRegionLabel,
+          weather: {
+            ...weather,
+            regionLabel: selectedRegionLabel,
+          },
+        }),
+      });
+
+      const payload = (await response.json()) as
+        | { ok: true; data: RecommendationData }
+        | { ok: false; error?: string };
+
+      if (!response.ok || !payload.ok) {
+        setRecommendError(payload.ok ? "" : payload.error || "코디 추천을 만들지 못했습니다.");
+        return;
+      }
+
+      setRecommendation(payload.data);
+    } catch {
+      setRecommendError("코디 추천을 만들지 못했습니다.");
+    } finally {
+      setRecommendLoading(false);
+    }
   }
 
   return (
@@ -262,7 +401,7 @@ export function BlurFadeTextDemo() {
               aria-controls="dashboard-region-panel"
               disabled={regionsLoading || regions.length === 0}
             >
-              {regionsLoading ? "지역 불러오는 중.." : selectedRegionLabel}
+              {regionsLoading ? "지역 불러오는 중..." : selectedRegionLabel}
             </button>
             {isOpen ? (
               <div
@@ -270,7 +409,7 @@ export function BlurFadeTextDemo() {
                 className="outfit-weather-panel"
                 style={{
                   width: "min(100%, 32rem)",
-                  textAlign: "left",
+                  textAlign: "center",
                 }}
               >
                 <div className="dashboard-region-grid" style={{ width: "100%" }}>
@@ -302,9 +441,7 @@ export function BlurFadeTextDemo() {
                         className="dashboard-region-select"
                         value={draftSigunguId}
                         onChange={(event) => setDraftSigunguId(event.target.value)}
-                        disabled={
-                          regionsLoading || !draftSidoId || draftSigunguOptions.length === 0
-                        }
+                        disabled={regionsLoading || !draftSidoId || draftSigunguOptions.length === 0}
                       >
                         <option value="">시/군/구를 선택해 주세요</option>
                         {draftSigunguOptions.map((option) => (
@@ -349,9 +486,9 @@ export function BlurFadeTextDemo() {
                   gap: "0.8rem",
                 }}
               >
-                {isLoading ? (
+                {weatherLoading ? (
                   <p className="outfit-weather-message" style={{ margin: 0 }}>
-                    날씨 불러오는 중..
+                    날씨 정보를 불러오는 중입니다.
                   </p>
                 ) : null}
                 {weather ? (
@@ -368,15 +505,17 @@ export function BlurFadeTextDemo() {
                         borderRadius: "12px",
                         padding: "0.8rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
+                        textAlign: "center",
                       }}
                     >
-                      <strong style={{ display: "block", marginBottom: "0.5rem" }}>
+                      <strong style={{ display: "block", marginBottom: "0.5rem", textAlign: "center" }}>
                         현재 날씨 상태
                       </strong>
                       <div
                         style={{
                           display: "flex",
                           alignItems: "center",
+                          justifyContent: "center",
                           gap: "0.7rem",
                         }}
                       >
@@ -392,9 +531,10 @@ export function BlurFadeTextDemo() {
                         borderRadius: "12px",
                         padding: "0.8rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
+                        textAlign: "center",
                       }}
                     >
-                      <strong style={{ display: "block", marginBottom: "0.3rem" }}>
+                      <strong style={{ display: "block", marginBottom: "0.3rem", textAlign: "center" }}>
                         현재 기온
                       </strong>
                       <span className="outfit-weather-message" style={{ margin: 0 }}>
@@ -407,10 +547,11 @@ export function BlurFadeTextDemo() {
                         borderRadius: "12px",
                         padding: "0.8rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
+                        textAlign: "center",
                       }}
                     >
-                      <strong style={{ display: "block", marginBottom: "0.3rem" }}>
-                        체감온도
+                      <strong style={{ display: "block", marginBottom: "0.3rem", textAlign: "center" }}>
+                        체감 온도
                       </strong>
                       <span className="outfit-weather-message" style={{ margin: 0 }}>
                         {formatTemperature(weather.feels_like)}
@@ -422,9 +563,10 @@ export function BlurFadeTextDemo() {
                         borderRadius: "12px",
                         padding: "0.8rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
+                        textAlign: "center",
                       }}
                     >
-                      <strong style={{ display: "block", marginBottom: "0.3rem" }}>
+                      <strong style={{ display: "block", marginBottom: "0.3rem", textAlign: "center" }}>
                         최저 / 최고 기온
                       </strong>
                       <span className="outfit-weather-message" style={{ margin: 0 }}>
@@ -437,19 +579,133 @@ export function BlurFadeTextDemo() {
                         borderRadius: "12px",
                         padding: "0.8rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
+                        textAlign: "center",
                       }}
                     >
-                      <strong style={{ display: "block", marginBottom: "0.3rem" }}>
+                      <strong style={{ display: "block", marginBottom: "0.3rem", textAlign: "center" }}>
                         강수 정보
                       </strong>
                       <span className="outfit-weather-message" style={{ margin: 0 }}>
-                        {weather.precipitation_type} · 강수확률 {weather.precipitation_probability}%
-                        · 강수량 {weather.precipitation_amount}
+                        {weather.precipitation_type} / {weather.precipitation_probability}% / {weather.precipitation_amount}
                       </span>
                     </div>
                   </div>
                 ) : null}
-                {error ? <p className="form-error">{error}</p> : null}
+                {weather ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "center",
+                      marginTop: "0.2rem",
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="solid-button"
+                      onClick={handleRecommendOutfit}
+                      disabled={recommendLoading}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        gap: "0.45rem",
+                      }}
+                    >
+                      {recommendLoading ? <RecommendLoader /> : null}
+                      <span>{recommendLoading ? "코디 추천 중..." : "코디 추천"}</span>
+                    </button>
+                  </div>
+                ) : null}
+                {recommendError ? <p className="form-error">{recommendError}</p> : null}
+                {recommendation ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "0.8rem",
+                    }}
+                  >
+                    <div
+                      style={{
+                        border: "1px solid var(--line)",
+                        borderRadius: "16px",
+                        padding: "1rem",
+                        background: "rgba(var(--surface-rgb), 0.68)",
+                      }}
+                    >
+                      <strong style={{ display: "block", marginBottom: "0.45rem" }}>추천 코디</strong>
+                      <p className="outfit-weather-message" style={{ margin: 0 }}>
+                        {recommendation.summary}
+                      </p>
+                      {recommendation.missingSlots.length > 0 ? (
+                        <p className="outfit-weather-message" style={{ margin: "0.55rem 0 0" }}>
+                          부족한 카테고리: {recommendation.missingSlots.map((slot) => slotLabel(slot as RecommendationPart["slot"])).join(", ")}
+                        </p>
+                      ) : null}
+                    </div>
+                    <div
+                      style={{
+                        display: "grid",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                        gap: "0.75rem",
+                      }}
+                    >
+                      {recommendation.parts.map((part) => (
+                        <div
+                          key={`${part.slot}-${part.item.id}`}
+                          style={{
+                            border: "1px solid var(--line)",
+                            borderRadius: "14px",
+                            padding: "0.85rem",
+                            background: "rgba(var(--surface-rgb), 0.6)",
+                            display: "grid",
+                            gap: "0.55rem",
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: "0.78rem",
+                              color: "var(--muted-foreground)",
+                            }}
+                          >
+                            {slotLabel(part.slot)}
+                          </span>
+                          {part.item.image_path ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={part.item.image_path}
+                              alt={part.item.name}
+                              style={{
+                                width: "100%",
+                                aspectRatio: "4 / 5",
+                                objectFit: "cover",
+                                borderRadius: "12px",
+                                border: "1px solid var(--line)",
+                              }}
+                            />
+                          ) : null}
+                          <div style={{ display: "grid", gap: "0.2rem" }}>
+                            <strong>{part.item.name}</strong>
+                            <span className="outfit-weather-message" style={{ margin: 0 }}>
+                              {[part.item.detail_category, part.item.color, part.item.thickness]
+                                .filter(Boolean)
+                                .join(" / ") || "기본 추천"}
+                            </span>
+                          </div>
+                          {part.reasons.length > 0 ? (
+                            <div style={{ display: "grid", gap: "0.18rem" }}>
+                              {part.reasons.map((reason) => (
+                                <span key={reason} className="outfit-weather-message" style={{ margin: 0 }}>
+                                  {reason}
+                                </span>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+                {weatherError ? <p className="form-error">{weatherError}</p> : null}
               </div>
             ) : null}
           </div>

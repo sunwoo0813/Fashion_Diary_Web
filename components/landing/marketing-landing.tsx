@@ -21,9 +21,8 @@ type MarketingLandingProps = {
 
 const NAV_ITEMS = [
   { label: "Preview", href: "#preview" },
-  { label: "Workflow", href: "#capabilities" },
-  { label: "Features", href: "#features" },
-  { label: "Archive", href: "#top" },
+  { label: "Flow", href: "#capabilities" },
+  { label: "Start", href: "#top" },
 ];
 
 const CAPABILITY_ITEMS = [
@@ -51,14 +50,14 @@ const CAPABILITY_ITEMS = [
 
 const FEATURE_ITEMS = [
   {
-    title: "Remember why a look worked",
+    title: "Remember the full look",
     copy:
-      "Each diary entry keeps the outfit photo, the weather, and the tagged pieces together so future decisions have context.",
+      "Photos, weather, and tagged pieces stay together so each outfit keeps its context.",
   },
   {
-    title: "See repeat pieces with more clarity",
+    title: "Spot repeat pieces faster",
     copy:
-      "Wardrobe usage becomes visible over time, which makes it easier to spot staples, gaps, and pieces you only thought you wore.",
+      "Wear history makes staples and gaps easier to notice without digging through old entries.",
   },
 ];
 
@@ -207,17 +206,16 @@ export function MarketingLanding({
             <Link href="#features" className="marketing-announcement">
               <span className="marketing-announcement-label">Personal wardrobe archive</span>
               <span className="marketing-announcement-divider" />
-              <span className="marketing-announcement-text">See how looks, weather, and pieces stay linked</span>
+              <span className="marketing-announcement-text">Keep outfits, weather, and pieces in one place</span>
               <span className="marketing-announcement-icon">
                 <ArrowRightIcon size={14} />
               </span>
             </Link>
 
-            <h1>Archive Your Style, Not Just Your Clothes.</h1>
+            <h1>Keep a clear record of what you wore.</h1>
             <p>
-              Log daily looks, attach the pieces you wore, and keep weather beside every outfit. The
-              result feels less like a closet app and more like a personal style archive you can
-              return to.
+              Log daily outfits, connect the pieces you wore, and save the weather beside each
+              look. It stays simple enough for daily use and useful enough to revisit later.
             </p>
 
             <div className="marketing-hero-actions">
@@ -243,12 +241,6 @@ export function MarketingLanding({
               <p>Photo, weather, and item tags stored in one diary entry.</p>
             </article>
 
-            <article className="marketing-floating-card marketing-floating-card-bottom">
-              <span className="marketing-floating-kicker">Wardrobe Read</span>
-              <strong>Black coat worn 12 times this season</strong>
-              <p>Repeat pieces surface naturally once the diary and closet are connected.</p>
-            </article>
-
             <div className="marketing-device">
               <div className="marketing-device-topbar">
                 <div className="marketing-device-dots" aria-hidden>
@@ -266,7 +258,7 @@ export function MarketingLanding({
                 <section className="marketing-preview-primary">
                   <div className="marketing-preview-heading">
                     <p>March 07 Diary</p>
-                    <strong>Black coat, ivory knit, wide denim, and rain notes kept together</strong>
+                    <strong>One outfit entry with the photo, weather, and tagged pieces together</strong>
                   </div>
 
                   <div className="marketing-outfit-stage">
@@ -300,12 +292,8 @@ export function MarketingLanding({
                       <span>Looks archived</span>
                     </article>
                     <article>
-                      <strong>62</strong>
-                      <span>Weather-linked entries</span>
-                    </article>
-                    <article>
                       <strong>12</strong>
-                      <span>Repeat staples found</span>
+                      <span>Core staples tracked</span>
                     </article>
                   </div>
                 </section>
@@ -315,19 +303,19 @@ export function MarketingLanding({
                     <p className="marketing-preview-kicker">Closet Balance</p>
                     <ul className="marketing-progress-list">
                       <li>
-                        <span>Outerwear in rotation</span>
+                        <span>Outerwear</span>
                         <div>
                           <em style={{ width: "68%" }} />
                         </div>
                       </li>
                       <li>
-                        <span>Knitwear reuse</span>
+                        <span>Knitwear</span>
                         <div>
                           <em style={{ width: "84%" }} />
                         </div>
                       </li>
                       <li>
-                        <span>Bottoms coverage</span>
+                        <span>Bottoms</span>
                         <div>
                           <em style={{ width: "72%" }} />
                         </div>
@@ -336,18 +324,14 @@ export function MarketingLanding({
                   </article>
 
                   <article className="marketing-preview-card">
-                    <p className="marketing-preview-kicker">Recent Looks</p>
+                    <p className="marketing-preview-kicker">Recent Entries</p>
                     <div className="marketing-preview-entry">
                       <span>Mar 04</span>
-                      <strong>Rain-ready layers with loafers tagged for repeat wear</strong>
+                      <strong>Rain-ready layers saved with tagged loafers</strong>
                     </div>
                     <div className="marketing-preview-entry">
                       <span>Mar 02</span>
-                      <strong>Office knit saved beside temperature and humidity notes</strong>
-                    </div>
-                    <div className="marketing-preview-entry">
-                      <span>Feb 28</span>
-                      <strong>Weekend denim surfaced again in monthly wear ranking</strong>
+                      <strong>Office knit logged with temperature notes</strong>
                     </div>
                   </article>
                 </aside>
@@ -358,9 +342,9 @@ export function MarketingLanding({
 
         <section id="capabilities" className="marketing-capability-section">
           <div className="marketing-section-heading">
-            <p>Workflow</p>
-            <h2>A wardrobe archive that stays useful after the photo.</h2>
-            <span>Built for the full loop: log the look, connect the pieces, revisit the context, and learn from repeat wear.</span>
+            <p>Flow</p>
+            <h2>A simple loop for logging, linking, and revisiting outfits.</h2>
+            <span>Start with the outfit, connect the pieces, and return later with the context still attached.</span>
           </div>
 
           <div className="marketing-capability-grid">
@@ -383,17 +367,17 @@ export function MarketingLanding({
 
         <section id="features" className="marketing-editorial-section" aria-label="Feature highlights">
           <article className="marketing-editorial-lead">
-            <p className="marketing-feature-label">Why it feels different</p>
-            <h2>A calmer way to remember what you wore and why you wore it.</h2>
+            <p className="marketing-feature-label">Why it helps</p>
+            <h2>A lighter way to keep your wardrobe and outfit history connected.</h2>
             <p className="marketing-editorial-copy">
-              Most closet tools stop at inventory. This one keeps the wearing history too, which
-              makes the archive more personal, more visual, and more useful over time.
+              Instead of treating your closet and diary as separate tools, this keeps them close
+              enough to feel like one record.
             </p>
             <div className="marketing-editorial-panel">
               <div className="marketing-editorial-photo" aria-hidden />
               <div className="marketing-editorial-text">
-                <span>Look memory</span>
-                <strong>Photos, notes, weather, and item tags stay in the same place.</strong>
+                <span>One record</span>
+                <strong>Photos, notes, weather, and tagged items stay together.</strong>
               </div>
             </div>
           </article>

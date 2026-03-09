@@ -1,0 +1,413 @@
+.outfit-new-page,
+.outfit-edit-page {
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: rgba(var(--surface-rgb), 0.86);
+  padding: 1.2rem;
+  min-height: calc(100vh - 2.8rem);
+}
+
+.outfit-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.outfit-header h1 {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-serif);
+}
+
+.outfit-header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.outfit-form {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.outfit-form label {
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.84rem;
+}
+
+.outfit-form input,
+.outfit-form textarea,
+.outfit-form select {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.58rem 0.65rem;
+  color: inherit;
+  font: inherit;
+}
+
+.outfit-weather-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.55rem;
+}
+
+.outfit-weather-panel {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 0.75rem;
+  display: grid;
+  gap: 0.55rem;
+}
+
+.outfit-weather-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: flex-end;
+}
+
+.outfit-city-field {
+  min-width: 200px;
+  flex: 1;
+  display: grid;
+  gap: 0.3rem;
+  font-size: 0.84rem;
+}
+
+.outfit-weather-message {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.82rem;
+}
+
+.dashboard-region-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.dashboard-region-field {
+  min-width: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.dashboard-region-label {
+  display: block;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 1.2;
+}
+
+.dashboard-region-select-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  color: #666666;
+}
+
+:root:is([data-theme="dark"], .dark) .dashboard-region-select-wrap {
+  color: #a1a1a1;
+}
+
+.dashboard-region-select-wrap:hover {
+  color: #171717;
+}
+
+:root:is([data-theme="dark"], .dark) .dashboard-region-select-wrap:hover {
+  color: #ededed;
+}
+
+.dashboard-region-select {
+  appearance: none;
+  width: 100%;
+  height: 2.5rem;
+  border: 1px solid rgba(var(--foreground-rgb), 0.14);
+  border-radius: 5px;
+  background: rgba(var(--surface-rgb), 0.96);
+  color: var(--text);
+  padding: 0 2.25rem 0 0.75rem;
+  outline: none;
+  box-shadow: 0 0 0 1px rgba(var(--foreground-rgb), 0.04);
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease,
+    background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.dashboard-region-select:focus {
+  border-color: rgba(var(--accent-rgb), 0.45);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.16);
+}
+
+.dashboard-region-select:disabled {
+  cursor: not-allowed;
+  color: var(--muted-foreground);
+  background: rgba(var(--foreground-rgb), 0.06);
+  border-color: rgba(var(--foreground-rgb), 0.08);
+}
+
+.dashboard-region-select-icon {
+  position: absolute;
+  right: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  line-height: 0;
+}
+
+.dashboard-region-select-icon svg {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
+
+@media (max-width: 640px) {
+  .dashboard-region-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.new-photo-picker {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 0.75rem;
+}
+
+.new-photo-picker-label {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.84rem;
+}
+
+.new-photo-list {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.new-photo-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--surface);
+  display: grid;
+  grid-template-columns: 130px 1fr;
+}
+
+.new-photo-preview {
+  border-right: 1px solid var(--line);
+  background: #f8f5f2;
+}
+
+.new-photo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  aspect-ratio: 4 / 5;
+  display: block;
+}
+
+.new-photo-meta {
+  padding: 0.65rem;
+}
+
+.new-photo-meta-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.new-photo-file-name {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.new-photo-tag-toggle {
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff7f2;
+  color: var(--accent-deep);
+  padding: 0.22rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.new-photo-tags {
+  margin-top: 0.5rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.new-photo-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 0.2rem 0.48rem;
+  font-size: 0.75rem;
+  background: #fbf8f5;
+}
+
+.new-photo-empty-tag {
+  margin-top: 0.45rem;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.new-photo-tag-hint {
+  margin-top: 0.45rem;
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.new-photo-status {
+  margin: 0.55rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.8rem;
+}
+
+.existing-photo-section {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  padding: 0.75rem;
+}
+
+.existing-photo-section h2 {
+  margin: 0;
+  font-size: 1rem;
+  font-family: var(--font-serif);
+}
+
+.existing-photo-list {
+  margin-top: 0.65rem;
+  display: grid;
+  gap: 0.7rem;
+}
+
+.existing-photo-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface);
+  padding: 0.6rem;
+}
+
+.existing-photo-preview {
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 280px;
+}
+
+.existing-photo-preview img {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  display: block;
+}
+
+.existing-photo-delete {
+  margin-top: 0.45rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8rem;
+}
+
+.existing-photo-tags {
+  margin-top: 0.55rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.danger-button {
+  margin-top: 0.8rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  border: 1px solid #d27c5c;
+  background: #fff3ee;
+  color: #9c3514;
+  padding: 0.56rem 0.86rem;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+:root:is([data-theme="dark"], .dark) .outfit-new-page,
+:root:is([data-theme="dark"], .dark) .outfit-edit-page,
+:root:is([data-theme="dark"], .dark) .outfit-weather-panel,
+:root:is([data-theme="dark"], .dark) .outfit-form input,
+:root:is([data-theme="dark"], .dark) .outfit-form textarea,
+:root:is([data-theme="dark"], .dark) .outfit-form select,
+:root:is([data-theme="dark"], .dark) .new-photo-picker,
+:root:is([data-theme="dark"], .dark) .new-photo-card,
+:root:is([data-theme="dark"], .dark) .existing-photo-section,
+:root:is([data-theme="dark"], .dark) .existing-photo-card {
+  background: var(--surface);
+  color: var(--text);
+  border-color: var(--line);
+}
+
+:root:is([data-theme="dark"], .dark) .new-photo-tag {
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text);
+  border-color: var(--line);
+}
+
+:root:is([data-theme="dark"], .dark) .new-photo-tag-toggle {
+  background: rgba(var(--accent-rgb), 0.08);
+  color: var(--primary);
+  border-color: rgba(var(--accent-rgb), 0.22);
+}
+
+:root:is([data-theme="dark"], .dark) .new-photo-preview {
+  background: var(--secondary);
+  border-color: var(--line);
+}
+
+@media (max-width: 900px) {
+  .outfit-header {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .outfit-weather-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .outfit-weather-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .new-photo-card {
+    grid-template-columns: 1fr;
+  }
+
+  .new-photo-preview {
+    border-right: 0;
+    border-bottom: 1px solid var(--line);
+  }
+}
+
+@media (max-width: 640px) {
+  .outfit-actions {
+    width: 100%;
+    gap: 0.5rem;
+  }
+}

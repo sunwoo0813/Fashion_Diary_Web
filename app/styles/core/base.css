@@ -1,0 +1,281 @@
+/* Base tokens and resets */
+
+:root {
+  --card: #f5f5f5;
+  --ring: #606060;
+  --input: #e0e0e0;
+  --muted: #d9d9d9;
+  --accent: #c0c0c0;
+  --border: #d0d0d0;
+  --radius: 0.35rem;
+  --chart-1: #606060;
+  --chart-2: #476666;
+  --chart-3: #909090;
+  --chart-4: #a8a8a8;
+  --chart-5: #c0c0c0;
+  --popover: #f5f5f5;
+  --primary: #606060;
+  --sidebar: #eaeaea;
+  --spacing: 0.25rem;
+  --font-mono: Fira Code, monospace;
+  --font-sans: Montserrat, sans-serif;
+  --secondary: #e0e0e0;
+  --background: #f0f0f0;
+  --font-serif: Georgia, serif;
+  --foreground: #333333;
+  --destructive: #cc3333;
+  --shadow-blur: 0px;
+  --shadow-color: hsl(0 0% 20% / 0.1);
+  --sidebar-ring: #606060;
+  --shadow-spread: 0px;
+  --shadow-opacity: 0.15;
+  --sidebar-accent: #c0c0c0;
+  --sidebar-border: #d0d0d0;
+  --card-foreground: #333333;
+  --shadow-offset-x: 0px;
+  --shadow-offset-y: 2px;
+  --sidebar-primary: #606060;
+  --muted-foreground: #666666;
+  --accent-foreground: #333333;
+  --popover-foreground: #333333;
+  --primary-foreground: #ffffff;
+  --sidebar-foreground: #333333;
+  --secondary-foreground: #333333;
+  --destructive-foreground: #ffffff;
+  --sidebar-accent-foreground: #333333;
+  --sidebar-primary-foreground: #ffffff;
+
+  --surface-rgb: 245, 245, 245;
+  --background-rgb: 240, 240, 240;
+  --foreground-rgb: 51, 51, 51;
+  --accent-rgb: 96, 96, 96;
+  --accent-deep-rgb: 71, 102, 102;
+
+  --bg: var(--background);
+  --surface: var(--card);
+  --text: var(--foreground);
+  --line: var(--border);
+  --accent-deep: var(--chart-3);
+}
+
+:root:is([data-theme="dark"], .dark) {
+  --card: #202020;
+  --ring: #a0a0a0;
+  --input: #303030;
+  --muted: #2a2a2a;
+  --accent: #404040;
+  --border: #353535;
+  --chart-1: #a0a0a0;
+  --chart-2: #7e9ca0;
+  --chart-3: #707070;
+  --chart-4: #585858;
+  --chart-5: #404040;
+  --popover: #202020;
+  --primary: #a0a0a0;
+  --sidebar: #1f1f1f;
+  --font-mono: Fira Code, monospace;
+  --font-sans: Inter, sans-serif;
+  --secondary: #303030;
+  --background: #1a1a1a;
+  --font-serif: Georgia, serif;
+  --foreground: #d9d9d9;
+  --destructive: #e06666;
+  --sidebar-ring: #a0a0a0;
+  --sidebar-accent: #404040;
+  --sidebar-border: #353535;
+  --card-foreground: #d9d9d9;
+  --sidebar-primary: #a0a0a0;
+  --muted-foreground: #808080;
+  --accent-foreground: #d9d9d9;
+  --popover-foreground: #d9d9d9;
+  --primary-foreground: #1a1a1a;
+  --sidebar-foreground: #d9d9d9;
+  --secondary-foreground: #d9d9d9;
+  --destructive-foreground: #ffffff;
+  --sidebar-accent-foreground: #d9d9d9;
+  --sidebar-primary-foreground: #1a1a1a;
+
+  --surface-rgb: 32, 32, 32;
+  --background-rgb: 26, 26, 26;
+  --foreground-rgb: 217, 217, 217;
+  --accent-rgb: 160, 160, 160;
+  --accent-deep-rgb: 126, 156, 160;
+
+  --bg: var(--background);
+  --surface: var(--card);
+  --text: var(--foreground);
+  --line: var(--border);
+  --accent-deep: var(--chart-4);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: var(--font-sans);
+  color: var(--text);
+  background:
+    radial-gradient(circle at 82% 10%, rgba(var(--foreground-rgb), 0.035) 0%, transparent 32%),
+    radial-gradient(circle at 5% 95%, rgba(var(--accent-rgb), 0.03) 0%, transparent 24%),
+    var(--bg);
+}
+
+:root:is([data-theme="dark"], .dark) body {
+  background:
+    radial-gradient(circle at 82% 10%, rgba(var(--accent-rgb), 0.07) 0%, transparent 24%),
+    radial-gradient(circle at 5% 95%, rgba(var(--foreground-rgb), 0.05) 0%, transparent 22%),
+    var(--bg);
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+code,
+pre,
+kbd,
+samp {
+  font-family: var(--font-mono);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button,
+.solid-button,
+.ghost-button,
+.danger-button,
+.quick-link,
+.app-link,
+.filter-chip,
+.diary-icon-button,
+.wardrobe-edit-icon,
+.wardrobe-inline-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+button,
+[role="button"],
+.solid-button,
+.ghost-button,
+.danger-button,
+.quick-link,
+.app-link,
+.filter-chip,
+.wardrobe-card,
+.dash-card,
+.workflow-card,
+.account-card,
+.diary-outfit-card,
+.diary-day-cell,
+.stats-next-card,
+.stats-next-top-item,
+.new-photo-card,
+.existing-photo-card,
+.item-search-result {
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease,
+    border-color 0.2s ease,
+    background-color 0.2s ease;
+}
+
+button:hover,
+[role="button"]:hover,
+.solid-button:hover,
+.ghost-button:hover,
+.danger-button:hover,
+.quick-link:hover,
+.app-link:hover,
+.filter-chip:hover,
+.wardrobe-card:hover,
+.dash-card:hover,
+.workflow-card:hover,
+.account-card:hover,
+.diary-outfit-card:hover,
+.diary-day-cell:hover,
+.stats-next-card:hover,
+.stats-next-top-item:hover,
+.new-photo-card:hover,
+.existing-photo-card:hover,
+.item-search-result:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(31, 26, 23, 0.1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  button,
+  [role="button"],
+  .solid-button,
+  .ghost-button,
+  .danger-button,
+  .quick-link,
+  .app-link,
+  .filter-chip,
+  .wardrobe-card,
+  .dash-card,
+  .workflow-card,
+  .account-card,
+  .diary-outfit-card,
+  .diary-day-cell,
+  .stats-next-card,
+  .stats-next-top-item,
+  .new-photo-card,
+  .existing-photo-card,
+  .item-search-result {
+    transition: none;
+  }
+
+  button:hover,
+  [role="button"]:hover,
+  .solid-button:hover,
+  .ghost-button:hover,
+  .danger-button:hover,
+  .quick-link:hover,
+  .app-link:hover,
+  .filter-chip:hover,
+  .wardrobe-card:hover,
+  .dash-card:hover,
+  .workflow-card:hover,
+  .account-card:hover,
+  .diary-outfit-card:hover,
+  .diary-day-cell:hover,
+  .stats-next-card:hover,
+  .stats-next-top-item:hover,
+  .new-photo-card:hover,
+  .existing-photo-card:hover,
+  .item-search-result:hover {
+    transform: none;
+    box-shadow: none;
+  }
+}
+
+.page {
+  padding: 2rem;
+}
+
+.page h1 {
+  margin: 0 0 0.75rem;
+  font-size: 1.875rem;
+  font-family: var(--font-serif);
+}
+
+.page p {
+  margin: 0;
+  color: var(--muted-foreground);
+}
+
+
