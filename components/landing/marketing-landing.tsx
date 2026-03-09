@@ -28,36 +28,36 @@ const NAV_ITEMS = [
 const CAPABILITY_ITEMS = [
   {
     icon: WardrobeIcon,
-    title: "Closet Archive",
-    copy: "Search your wardrobe by item, category, size, and wear count.",
+    title: "옷장 아카이브",
+    copy: "아이템, 카테고리, 사이즈, 착용 횟수 기준으로 옷장을 빠르게 찾아보세요.",
   },
   {
     icon: DiaryIcon,
-    title: "Diary by Date",
-    copy: "Keep daily looks linked to notes, photos, and tagged wardrobe pieces.",
+    title: "날짜별 다이어리",
+    copy: "매일의 룩을 메모, 사진, 태그된 옷장 아이템과 함께 기록할 수 있습니다.",
   },
   {
     icon: StatsIcon,
-    title: "Wear Analytics",
-    copy: "See what you actually wear, revisit patterns, and refine your rotation.",
+    title: "착용 분석",
+    copy: "실제로 자주 입는 옷을 확인하고 패턴을 돌아보며 스타일 루틴을 다듬어 보세요.",
   },
   {
     icon: DashboardIcon,
-    title: "Daily Overview",
-    copy: "A clear summary of weather, recent looks, and wardrobe activity.",
+    title: "데일리 개요",
+    copy: "날씨, 최근 룩, 옷장 활동을 한눈에 정리해 보여줍니다.",
   },
 ];
 
 const FEATURE_ITEMS = [
   {
-    title: "Remember the full look",
+    title: "룩 전체를 맥락까지 기억하기",
     copy:
-      "Photos, weather, and tagged pieces stay together so each outfit keeps its context.",
+      "사진, 날씨, 태그한 아이템이 함께 저장되어 각 코디의 맥락을 그대로 남길 수 있습니다.",
   },
   {
-    title: "Spot repeat pieces faster",
+    title: "자주 입는 아이템을 더 빨리 파악하기",
     copy:
-      "Wear history makes staples and gaps easier to notice without digging through old entries.",
+      "착용 기록이 쌓이면 예전 기록을 일일이 뒤지지 않아도 자주 입는 기본템과 부족한 부분이 보입니다.",
   },
 ];
 
@@ -120,9 +120,9 @@ export function MarketingLanding({
   const headerSecondaryHref = isAuthenticated ? diaryHref : loginHref;
   const headerSecondaryLabel = isAuthenticated ? "Open Diary" : "Log In";
   const heroPrimaryHref = isAuthenticated ? dashboardHref : signupHref;
-  const heroPrimaryLabel = isAuthenticated ? "Go to Dashboard" : "Start Logging";
+  const heroPrimaryLabel = isAuthenticated ? "대시보드로 이동" : "기록 시작하기";
   const heroSecondaryHref = isAuthenticated ? diaryHref : "#preview";
-  const heroSecondaryLabel = isAuthenticated ? "Open Diary" : "Explore Preview";
+  const heroSecondaryLabel = isAuthenticated ? "다이어리 열기" : "미리보기 보기";
 
   return (
     <div className="marketing-page">
@@ -204,18 +204,22 @@ export function MarketingLanding({
         <section id="top" className="marketing-hero">
           <div className="marketing-copy">
             <Link href="#features" className="marketing-announcement">
-              <span className="marketing-announcement-label">Personal wardrobe archive</span>
+              <span className="marketing-announcement-label">개인 옷장 아카이브</span>
               <span className="marketing-announcement-divider" />
-              <span className="marketing-announcement-text">Keep outfits, weather, and pieces in one place</span>
+              <span className="marketing-announcement-text">코디, 날씨, 아이템을 한곳에 모아 기록하세요</span>
               <span className="marketing-announcement-icon">
                 <ArrowRightIcon size={14} />
               </span>
             </Link>
 
-            <h1>Keep a clear record of what you wore.</h1>
+            <h1>
+              <span>오늘 입은 옷을</span>
+              <span>선명하게</span>
+              <span>기록하세요</span>
+            </h1>
             <p>
-              Log daily outfits, connect the pieces you wore, and save the weather beside each
-              look. It stays simple enough for daily use and useful enough to revisit later.
+              매일의 코디를 기록하고, 착용한 아이템을 연결하고, 그날의 날씨까지 함께 남겨보세요.
+              매일 쓰기에는 간단하고, 나중에 다시 보기에는 충분히 유용합니다.
             </p>
 
             <div className="marketing-hero-actions">
@@ -228,17 +232,17 @@ export function MarketingLanding({
             </div>
 
             <ul className="marketing-proof-list" aria-label="Core strengths">
-              <li>Outfits saved by date</li>
-              <li>Tagged wardrobe pieces</li>
-              <li>Weather kept with each look</li>
+              <li>날짜별 코디 저장</li>
+              <li>옷장 아이템 태그 연동</li>
+              <li>룩별 날씨 기록 보관</li>
             </ul>
           </div>
 
           <div id="preview" className="marketing-showcase">
             <article className="marketing-floating-card marketing-floating-card-top">
-              <span className="marketing-floating-kicker">Daily Note</span>
-              <strong>Mar 07 | City layers, light rain</strong>
-              <p>Photo, weather, and item tags stored in one diary entry.</p>
+              <span className="marketing-floating-kicker">오늘의 메모</span>
+              <strong>3월 7일 | 도심 레이어드, 약한 비</strong>
+              <p>사진, 날씨, 아이템 태그를 하나의 다이어리 기록에 함께 저장합니다.</p>
             </article>
 
             <div className="marketing-device">
@@ -249,16 +253,16 @@ export function MarketingLanding({
                   <span />
                 </div>
                 <div className="marketing-device-pills">
-                  <span>Diary view</span>
-                  <span>Closet linked</span>
+                  <span>다이어리 보기</span>
+                  <span>옷장 연동</span>
                 </div>
               </div>
 
               <div className="marketing-device-body">
                 <section className="marketing-preview-primary">
                   <div className="marketing-preview-heading">
-                    <p>March 07 Diary</p>
-                    <strong>One outfit entry with the photo, weather, and tagged pieces together</strong>
+                    <p>3월 7일 다이어리</p>
+                    <strong>한 번의 코디 기록에 사진, 날씨, 태그한 아이템을 함께 담습니다</strong>
                   </div>
 
                   <div className="marketing-outfit-stage">
@@ -267,21 +271,21 @@ export function MarketingLanding({
                       <div className="marketing-shot-photo" aria-hidden />
                       <div className="marketing-shot-meta">
                         <span>16C</span>
-                        <span>Light rain</span>
-                        <span>Seoul</span>
+                        <span>약한 비</span>
+                        <span>서울</span>
                       </div>
                     </div>
 
                     <div className="marketing-look-summary">
-                      <p className="marketing-look-label">Tagged pieces</p>
+                      <p className="marketing-look-label">태그한 아이템</p>
                       <div className="marketing-look-tags">
-                        <span>Black coat</span>
-                        <span>Ivory knit</span>
-                        <span>Wide denim</span>
-                        <span>Leather loafer</span>
+                        <span>블랙 코트</span>
+                        <span>아이보리 니트</span>
+                        <span>와이드 데님</span>
+                        <span>레더 로퍼</span>
                       </div>
                       <div className="marketing-look-note">
-                        Easy commute look. Warm enough indoors, light layer for drizzle.
+                        출근하기 편한 룩. 실내에서는 충분히 따뜻하고, 가벼운 비에도 잘 어울리는 레이어드.
                       </div>
                     </div>
                   </div>
@@ -289,33 +293,33 @@ export function MarketingLanding({
                   <div className="marketing-stat-row">
                     <article>
                       <strong>73</strong>
-                      <span>Looks archived</span>
+                      <span>저장된 룩</span>
                     </article>
                     <article>
                       <strong>12</strong>
-                      <span>Core staples tracked</span>
+                      <span>관리 중인 핵심 기본템</span>
                     </article>
                   </div>
                 </section>
 
                 <aside className="marketing-preview-column">
                   <article className="marketing-preview-card">
-                    <p className="marketing-preview-kicker">Closet Balance</p>
+                    <p className="marketing-preview-kicker">옷장 밸런스</p>
                     <ul className="marketing-progress-list">
                       <li>
-                        <span>Outerwear</span>
+                        <span>아우터</span>
                         <div>
                           <em style={{ width: "68%" }} />
                         </div>
                       </li>
                       <li>
-                        <span>Knitwear</span>
+                        <span>니트웨어</span>
                         <div>
                           <em style={{ width: "84%" }} />
                         </div>
                       </li>
                       <li>
-                        <span>Bottoms</span>
+                        <span>하의</span>
                         <div>
                           <em style={{ width: "72%" }} />
                         </div>
@@ -324,14 +328,14 @@ export function MarketingLanding({
                   </article>
 
                   <article className="marketing-preview-card">
-                    <p className="marketing-preview-kicker">Recent Entries</p>
+                    <p className="marketing-preview-kicker">최근 기록</p>
                     <div className="marketing-preview-entry">
-                      <span>Mar 04</span>
-                      <strong>Rain-ready layers saved with tagged loafers</strong>
+                      <span>3월 4일</span>
+                      <strong>비 오는 날용 레이어드 룩과 로퍼 태그를 함께 저장</strong>
                     </div>
                     <div className="marketing-preview-entry">
-                      <span>Mar 02</span>
-                      <strong>Office knit logged with temperature notes</strong>
+                      <span>3월 2일</span>
+                      <strong>오피스 니트 룩과 체감 온도 메모를 기록</strong>
                     </div>
                   </article>
                 </aside>
@@ -342,9 +346,9 @@ export function MarketingLanding({
 
         <section id="capabilities" className="marketing-capability-section">
           <div className="marketing-section-heading">
-            <p>Flow</p>
-            <h2>A simple loop for logging, linking, and revisiting outfits.</h2>
-            <span>Start with the outfit, connect the pieces, and return later with the context still attached.</span>
+            <p>기록 흐름</p>
+            <h2>기록하고, 연결하고, 다시 돌아보는 간단한 루틴.</h2>
+            <span>코디에서 시작해 아이템을 연결하고, 맥락이 남아 있는 상태로 나중에 다시 확인하세요.</span>
           </div>
 
           <div className="marketing-capability-grid">
@@ -365,19 +369,18 @@ export function MarketingLanding({
           </div>
         </section>
 
-        <section id="features" className="marketing-editorial-section" aria-label="Feature highlights">
+        <section id="features" className="marketing-editorial-section" aria-label="주요 기능 소개">
           <article className="marketing-editorial-lead">
-            <p className="marketing-feature-label">Why it helps</p>
-            <h2>A lighter way to keep your wardrobe and outfit history connected.</h2>
+            <p className="marketing-feature-label">왜 도움이 될까요</p>
+            <h2>옷장과 코디 기록을 더 가볍게 연결하는 방법.</h2>
             <p className="marketing-editorial-copy">
-              Instead of treating your closet and diary as separate tools, this keeps them close
-              enough to feel like one record.
+              옷장과 다이어리를 별개의 도구로 나누지 않고, 하나의 기록처럼 자연스럽게 이어지도록 구성했습니다.
             </p>
             <div className="marketing-editorial-panel">
               <div className="marketing-editorial-photo" aria-hidden />
               <div className="marketing-editorial-text">
-                <span>One record</span>
-                <strong>Photos, notes, weather, and tagged items stay together.</strong>
+                <span>하나의 기록</span>
+                <strong>사진, 메모, 날씨, 태그한 아이템이 함께 남습니다.</strong>
               </div>
             </div>
           </article>
@@ -385,11 +388,11 @@ export function MarketingLanding({
           <div className="marketing-feature-grid">
             {FEATURE_ITEMS.map((item) => (
               <article key={item.title} className="marketing-feature-card">
-                <p className="marketing-feature-label">Feature</p>
+                <p className="marketing-feature-label">기능</p>
                 <h3>{item.title}</h3>
                 <p>{item.copy}</p>
                 <Link href={heroPrimaryHref} className="marketing-feature-link">
-                  <span>{isAuthenticated ? "Open workspace" : "Start your archive"}</span>
+                  <span>{isAuthenticated ? "워크스페이스 열기" : "아카이브 시작하기"}</span>
                   <ChevronRightSmallIcon />
                 </Link>
               </article>

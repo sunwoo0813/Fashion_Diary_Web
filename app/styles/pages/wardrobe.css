@@ -35,6 +35,10 @@
   gap: 0.6rem;
 }
 
+.wardrobe-header > div:first-child {
+  min-width: 0;
+}
+
 .wardrobe-search-form {
   display: flex;
 }
@@ -767,6 +771,33 @@
   .wardrobe-search-form input {
     min-width: 0;
     width: 100%;
+  }
+}
+
+@media (min-width: 900px) and (max-width: 1025px) {
+  .wardrobe-header {
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .wardrobe-header > div:first-child {
+    flex: 0 0 auto;
+  }
+
+  .wardrobe-kicker,
+  .wardrobe-header h1 {
+    white-space: nowrap;
+  }
+
+  .wardrobe-header-actions {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  .wardrobe-search-shell {
+    min-width: 210px;
+    max-width: 300px;
   }
 }
 

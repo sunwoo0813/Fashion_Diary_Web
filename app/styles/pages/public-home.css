@@ -323,11 +323,15 @@
   margin: 1.35rem 0 0;
   max-width: 12ch;
   font-family: var(--font-serif);
-  font-size: clamp(3.1rem, 7vw, 5.8rem);
-  line-height: 0.9;
+  font-size: clamp(2.8rem, 6.2vw, 5.1rem);
+  line-height: 1.08;
   letter-spacing: -0.055em;
   font-weight: 500;
   text-wrap: balance;
+}
+
+.marketing-copy h1 span {
+  display: block;
 }
 
 .marketing-copy p {
@@ -805,7 +809,7 @@
 .marketing-editorial-lead h2 {
   margin: 0.35rem 0 0;
   font-family: var(--font-serif);
-  font-size: clamp(2rem, 3.2vw, 3rem);
+  font-size: clamp(1.35rem, 1.7vw, 1.8rem);
   line-height: 0.98;
   letter-spacing: -0.05em;
   font-weight: 500;
@@ -1073,8 +1077,8 @@ textarea:focus-visible {
 
   .marketing-copy h1 {
     max-width: none;
-    font-size: clamp(2.7rem, 13vw, 4.2rem);
-    line-height: 0.94;
+    font-size: clamp(2.4rem, 11vw, 3.8rem);
+    line-height: 1.12;
   }
 
   .marketing-copy p {

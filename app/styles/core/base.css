@@ -17,11 +17,11 @@
   --primary: #606060;
   --sidebar: #eaeaea;
   --spacing: 0.25rem;
-  --font-mono: Fira Code, monospace;
-  --font-sans: Montserrat, sans-serif;
+  --font-mono: Helvetica, Arial, sans-serif;
+  --font-sans: Helvetica, Arial, sans-serif;
   --secondary: #e0e0e0;
   --background: #f0f0f0;
-  --font-serif: Georgia, serif;
+  --font-serif: Helvetica, Arial, sans-serif;
   --foreground: #333333;
   --destructive: #cc3333;
   --shadow-blur: 0px;
@@ -73,11 +73,11 @@
   --popover: #202020;
   --primary: #a0a0a0;
   --sidebar: #1f1f1f;
-  --font-mono: Fira Code, monospace;
-  --font-sans: Inter, sans-serif;
+  --font-mono: Helvetica, Arial, sans-serif;
+  --font-sans: Helvetica, Arial, sans-serif;
   --secondary: #303030;
   --background: #1a1a1a;
-  --font-serif: Georgia, serif;
+  --font-serif: Helvetica, Arial, sans-serif;
   --foreground: #d9d9d9;
   --destructive: #e06666;
   --sidebar-ring: #a0a0a0;
@@ -276,6 +276,28 @@ button:hover,
 .page p {
   margin: 0;
   color: var(--muted-foreground);
+}
+
+@media (max-width: 1024px) {
+  .page {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .page h1 {
+    font-size: 1.625rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .page {
+    padding: 0.8rem;
+  }
 }
 
 
