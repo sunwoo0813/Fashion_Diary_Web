@@ -249,6 +249,7 @@ export function BlurFadeTextDemo() {
       return;
     }
 
+    const region = appliedSigungu;
     let active = true;
 
     async function fetchWeather() {
@@ -263,9 +264,9 @@ export function BlurFadeTextDemo() {
           displayName: selectedRegionLabel,
         });
 
-        if (typeof appliedSigungu.lat === "number" && typeof appliedSigungu.lon === "number") {
-          params.set("lat", String(appliedSigungu.lat));
-          params.set("lon", String(appliedSigungu.lon));
+        if (typeof region.lat === "number" && typeof region.lon === "number") {
+          params.set("lat", String(region.lat));
+          params.set("lon", String(region.lon));
         }
 
         const response = await fetch(`/api/weather?${params.toString()}`);
