@@ -11,6 +11,7 @@ type UpdateBody = {
   category?: unknown;
   detail_category?: unknown;
   size?: unknown;
+  size_detail?: unknown;
   color?: unknown;
   season?: unknown;
   thickness?: unknown;
@@ -38,6 +39,10 @@ export async function PATCH(
     const category = toText(body.category);
     const detailCategory = toText(body.detail_category);
     const size = toText(body.size);
+    const sizeDetail =
+      body.size_detail && typeof body.size_detail === "object" && !Array.isArray(body.size_detail)
+        ? (body.size_detail as Record<string, unknown>)
+        : null;
     const color = toText(body.color);
     const seasons = Array.isArray(body.season)
       ? Array.from(new Set(body.season.map((value) => toText(value)).filter(Boolean)))
@@ -48,7 +53,21 @@ export async function PATCH(
     const appUserId = await getOrCreateAppUserId(authUser.email);
     const admin = createServiceRoleSupabaseClient();
 
-    const sizeDetail =
+    const { data: existingItem, error: existingItemError } = await admin
+      .from("item")
+      .select("id,brand,product_name,category,detail_category,color,season,thickness,size,size_detail")
+      .eq("id", itemId)
+      .eq("user_id", appUserId)
+      .maybeSingle();
+
+    if (existingItemError) {
+      return NextResponse.json({ ok: false, error: "아이템 정보를 불러오지 못했어요." }, { status: 500 });
+    }
+    if (!existingItem) {
+      return NextResponse.json({ ok: false, error: "아이템을 찾을 수 없어요." }, { status: 404 });
+    }
+
+    const fallbackSizeDetail =
       color || stylingIdea
         ? {
             pairs: {
@@ -58,16 +77,18 @@ export async function PATCH(
           }
         : null;
 
+    const hasSeasonField = Array.isArray(body.season);
+
     const payload = {
-      brand: brand || null,
-      product_name: product || null,
-      category: category || null,
-      detail_category: detailCategory || null,
-      color: color || null,
-      season: seasons.length > 0 ? seasons : null,
-      thickness: thickness || null,
-      size: size || null,
-      size_detail: sizeDetail,
+      brand: brand || toText(existingItem.brand) || null,
+      product_name: product || toText(existingItem.product_name) || null,
+      category: category || toText(existingItem.category) || null,
+      detail_category: detailCategory || toText(existingItem.detail_category) || null,
+      color: color || toText(existingItem.color) || null,
+      season: hasSeasonField ? (seasons.length > 0 ? seasons : null) : existingItem.season ?? null,
+      thickness: thickness || toText(existingItem.thickness) || null,
+      size: size || toText(existingItem.size) || null,
+      size_detail: sizeDetail ?? fallbackSizeDetail ?? existingItem.size_detail ?? null,
     };
 
     const { data, error } = await admin

@@ -93,6 +93,7 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
       <WardrobeGrid
         items={data.items}
         wearCounts={data.wearCounts}
+        recentWearDates={data.recentWearDates}
         favoriteIds={data.favoriteIds}
         hasFilters={data.hasFilters}
       />

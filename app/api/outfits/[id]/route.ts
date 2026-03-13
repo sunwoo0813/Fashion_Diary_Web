@@ -58,11 +58,19 @@ function parsePhotoUrlsJson(raw: string, bucketName: string): string[] {
   }
 }
 
-async function uploadOutfitPhoto(file: File) {
+function normalizePathSegment(value: string): string {
+  const raw = value.trim();
+  if (!raw) return "anonymous";
+  const cleaned = raw.replace(/[^a-zA-Z0-9_-]/g, "");
+  return cleaned || "anonymous";
+}
+
+async function uploadOutfitPhoto(file: File, appUserId: number) {
   const admin = createServiceRoleSupabaseClient();
   const bucket = getSupabaseBucket();
   const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
-  const objectPath = `outfits/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
+  const userPath = normalizePathSegment(String(appUserId));
+  const objectPath = `outfits/${userPath}/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error } = await admin.storage.from(bucket).upload(objectPath, buffer, {
@@ -109,10 +117,7 @@ async function resolveContext(request: Request, outfitIdRaw: string) {
   return { redirect: null as NextResponse | null, appUserId, outfitId, admin };
 }
 
-async function deleteOutfit(
-  request: Request,
-  params: { id: string },
-) {
+async function deleteOutfit(request: Request, params: { id: string }) {
   const ctx = await resolveContext(request, params.id);
   if (ctx.redirect) return ctx.redirect;
   const { appUserId, outfitId, admin } = ctx;
@@ -122,7 +127,7 @@ async function deleteOutfit(
 
   const { data: outfitRow } = await admin
     .from("outfit")
-    .select("id,date,user_id")
+    .select("id,user_id")
     .eq("id", outfitId)
     .eq("user_id", appUserId)
     .maybeSingle();
@@ -130,11 +135,7 @@ async function deleteOutfit(
     return NextResponse.redirect(new URL("/diary", request.url), { status: 303 });
   }
 
-  const dateValue = String(outfitRow.date);
-  const { data: photos } = await admin
-    .from("outfit_photo")
-    .select("id,photo_path")
-    .eq("outfit_id", outfitId);
+  const { data: photos } = await admin.from("outfit_photo").select("id,photo_path").eq("outfit_id", outfitId);
   const photoIds = (photos || []).map((row) => Number(row.id));
 
   if (photoIds.length > 0) {
@@ -148,14 +149,10 @@ async function deleteOutfit(
     await removePublicUrl(toText(photo.photo_path));
   }
 
-  return NextResponse.redirect(new URL(`/diary/${dateValue}`, request.url), { status: 303 });
+  return NextResponse.redirect(new URL("/diary", request.url), { status: 303 });
 }
 
-async function updateOutfit(
-  request: Request,
-  params: { id: string },
-  formData: FormData,
-) {
+async function updateOutfit(request: Request, params: { id: string }, formData: FormData) {
   const ctx = await resolveContext(request, params.id);
   if (ctx.redirect) return ctx.redirect;
   const { appUserId, outfitId, admin } = ctx;
@@ -218,25 +215,14 @@ async function updateOutfit(
     }
   }
 
-  const { data: remainingPhotos } = await admin
-    .from("outfit_photo")
-    .select("id")
-    .eq("outfit_id", outfitId)
-    .order("created_at", { ascending: true });
-  const remainingPhotoIds = (remainingPhotos || []).map((row) => Number(row.id));
-
   const { data: userItems } = await admin.from("item").select("id").eq("user_id", appUserId);
   const allowedItemIds = new Set((userItems || []).map((row) => Number(row.id)));
+  const outfitItemIds = parseIdList(formData.getAll("outfit_item_ids")).filter((id) => allowedItemIds.has(id));
 
-  if (remainingPhotoIds.length > 0) {
-    await admin.from("outfit_photo_item").delete().in("photo_id", remainingPhotoIds);
-    for (const photoId of remainingPhotoIds) {
-      const key = `existing_photo_tags_${photoId}`;
-      const itemIds = parseIdList(formData.getAll(key)).filter((id) => allowedItemIds.has(id));
-      if (itemIds.length === 0) continue;
-      const rows = itemIds.map((itemId) => ({ photo_id: photoId, item_id: itemId }));
-      await admin.from("outfit_photo_item").insert(rows);
-    }
+  await admin.from("outfit_item").delete().eq("outfit_id", outfitId);
+  if (outfitItemIds.length > 0) {
+    const rows = outfitItemIds.map((itemId) => ({ outfit_id: outfitId, item_id: itemId }));
+    await admin.from("outfit_item").insert(rows);
   }
 
   const newTagsList = parseTagsJson(toText(formData.get("photo_tags_new_json")));
@@ -253,7 +239,7 @@ async function updateOutfit(
     const file = newFiles[index];
     if (!uploadedUrl && !file) continue;
 
-    const publicPath = uploadedUrl || (await uploadOutfitPhoto(file));
+    const publicPath = uploadedUrl || (await uploadOutfitPhoto(file, appUserId));
     const uploadedByServer = !uploadedUrl;
 
     const { data: photoRow, error: photoInsertError } = await admin
@@ -279,17 +265,14 @@ async function updateOutfit(
     }
   }
 
-  return NextResponse.redirect(new URL(`/diary/${dateValue}`, request.url), { status: 303 });
+  return NextResponse.redirect(new URL("/diary", request.url), { status: 303 });
 }
 
 export async function PATCH() {
-  return NextResponse.json({ ok: false, error: "수정은 POST multipart 방식으로 요청해주세요." }, { status: 405 });
+  return NextResponse.json({ ok: false, error: "수정은 POST multipart 방식으로 요청해 주세요." }, { status: 405 });
 }
 
-export async function POST(
-  request: Request,
-  { params }: { params: { id: string } },
-) {
+export async function POST(request: Request, { params }: { params: { id: string } }) {
   const formData = await request.formData();
   const action = toText(formData.get("_action")).toLowerCase();
   if (action === "delete") {
@@ -298,9 +281,6 @@ export async function POST(
   return updateOutfit(request, params, formData);
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } },
-) {
+export async function DELETE(request: Request, { params }: { params: { id: string } }) {
   return deleteOutfit(request, params);
 }

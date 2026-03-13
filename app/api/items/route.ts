@@ -66,6 +66,10 @@ function toStorageImagePath(value: string): string {
   return raw;
 }
 
+function requiresDetailCategory(category: string): boolean {
+  return category === "Top" || category === "Outer" || category === "Bottom";
+}
+
 export async function POST(request: Request) {
   const authUser = await getCurrentUser();
   if (!authUser?.email) {
@@ -91,6 +95,24 @@ export async function POST(request: Request) {
     const sizeDetail = parsedSizeDetail;
     const prefillImagePath = toText(formData.get("image_path_prefill"));
     const appUserId = await getOrCreateAppUserId(authUser.email);
+
+    if (!brand || !product || !category || !color || !thickness || !explicitSize || seasons.length === 0) {
+      return redirectWithMessage(
+        request.url,
+        "/wardrobe/new",
+        "error",
+        "브랜드, 아이템명, 카테고리, 색상, 시즌, 두께, 사이즈를 모두 입력해 주세요.",
+      );
+    }
+
+    if (requiresDetailCategory(category) && !detailCategory) {
+      return redirectWithMessage(
+        request.url,
+        "/wardrobe/new",
+        "error",
+        "세부 카테고리를 선택해 주세요.",
+      );
+    }
 
     const fileValue = formData.get("image");
     const file = fileValue instanceof File ? fileValue : null;

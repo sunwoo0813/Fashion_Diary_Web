@@ -2,12 +2,14 @@
 
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 
+import { ConfirmSubmitButton } from "@/components/common/confirm-submit-button";
 import { KebabVerticalIcon } from "@/components/common/icons";
 import type { WardrobeItem } from "@/lib/queries/wardrobe";
 
 type WardrobeGridProps = {
   items: WardrobeItem[];
   wearCounts: Record<number, number>;
+  recentWearDates: Record<number, string>;
   favoriteIds: number[];
   hasFilters: boolean;
 };
@@ -27,14 +29,34 @@ type EditFormState = {
   product: string;
   category: string;
   size: string;
-  color: string;
-  stylingIdea: string;
+  sizeDetail: unknown;
 };
+
+const EDIT_CATEGORY_OPTIONS = [
+  { value: "Top", label: "상의" },
+  { value: "Outer", label: "아우터" },
+  { value: "Bottom", label: "하의" },
+  { value: "Shoes", label: "신발" },
+  { value: "ACC", label: "액세서리" },
+] as const;
 
 function itemCountText(count: number) {
   if (count <= 0) return "아직 착용하지 않았어요";
   if (count === 1) return "1회 착용";
   return `${count}회 착용`;
+}
+
+function formatRecentWearDate(value: string | null | undefined): string {
+  const date = String(value || "").trim();
+  if (!date) return "-";
+
+  const parsed = new Date(`${date}T00:00:00`);
+  if (Number.isNaN(parsed.getTime())) return date;
+  return parsed.toLocaleDateString("ko-KR", {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 const MULTI_WORD_BRANDS = [
@@ -62,13 +84,71 @@ function toCategoryLabel(category: string | null): string {
   const value = String(category || "").trim().toLowerCase();
   if (!value) return "아이템";
 
-  if (["outerwear", "아우터"].includes(value)) return "아우터";
+  if (["outer", "outerwear", "아우터"].includes(value)) return "아우터";
   if (["top", "tops", "상의"].includes(value)) return "상의";
   if (["bottom", "bottoms", "하의"].includes(value)) return "하의";
   if (["footwear", "신발"].includes(value)) return "신발";
   if (["accessories", "accessory", "액세서리"].includes(value)) return "액세서리";
 
   return category || "아이템";
+}
+
+function toDetailCategoryLabel(detailCategory: string | null): string {
+  const value = String(detailCategory || "").trim().toLowerCase();
+  if (!value) return "-";
+
+  const labels: Record<string, string> = {
+    short_sleeve_tshirt: "반팔",
+    long_sleeve_tshirt: "긴팔",
+    shirt: "셔츠",
+    polo_shirt: "카라티",
+    sweatshirt: "맨투맨",
+    hoodie: "후드티",
+    knit: "니트",
+    sleeveless: "슬리브리스",
+    vest: "조끼",
+    blouse: "블라우스",
+    cardigan: "가디건",
+    hood_zipup: "후드집업",
+    jacket: "자켓",
+    blazer: "블레이저",
+    leather_jacket: "가죽자켓",
+    windbreaker: "바람막이",
+    coat: "코트",
+    padding: "패딩",
+    fleece: "플리스",
+    shorts: "반바지",
+    jeans: "청바지",
+    slacks: "슬랙스",
+    cotton_pants: "면바지/치노",
+    jogger_pants: "조거팬츠",
+    leggings: "레깅스",
+    skirt: "스커트",
+  };
+
+  return labels[value] || detailCategory || "-";
+}
+
+function toSeasonLabel(seasons: string[]): string {
+  if (!Array.isArray(seasons) || seasons.length === 0) return "-";
+
+  const labels: Record<string, string> = {
+    spring: "봄",
+    summer: "여름",
+    fall: "가을",
+    winter: "겨울",
+  };
+
+  return seasons.map((season) => labels[String(season).toLowerCase()] || season).join(", ");
+}
+
+function toThicknessLabel(thickness: string | null): string {
+  const value = String(thickness || "").trim().toLowerCase();
+  if (!value) return "-";
+  if (value === "light") return "얇음";
+  if (value === "medium") return "보통";
+  if (value === "heavy") return "두꺼움";
+  return thickness || "-";
 }
 
 function splitName(name: string): { brand: string; product: string } {
@@ -152,9 +232,33 @@ function parseSizeGrid(detail: unknown): SizeGrid | null {
   return null;
 }
 
+function visibleSizeGridColumns(grid: SizeGrid): number[] {
+  return grid.headers
+    .map((header, index) => ({ header: header.trim().toLowerCase(), index }))
+    .filter(({ header, index }) => !(index === 0 && header === "사이즈"))
+    .map(({ index }) => index);
+}
+
+function buildSizeDetailFromGrid(headers: string[], values: string[]) {
+  const pairs: Record<string, string> = {};
+  headers.forEach((header, index) => {
+    pairs[header || `col_${index + 1}`] = values[index] || "";
+  });
+  return { headers, values, pairs };
+}
+
+function findSelectedSizeRowIndex(grid: SizeGrid | null, size: string | null): number | null {
+  if (!grid) return null;
+  const target = String(size || "").trim();
+  if (!target) return null;
+  const rowIndex = grid.rows.findIndex((row) => String(row[0] || "").trim() === target);
+  return rowIndex >= 0 ? rowIndex : null;
+}
+
 export function WardrobeGrid({
   items,
   wearCounts,
+  recentWearDates,
   favoriteIds,
   hasFilters,
 }: WardrobeGridProps) {
@@ -166,13 +270,14 @@ export function WardrobeGrid({
   const [editItem, setEditItem] = useState<WardrobeItem | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
+  const [editSizeGrid, setEditSizeGrid] = useState<SizeGrid | null>(null);
+  const [editSelectedSizeRowIndex, setEditSelectedSizeRowIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<EditFormState>({
     brand: "",
     product: "",
     category: "",
     size: "",
-    color: "",
-    stylingIdea: "",
+    sizeDetail: null,
   });
 
   const formRef = useRef<HTMLFormElement | null>(null);
@@ -181,6 +286,9 @@ export function WardrobeGrid({
   const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const activeParsedName = activeItem ? parseName(activeItem.name) : null;
   const activeSizeGrid = activeItem ? parseSizeGrid(activeItem.size_detail) : null;
+  const activeSizeGridColumns = activeSizeGrid ? visibleSizeGridColumns(activeSizeGrid) : [];
+  const activeWearCount = activeItem ? wearCounts[activeItem.id] ?? 0 : 0;
+  const activeRecentWearDate = activeItem ? recentWearDates[activeItem.id] || "" : "";
 
   useEffect(() => {
     setLocalItems(items);
@@ -215,19 +323,32 @@ export function WardrobeGrid({
 
   function openEditModal(item: WardrobeItem) {
     const parsed = parseName(item.name);
-    const color = getDetailValue(item.size_detail, ["color", "colour"]);
-    const styling = getDetailValue(item.size_detail, ["styling", "style", "stylingIdea", "note"]);
+    const nextSizeGrid = parseSizeGrid(item.size_detail);
 
     setEditItem(item);
     setEditError("");
+    setEditSizeGrid(nextSizeGrid);
+    setEditSelectedSizeRowIndex(findSelectedSizeRowIndex(nextSizeGrid, item.size));
     setEditForm({
       brand: parsed.brand === "-" ? "" : parsed.brand,
       product: parsed.itemName,
       category: item.category || "",
       size: item.size || "",
-      color: color === "-" ? "" : color,
-      stylingIdea: styling === "-" ? "" : styling,
+      sizeDetail: item.size_detail ?? null,
     });
+  }
+
+  function selectEditSizeRow(rowIndex: number) {
+    if (!editSizeGrid) return;
+    const row = editSizeGrid.rows[rowIndex];
+    if (!row) return;
+
+    setEditSelectedSizeRowIndex(rowIndex);
+    setEditForm((prev) => ({
+      ...prev,
+      size: row[0] || "",
+      sizeDetail: buildSizeDetailFromGrid(editSizeGrid.headers, row),
+    }));
   }
 
   async function saveEdit() {
@@ -244,8 +365,7 @@ export function WardrobeGrid({
           product: editForm.product,
           category: editForm.category,
           size: editForm.size,
-          color: editForm.color,
-          stylingIdea: editForm.stylingIdea,
+          size_detail: editForm.sizeDetail,
         }),
       });
 
@@ -299,6 +419,8 @@ export function WardrobeGrid({
       }
 
       setEditItem(null);
+      setEditSizeGrid(null);
+      setEditSelectedSizeRowIndex(null);
     } catch (error) {
       setEditError(error instanceof Error ? error.message : "수정에 실패했어요.");
     } finally {
@@ -322,12 +444,9 @@ export function WardrobeGrid({
 
     if (selectedIds.length === 0) {
       setDeleteMode(false);
-      return;
+      return false;
     }
-
-    const ok = window.confirm(`선택한 ${selectedIds.length}개 아이템을 삭제할까요?`);
-    if (!ok) return;
-    formRef.current?.requestSubmit();
+    return true;
   }
 
   if (localItems.length === 0) {
@@ -344,16 +463,24 @@ export function WardrobeGrid({
         <p className={`wardrobe-delete-hint${deleteMode ? " is-visible" : ""}`}>
           삭제할 아이템을 선택하세요.
         </p>
-        <button type="button" className="ghost-button" onClick={handleDeleteButton}>
-          {!deleteMode
-            ? "삭제"
-            : selectedIds.length > 0
-              ? `선택 삭제 (${selectedIds.length})`
-              : "삭제 취소"}
-        </button>
+        {!deleteMode || selectedIds.length === 0 ? (
+          <button type="button" className="ghost-button" onClick={handleDeleteButton}>
+            {!deleteMode ? "삭제" : "삭제 취소"}
+          </button>
+        ) : (
+          <ConfirmSubmitButton
+            className="ghost-button"
+            formId="wardrobeDeleteForm"
+            title={`${selectedIds.length}개 아이템을 삭제할까요?`}
+            message="삭제한 아이템은 되돌릴 수 없고, 관련 착용 기록 연결도 함께 정리됩니다."
+            confirmLabel="삭제"
+          >
+            선택 삭제 ({selectedIds.length})
+          </ConfirmSubmitButton>
+        )}
       </div>
 
-      <form ref={formRef} action="/api/items/delete" method="post">
+      <form ref={formRef} id="wardrobeDeleteForm" action="/api/items/delete" method="post">
         {selectedIds.map((id) => (
           <input key={id} type="hidden" name="item_ids" value={id} />
         ))}
@@ -413,12 +540,9 @@ export function WardrobeGrid({
                 ) : (
                   <div className="wardrobe-media-placeholder">이미지 없음</div>
                 )}
-                {favoriteSet.has(item.id) ? <span className="wardrobe-badge">상위</span> : null}
               </div>
               <div className="wardrobe-info">
                 <h3>{label.product}</h3>
-                <p>{toCategoryLabel(item.category)}</p>
-                <span>{itemCountText(count)}</span>
               </div>
             </article>
           );
@@ -442,6 +566,9 @@ export function WardrobeGrid({
               <div className="wardrobe-inline-modal-title">
                 <strong>{activeParsedName?.brand || "-"}</strong>
                 <p>{activeParsedName?.itemName || "이름 없음"}</p>
+                <small>
+                  {toCategoryLabel(activeItem.category)} / {toDetailCategoryLabel(activeItem.detail_category)}
+                </small>
               </div>
               <button
                 type="button"
@@ -456,6 +583,12 @@ export function WardrobeGrid({
               </button>
             </div>
             <div className="wardrobe-inline-body">
+              <p><span>사이즈</span><strong>{activeItem.size || "-"}</strong></p>
+              <p><span>시즌</span><strong>{toSeasonLabel(activeItem.season)}</strong></p>
+              <p><span>두께</span><strong>{toThicknessLabel(activeItem.thickness)}</strong></p>
+              <p><span>착용 횟수</span><strong>{itemCountText(activeWearCount)}</strong></p>
+              <p><span>최근 착용일</span><strong>{formatRecentWearDate(activeRecentWearDate)}</strong></p>
+
               <div className="wardrobe-inline-size">
                 <span>사이즈 표</span>
                 {activeSizeGrid ? (
@@ -463,15 +596,17 @@ export function WardrobeGrid({
                     <table className="wardrobe-inline-size-table">
                       <thead>
                         <tr>
-                          {activeSizeGrid.headers.map((header, index) => (
-                            <th key={`${header}-${index}`}>{header || `열 ${index + 1}`}</th>
+                          {activeSizeGridColumns.map((index) => (
+                            <th key={`${activeSizeGrid.headers[index]}-${index}`}>
+                              {activeSizeGrid.headers[index] || `열 ${index + 1}`}
+                            </th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
                         {activeSizeGrid.rows.map((row, rowIndex) => (
                           <tr key={`size-row-${rowIndex}`}>
-                            {activeSizeGrid.headers.map((_, colIndex) => (
+                            {activeSizeGridColumns.map((colIndex) => (
                               <td key={`size-cell-${rowIndex}-${colIndex}`}>{row[colIndex] || "-"}</td>
                             ))}
                           </tr>
@@ -483,13 +618,6 @@ export function WardrobeGrid({
                   <strong>-</strong>
                 )}
               </div>
-
-              <p><span>사이즈</span><strong>{activeItem.size || "-"}</strong></p>
-              <p><span>색상</span><strong>{getDetailValue(activeItem.size_detail, ["color", "colour"])}</strong></p>
-              <p>
-                <span>스타일링 아이디어</span>
-                <strong>{getDetailValue(activeItem.size_detail, ["styling", "style", "stylingIdea", "note"])}</strong>
-              </p>
             </div>
           </aside>
         </div>
@@ -529,19 +657,26 @@ export function WardrobeGrid({
               </label>
               <label>
                 카테고리
-                <input value={editForm.category} onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))} />
+                <select
+                  value={editForm.category}
+                  onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))}
+                >
+                  <option value="">카테고리를 선택해 주세요</option>
+                  {EDIT_CATEGORY_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label>
                 사이즈
-                <input value={editForm.size} onChange={(event) => setEditForm((prev) => ({ ...prev, size: event.target.value }))} />
-              </label>
-              <label>
-                색상
-                <input value={editForm.color} onChange={(event) => setEditForm((prev) => ({ ...prev, color: event.target.value }))} />
-              </label>
-              <label>
-                스타일링 아이디어
-                <textarea rows={3} value={editForm.stylingIdea} onChange={(event) => setEditForm((prev) => ({ ...prev, stylingIdea: event.target.value }))} />
+                <input
+                  value={editForm.size}
+                  onChange={(event) =>
+                    setEditForm((prev) => ({ ...prev, size: event.target.value, sizeDetail: prev.sizeDetail }))
+                  }
+                />
               </label>
             </div>
 

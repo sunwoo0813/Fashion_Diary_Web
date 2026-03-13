@@ -36,6 +36,10 @@
   gap: 0.9rem;
 }
 
+.account-logout-inline {
+  margin-top: 0.8rem;
+}
+
 .account-theme-toggle .theme-toggle-card {
   width: auto;
   justify-items: start;
@@ -67,6 +71,19 @@
   margin: 0;
   font-family: var(--font-serif);
   font-size: 1.05rem;
+}
+
+.account-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-card-copy {
+  margin: 0.45rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
 }
 
 .account-card p {
@@ -119,6 +136,65 @@
   color: var(--text);
 }
 
+.account-region-current {
+  margin-top: 0.8rem;
+  display: grid;
+  gap: 0.18rem;
+}
+
+.account-region-current span {
+  color: var(--muted-foreground);
+  font-size: 0.78rem;
+}
+
+.account-region-current strong {
+  font-size: 0.95rem;
+}
+
+.account-region-grid {
+  margin-top: 0.85rem;
+  display: grid;
+  gap: 0.7rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.account-region-field {
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.83rem;
+}
+
+.account-region-field span {
+  color: var(--muted-foreground);
+}
+
+.account-region-field select {
+  width: 100%;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  padding: 0.56rem 0.65rem;
+  font: inherit;
+  color: inherit;
+}
+
+.account-region-field select:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.account-region-actions {
+  margin-top: 0.85rem;
+  display: flex;
+}
+
+.account-region-preview {
+  margin: 0.7rem 0 0;
+  color: var(--muted-foreground);
+  font-size: 0.83rem;
+}
+
 .account-card.danger {
   border-color: #f2d2c4;
   background: #fff8f4;
@@ -166,6 +242,10 @@
   }
 
   .account-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .account-region-grid {
     grid-template-columns: 1fr;
   }
 

@@ -1637,3 +1637,17 @@ export function findRegionCoordinate(sido: string, sigungu: string) {
   };
 }
 
+export function findRegionCoordinateByIds(sidoId: string, sigunguId: string) {
+  const group = KOREA_REGION_COORDINATES.find((entry) => entry.id === sidoId);
+  if (!group) return null;
+  const region = group.children.find((entry) => entry.id === sigunguId);
+  if (!region) return null;
+  return {
+    lat: region.lat,
+    lon: region.lon,
+    displayName: `${group.name} ${region.name}`,
+    sidoName: group.name,
+    sigunguName: region.name,
+  };
+}
+

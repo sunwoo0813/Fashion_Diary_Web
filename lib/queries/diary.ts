@@ -11,6 +11,12 @@ export type DiaryPhoto = {
   tag_items: Array<{ id: number; name: string; category: string | null }>;
 };
 
+export type DiaryLinkedItem = {
+  id: number;
+  name: string;
+  category: string | null;
+};
+
 export type DiaryOutfit = {
   id: number;
   user_id: number;
@@ -21,6 +27,7 @@ export type DiaryOutfit = {
   humidity: number | null;
   rain: boolean | null;
   created_at: string | null;
+  outfit_items: DiaryLinkedItem[];
   photos: DiaryPhoto[];
 };
 
@@ -36,17 +43,16 @@ export type DiaryDayData = {
 };
 
 export type DiaryFeedPost = {
-  photo_id: number;
   outfit_id: number;
-  photo_path: string;
-  photo_created_at: string | null;
   date: string;
   note: string | null;
   t_min: number | null;
   t_max: number | null;
   humidity: number | null;
   rain: boolean | null;
-  tag_items: Array<{ id: number; name: string; category: string | null }>;
+  created_at: string | null;
+  outfit_items: DiaryLinkedItem[];
+  photos: DiaryPhoto[];
 };
 
 function toIsoDate(value: Date): string {
@@ -77,7 +83,62 @@ function mapOutfitRow(row: Record<string, unknown>): Omit<DiaryOutfit, "photos">
       typeof row.humidity === "number" ? row.humidity : row.humidity == null ? null : Number(row.humidity),
     rain: typeof row.rain === "boolean" ? row.rain : row.rain == null ? null : Boolean(row.rain),
     created_at: typeof row.created_at === "string" ? row.created_at : null,
+    outfit_items: [],
   };
+}
+
+async function fetchLinkedItemsByOutfitIds(appUserId: number, outfitIds: number[]) {
+  const admin = createServiceRoleSupabaseClient();
+  const outfitItemsByOutfitId: Record<number, DiaryLinkedItem[]> = {};
+  if (outfitIds.length === 0) return outfitItemsByOutfitId;
+
+  const { data: outfitItemRows, error: outfitItemError } = await admin
+    .from("outfit_item")
+    .select("outfit_id,item_id")
+    .in("outfit_id", outfitIds);
+  if (outfitItemError) {
+    throw new Error(`Outfit item query failed: ${outfitItemError.message}`);
+  }
+
+  const itemIds = Array.from(
+    new Set(
+      (outfitItemRows || [])
+        .map((row) => Number(row.item_id))
+        .filter((id) => Number.isInteger(id) && id > 0),
+    ),
+  );
+
+  const itemsById: Record<number, DiaryLinkedItem> = {};
+  if (itemIds.length > 0) {
+    const { data: itemRows, error: itemError } = await admin
+      .from("item")
+      .select("id,brand,product_name,category,user_id")
+      .eq("user_id", appUserId)
+      .in("id", itemIds);
+    if (itemError) {
+      throw new Error(`Outfit linked item lookup failed: ${itemError.message}`);
+    }
+
+    (itemRows || []).forEach((row) => {
+      const id = Number(row.id);
+      itemsById[id] = {
+        id,
+        name: makeDisplayNameFromFields(row.brand, row.product_name),
+        category: row.category ? String(row.category) : null,
+      };
+    });
+  }
+
+  (outfitItemRows || []).forEach((row) => {
+    const outfitId = Number(row.outfit_id);
+    const itemId = Number(row.item_id);
+    const item = itemsById[itemId];
+    if (!item) return;
+    if (!outfitItemsByOutfitId[outfitId]) outfitItemsByOutfitId[outfitId] = [];
+    outfitItemsByOutfitId[outfitId].push(item);
+  });
+
+  return outfitItemsByOutfitId;
 }
 
 export async function getDiaryMonthData(
@@ -153,6 +214,7 @@ export async function getDiaryDayData(appUserId: number, isoDate: string): Promi
 
   const outfitsBase = (outfitRows || []).map(mapOutfitRow);
   const outfitIds = outfitsBase.map((row) => row.id);
+  const linkedItemsByOutfitId = await fetchLinkedItemsByOutfitIds(appUserId, outfitIds);
 
   const photosByOutfitId: Record<number, DiaryPhoto[]> = {};
   const photoIdToOutfitId: Record<number, number> = {};
@@ -236,6 +298,7 @@ export async function getDiaryDayData(appUserId: number, isoDate: string): Promi
 
   const outfits: DiaryOutfit[] = outfitsBase.map((base) => ({
     ...base,
+    outfit_items: linkedItemsByOutfitId[base.id] || [],
     photos: photosByOutfitId[base.id] || [],
   }));
 
@@ -268,11 +331,7 @@ export async function getDiaryFeedData(appUserId: number, maxPosts = 120): Promi
   const outfits = (outfitRows || []).map(mapOutfitRow);
   const outfitIds = outfits.map((outfit) => outfit.id);
   if (outfitIds.length === 0) return [];
-
-  const outfitsById = outfits.reduce<Record<number, Omit<DiaryOutfit, "photos">>>((acc, outfit) => {
-    acc[outfit.id] = outfit;
-    return acc;
-  }, {});
+  const linkedItemsByOutfitId = await fetchLinkedItemsByOutfitIds(appUserId, outfitIds);
 
   const { data: photoRows, error: photoError } = await admin
     .from("outfit_photo")
@@ -289,81 +348,37 @@ export async function getDiaryFeedData(appUserId: number, maxPosts = 120): Promi
     photo_path: String(row.photo_path || ""),
     created_at: row.created_at ? String(row.created_at) : null,
   }));
-  if (photos.length === 0) return [];
+  const photosByOutfitId = photos.reduce<Record<number, DiaryPhoto[]>>((acc, photo) => {
+    const entry: DiaryPhoto = {
+      id: photo.id,
+      outfit_id: photo.outfit_id,
+      photo_path: photo.photo_path,
+      created_at: photo.created_at,
+      tag_items: [],
+    };
+    if (!acc[photo.outfit_id]) acc[photo.outfit_id] = [];
+    acc[photo.outfit_id].push(entry);
+    return acc;
+  }, {});
 
-  const photoIds = photos.map((photo) => photo.id);
-  const { data: tagRows, error: tagError } = await admin
-    .from("outfit_photo_item")
-    .select("photo_id,item_id")
-    .in("photo_id", photoIds);
-  if (tagError) {
-    throw new Error(`Diary feed tag query failed: ${tagError.message}`);
-  }
-
-  const itemIds = Array.from(
-    new Set((tagRows || []).map((row) => Number(row.item_id)).filter((id) => Number.isInteger(id) && id > 0)),
-  );
-  let itemsById: Record<number, { id: number; name: string; category: string | null }> = {};
-  if (itemIds.length > 0) {
-    const { data: itemRows, error: itemError } = await admin
-      .from("item")
-      .select("id,brand,product_name,category,user_id")
-      .eq("user_id", appUserId)
-      .in("id", itemIds);
-    if (itemError) {
-      throw new Error(`Diary feed item lookup failed: ${itemError.message}`);
-    }
-
-    itemsById = (itemRows || []).reduce<Record<number, { id: number; name: string; category: string | null }>>(
-      (acc, row) => {
-        const id = Number(row.id);
-        acc[id] = {
-          id,
-          name: makeDisplayNameFromFields(row.brand, row.product_name),
-          category: row.category ? String(row.category) : null,
-        };
-        return acc;
-      },
-      {},
-    );
-  }
-
-  const tagsByPhotoId = (tagRows || []).reduce<Record<number, Array<{ id: number; name: string; category: string | null }>>>(
-    (acc, row) => {
-      const photoId = Number(row.photo_id);
-      const itemId = Number(row.item_id);
-      const item = itemsById[itemId];
-      if (!item) return acc;
-      if (!acc[photoId]) acc[photoId] = [];
-      acc[photoId].push(item);
-      return acc;
-    },
-    {},
-  );
-
-  const posts: DiaryFeedPost[] = photos
-    .map((photo) => {
-      const outfit = outfitsById[photo.outfit_id];
-      if (!outfit) return null;
-      return {
-        photo_id: photo.id,
-        outfit_id: photo.outfit_id,
-        photo_path: photo.photo_path,
-        photo_created_at: photo.created_at,
-        date: outfit.date,
-        note: outfit.note,
-        t_min: outfit.t_min,
-        t_max: outfit.t_max,
-        humidity: outfit.humidity,
-        rain: outfit.rain,
-        tag_items: tagsByPhotoId[photo.id] || [],
-      };
-    })
-    .filter((post): post is DiaryFeedPost => Boolean(post))
+  const posts: DiaryFeedPost[] = outfits
+    .map((outfit) => ({
+      outfit_id: outfit.id,
+      date: outfit.date,
+      note: outfit.note,
+      t_min: outfit.t_min,
+      t_max: outfit.t_max,
+      humidity: outfit.humidity,
+      rain: outfit.rain,
+      created_at: outfit.created_at,
+      outfit_items: linkedItemsByOutfitId[outfit.id] || [],
+      photos: photosByOutfitId[outfit.id] || [],
+    }))
+    .filter((post) => post.photos.length > 0)
     .sort((a, b) => {
       const dateDiff = b.date.localeCompare(a.date);
       if (dateDiff !== 0) return dateDiff;
-      return (b.photo_created_at || "").localeCompare(a.photo_created_at || "");
+      return (b.created_at || "").localeCompare(a.created_at || "");
     });
 
   return posts.slice(0, maxPosts);
@@ -385,8 +400,11 @@ export async function getOutfitEditData(appUserId: number, outfitId: number) {
   const itemsPromise = getUserWardrobeItems(appUserId);
   const outfit: DiaryOutfit = {
     ...mapOutfitRow(outfitRow as Record<string, unknown>),
+    outfit_items: [],
     photos: [],
   };
+  const linkedItemsByOutfitId = await fetchLinkedItemsByOutfitIds(appUserId, [outfitId]);
+  outfit.outfit_items = linkedItemsByOutfitId[outfitId] || [];
 
   const { data: photoRows, error: photoError } = await admin
     .from("outfit_photo")

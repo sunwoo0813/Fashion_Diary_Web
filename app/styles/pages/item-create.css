@@ -408,6 +408,12 @@
   background: #fff6f0;
 }
 
+.size-table-upload-box.is-dragging {
+  border-color: rgba(var(--accent-rgb), 0.38);
+  background: rgba(var(--accent-rgb), 0.04);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.1);
+}
+
 .size-table-upload-box strong {
   font-size: 0.84rem;
 }
@@ -550,6 +556,12 @@
 :root:is([data-theme="dark"], .dark) .size-table-upload-box:hover {
   border-color: var(--primary);
   background: rgba(var(--accent-rgb), 0.08);
+}
+
+:root:is([data-theme="dark"], .dark) .size-table-upload-box.is-dragging {
+  border-color: var(--primary);
+  background: rgba(var(--accent-rgb), 0.08);
+  box-shadow: 0 0 0 3px rgba(var(--accent-rgb), 0.14);
 }
 
 :root:is([data-theme="dark"], .dark) .item-image-candidate.is-selected {

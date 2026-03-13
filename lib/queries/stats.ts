@@ -138,10 +138,7 @@ async function fetchPhotosByOutfitIds(outfitIds: number[]): Promise<OutfitPhotoR
   const photos: OutfitPhotoRow[] = [];
 
   for (const idChunk of chunks(outfitIds, CHUNK_SIZE)) {
-    const { data, error } = await admin
-      .from("outfit_photo")
-      .select("id,outfit_id")
-      .in("outfit_id", idChunk);
+    const { data, error } = await admin.from("outfit_photo").select("id,outfit_id").in("outfit_id", idChunk);
     if (error) {
       throw new Error(`Outfit photo query failed: ${error.message}`);
     }
@@ -169,10 +166,7 @@ async function fetchRecentWearCounts(
 
   if (recentOutfitIds.length > 0) {
     for (const outfitChunk of chunks(recentOutfitIds, CHUNK_SIZE)) {
-      const { data, error } = await admin
-        .from("outfit_item")
-        .select("item_id")
-        .in("outfit_id", outfitChunk);
+      const { data, error } = await admin.from("outfit_item").select("item_id").in("outfit_id", outfitChunk);
       if (error) {
         throw new Error(`Outfit wear query failed: ${error.message}`);
       }
@@ -186,10 +180,7 @@ async function fetchRecentWearCounts(
 
   if (recentPhotoIds.length > 0) {
     for (const photoChunk of chunks(recentPhotoIds, CHUNK_SIZE)) {
-      const { data, error } = await admin
-        .from("outfit_photo_item")
-        .select("item_id")
-        .in("photo_id", photoChunk);
+      const { data, error } = await admin.from("outfit_photo_item").select("item_id").in("photo_id", photoChunk);
       if (error) {
         throw new Error(`Outfit photo wear query failed: ${error.message}`);
       }
@@ -230,15 +221,12 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
   cutoffDate.setDate(cutoffDate.getDate() - 30);
   const cutoffIso = cutoffDate.toISOString().slice(0, 10);
 
-  const [{ data: itemRows, error: itemError }, { data: outfitRowsRaw, error: outfitError }] =
-    await Promise.all([
-      admin.from("item").select("id,brand,product_name,category,image_path").eq("user_id", appUserId),
-      admin
-        .from("outfit")
-        .select("id,date,t_min,t_max,humidity,rain")
-        .eq("user_id", appUserId)
-        .order("date", { ascending: false }),
-    ]);
+  const [{ data: itemRows, error: itemError }, { data: outfitRowsRaw, error: outfitError }] = await Promise.all([
+    admin.from("item").select("id,brand,product_name,category,image_path").eq("user_id", appUserId),
+    admin.from("outfit").select("id,date,t_min,t_max,humidity,rain").eq("user_id", appUserId).order("date", {
+      ascending: false,
+    }),
+  ]);
 
   if (itemError) {
     throw new Error(`Stats item query failed: ${itemError.message}`);
@@ -334,13 +322,9 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
   const maxTempCount = Math.max(0, ...tempBuckets.map((bucket) => bucket.count));
 
   const allowedItemIds = new Set(itemRowsSafe.map((row) => row.id).filter((id) => id > 0));
-  const recentOutfitIds = outfitRows
-    .filter((row) => row.date >= cutoffIso)
-    .map((row) => row.id);
+  const recentOutfitIds = outfitRows.filter((row) => row.date >= cutoffIso).map((row) => row.id);
   const recentOutfitIdSet = new Set(recentOutfitIds);
-  const recentPhotoIds = photos
-    .filter((photo) => recentOutfitIdSet.has(photo.outfitId))
-    .map((photo) => photo.id);
+  const recentPhotoIds = photos.filter((photo) => recentOutfitIdSet.has(photo.outfitId)).map((photo) => photo.id);
   const wearCounts = await fetchRecentWearCounts(recentOutfitIds, recentPhotoIds, allowedItemIds);
   const topItems = Object.entries(wearCounts)
     .map(([idText, count]) => ({

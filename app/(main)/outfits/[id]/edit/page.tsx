@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+import { ConfirmSubmitButton } from "@/components/common/confirm-submit-button";
+import { OutfitDateCalendar } from "@/components/diary/outfit-date-calendar";
+import { OutfitItemSelector } from "@/components/diary/outfit-item-selector";
 import { NewPhotoTagPicker } from "@/components/diary/new-photo-tag-picker";
 import { WeatherFields } from "@/components/diary/weather-fields";
 import { requireAppUserContext } from "@/lib/app-user";
@@ -17,10 +20,7 @@ type OutfitEditPageProps = {
   searchParams?: Record<string, string | string[] | undefined>;
 };
 
-export default async function OutfitEditPage({
-  params,
-  searchParams,
-}: OutfitEditPageProps) {
+export default async function OutfitEditPage({ params, searchParams }: OutfitEditPageProps) {
   const outfitId = Number(params.id);
   if (!Number.isInteger(outfitId) || outfitId <= 0) {
     redirect("/diary");
@@ -41,93 +41,85 @@ export default async function OutfitEditPage({
       <header className="outfit-header">
         <div>
           <p className="diary-kicker">기록 수정</p>
-          <h1>코디 #{outfit.id}</h1>
+          <h1>코디 수정</h1>
         </div>
         <div className="outfit-header-actions">
-          <Link href={`/diary/${outfit.date}`} className="ghost-button">
-            해당 날짜로
+          <Link href="/diary" className="ghost-button">
+            취소
           </Link>
+          <form action={`/api/outfits/${outfit.id}`} method="post">
+            <input type="hidden" name="_action" value="delete" />
+            <ConfirmSubmitButton
+              className="danger-button outfit-header-danger"
+              message="이 코디 게시물을 삭제할까요? 사진과 연결된 아이템 기록도 함께 삭제됩니다."
+            >
+              코디 삭제
+            </ConfirmSubmitButton>
+          </form>
           <button type="submit" form="outfitEditForm" className="solid-button">
-            변경 저장
+            저장
           </button>
         </div>
       </header>
 
       {error ? <p className="form-error">{error}</p> : null}
 
-      <form id="outfitEditForm" action={`/api/outfits/${outfit.id}`} method="post" encType="multipart/form-data" className="outfit-form">
+      <form
+        id="outfitEditForm"
+        action={`/api/outfits/${outfit.id}`}
+        method="post"
+        encType="multipart/form-data"
+        className="outfit-form outfit-create-form"
+      >
         <input type="hidden" name="_action" value="update" />
 
-        <label>
-          날짜
-          <input type="date" name="date" defaultValue={outfit.date} required />
-        </label>
-        <label>
-          메모
-          <textarea name="note" defaultValue={outfit.note || ""} rows={4} />
-        </label>
+        <div className="outfit-create-media-card">
+          <NewPhotoTagPicker
+            items={items.map((item) => ({ id: item.id, name: item.name, category: item.category }))}
+            inputName="photos"
+            hiddenInputName="photo_tags_new_json"
+            uploadedUrlsInputName="photo_urls_new_json"
+            formId="outfitEditForm"
+            label="코디 사진"
+            existingPhotos={outfit.photos.map((photo) => ({
+              id: photo.id,
+              url: photo.photo_path,
+            }))}
+          />
+        </div>
 
-        <WeatherFields
-          defaultCity="서울"
-          defaultTMin={outfit.t_min ?? 0}
-          defaultTMax={outfit.t_max ?? 0}
-          defaultHumidity={outfit.humidity ?? 0}
-          defaultRain={Boolean(outfit.rain)}
-        />
+        <div className="outfit-create-fields-card">
+          <div className="outfit-create-section-head">
+            <p className="outfit-create-section-kicker">기록</p>
+            <h2>코디 정보 수정</h2>
+            <span>날짜, 메모, 입은 옷과 날씨를 다시 정리하세요.</span>
+          </div>
+          <label>
+            날짜
+            <OutfitDateCalendar name="date" defaultValue={outfit.date} />
+          </label>
+          <label>
+            메모
+            <textarea name="note" defaultValue={outfit.note || ""} rows={5} />
+          </label>
 
-        <section className="existing-photo-section">
-          <h2>기존 사진</h2>
-          {outfit.photos.length === 0 ? (
-            <p className="diary-no-photo">첨부된 사진이 없어요.</p>
-          ) : (
-            <div className="existing-photo-list">
-              {outfit.photos.map((photo) => {
-                const taggedIdSet = new Set(photo.tag_items.map((item) => item.id));
-                return (
-                  <article key={photo.id} className="existing-photo-card">
-                    <div className="existing-photo-preview">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={photo.photo_path} alt={`사진 ${photo.id}`} />
-                    </div>
-                    <label className="existing-photo-delete">
-                      <input type="checkbox" name="delete_photo_ids" value={photo.id} />
-                      이 사진 삭제
-                    </label>
-                    <div className="existing-photo-tags">
-                      {items.map((item) => (
-                        <label key={`${photo.id}-${item.id}`} className="new-photo-tag">
-                          <input
-                            type="checkbox"
-                            name={`existing_photo_tags_${photo.id}`}
-                            value={item.id}
-                            defaultChecked={taggedIdSet.has(item.id)}
-                          />
-                          <span>{item.name}</span>
-                        </label>
-                      ))}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
-        </section>
+          <OutfitItemSelector
+            items={items.map((item) => ({
+              id: item.id,
+              name: item.name,
+              category: item.category,
+            }))}
+            defaultSelectedIds={outfit.outfit_items.map((item) => item.id)}
+          />
 
-        <NewPhotoTagPicker
-          items={items.map((item) => ({ id: item.id, name: item.name, category: item.category }))}
-          inputName="photos"
-          hiddenInputName="photo_tags_new_json"
-          uploadedUrlsInputName="photo_urls_new_json"
-          formId="outfitEditForm"
-          label="새 사진 추가"
-        />
-      </form>
-
-      <form action={`/api/outfits/${outfit.id}`} method="post">
-        <input type="hidden" name="_action" value="delete" />
-        <button type="submit" className="danger-button">
-          코디 삭제
-        </button>
+          <WeatherFields
+            defaultCity="서울"
+            defaultTMin={outfit.t_min ?? 0}
+            defaultTMax={outfit.t_max ?? 0}
+            defaultHumidity={outfit.humidity ?? 0}
+            defaultRain={Boolean(outfit.rain)}
+          />
+        </div>
       </form>
     </section>
   );

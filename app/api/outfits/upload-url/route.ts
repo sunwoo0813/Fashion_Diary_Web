@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { getCurrentUser } from "@/lib/auth";
+import { getOrCreateAppUserId } from "@/lib/app-user";
 import { getSupabaseBucket } from "@/lib/env";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 import { toText } from "@/lib/wardrobe";
@@ -105,11 +106,12 @@ export async function POST(request: Request) {
   try {
     const admin = createServiceRoleSupabaseClient();
     const bucket = getSupabaseBucket();
-    const authUserIdSegment = normalizePathSegment(toText(authUser.id));
+    const appUserId = await getOrCreateAppUserId(authUser.email);
+    const appUserIdSegment = normalizePathSegment(String(appUserId));
 
     const tickets = await Promise.all(files.map(async (file) => {
       const extension = sanitizeExtension(file.fileName);
-      const objectPath = `outfits/${authUserIdSegment}/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
+      const objectPath = `outfits/${appUserIdSegment}/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
       const { data, error } = await admin.storage.from(bucket).createSignedUploadUrl(objectPath);
       if (error || !data?.token) {
         throw new Error(error?.message || "서명 업로드 URL 생성에 실패했어요.");

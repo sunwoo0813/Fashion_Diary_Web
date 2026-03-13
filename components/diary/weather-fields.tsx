@@ -1,6 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+
+import type { RegionCoordinateGroup } from "@/lib/korea-region-coordinates";
+import { findRegionCoordinateByIds } from "@/lib/korea-region-coordinates";
+import type { PreferredRegion } from "@/lib/user-preferences";
 
 type WeatherData = {
   city: string;
@@ -19,6 +23,39 @@ type WeatherFieldsProps = {
   defaultRain?: boolean;
 };
 
+type WeatherState = {
+  city: string;
+  tMin: number;
+  tMax: number;
+  humidity: number;
+  rain: boolean;
+};
+
+function SelectArrow() {
+  return (
+    <svg aria-hidden="true" height="16" viewBox="0 0 16 16" width="16">
+      <path
+        d="M14.0607 5.49999L13.5303 6.03032L8.7071 10.8535C8.31658 11.2441 7.68341 11.2441 7.29289 10.8535L2.46966 6.03032L1.93933 5.49999L2.99999 4.43933L3.53032 4.96966L7.99999 9.43933L12.4697 4.96966L13 4.43933L14.0607 5.49999Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
+async function fetchPreferredRegion(): Promise<PreferredRegion | null> {
+  const response = await fetch("/api/account/preferred-region", { cache: "no-store" });
+  const payload = (await response.json()) as { ok?: boolean; data?: PreferredRegion | null };
+  if (!response.ok || !payload.ok) return null;
+  return payload.data || null;
+}
+
+async function fetchRegions(): Promise<RegionCoordinateGroup[]> {
+  const response = await fetch("/api/weather/regions", { cache: "no-store" });
+  const payload = (await response.json()) as { ok?: boolean; data?: RegionCoordinateGroup[] };
+  if (!response.ok || !payload.ok || !Array.isArray(payload.data)) return [];
+  return payload.data;
+}
+
 export function WeatherFields({
   defaultCity = "서울",
   defaultTMin = 0,
@@ -26,92 +63,188 @@ export function WeatherFields({
   defaultHumidity = 0,
   defaultRain = false,
 }: WeatherFieldsProps) {
-  const [city, setCity] = useState(defaultCity);
+  const [regions, setRegions] = useState<RegionCoordinateGroup[]>([]);
+  const [sidoId, setSidoId] = useState("");
+  const [sigunguId, setSigunguId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [weather, setWeather] = useState<WeatherState>({
+    city: defaultCity,
+    tMin: defaultTMin,
+    tMax: defaultTMax,
+    humidity: defaultHumidity,
+    rain: defaultRain,
+  });
 
-  const tMinRef = useRef<HTMLInputElement>(null);
-  const tMaxRef = useRef<HTMLInputElement>(null);
-  const humidityRef = useRef<HTMLInputElement>(null);
-  const rainRef = useRef<HTMLSelectElement>(null);
+  const selectedSido = useMemo(
+    () => regions.find((region) => region.id === sidoId) ?? null,
+    [regions, sidoId],
+  );
+  const sigunguOptions = useMemo(() => selectedSido?.children ?? [], [selectedSido]);
 
-  async function handleFillWeather() {
-    const trimmedCity = city.trim();
-    if (!trimmedCity) {
-      setError("날씨를 불러올 도시를 입력해주세요.");
-      setMessage("");
-      return;
-    }
+  useEffect(() => {
+    let active = true;
 
-    setIsLoading(true);
-    setError("");
-    setMessage("");
+    async function bootstrap() {
+      const [preferredRegion, nextRegions] = await Promise.all([fetchPreferredRegion(), fetchRegions()]);
+      if (!active) return;
 
-    try {
-      const response = await fetch(`/api/weather?city=${encodeURIComponent(trimmedCity)}`);
-      const payload = (await response.json()) as
-        | { ok: true; data: WeatherData }
-        | { ok: false; error?: string };
+      setRegions(nextRegions);
 
-      if (!response.ok || !payload.ok) {
-        setError("날씨 정보를 불러오지 못했어요.");
+      if (preferredRegion) {
+        setSidoId(preferredRegion.sidoId);
+        setSigunguId(preferredRegion.sigunguId);
         return;
       }
 
-      const weather = payload.data;
-      if (tMinRef.current) tMinRef.current.value = String(weather.t_min);
-      if (tMaxRef.current) tMaxRef.current.value = String(weather.t_max);
-      if (humidityRef.current) humidityRef.current.value = String(weather.humidity);
-      if (rainRef.current) rainRef.current.value = weather.rain ? "1" : "0";
-      setMessage(`${weather.city} · ${weather.desc} · ${weather.t_max}C / ${weather.t_min}C`);
-    } catch {
-      setError("날씨 정보를 불러오지 못했어요.");
-    } finally {
-      setIsLoading(false);
+      if (nextRegions.length > 0) {
+        const fallbackSido = nextRegions[0];
+        const fallbackSigungu = fallbackSido.children[0];
+        setSidoId(fallbackSido?.id || "");
+        setSigunguId(fallbackSigungu?.id || "");
+      }
     }
-  }
+
+    void bootstrap();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!sidoId || !sigunguId) return;
+
+    let active = true;
+
+    async function fillWeather() {
+      setIsLoading(true);
+      setError("");
+
+      try {
+        const region = findRegionCoordinateByIds(sidoId, sigunguId);
+        const query = region
+          ? `/api/weather?lat=${encodeURIComponent(String(region.lat))}&lon=${encodeURIComponent(String(region.lon))}&displayName=${encodeURIComponent(region.displayName)}`
+          : `/api/weather?city=${encodeURIComponent(defaultCity)}`;
+
+        const response = await fetch(query, { cache: "no-store" });
+        const payload = (await response.json()) as
+          | { ok: true; data: WeatherData }
+          | { ok: false; error?: string };
+
+        if (!active) return;
+        if (!response.ok || !payload.ok) {
+          setError("날씨 정보를 불러오지 못했어요.");
+          return;
+        }
+
+        const next = payload.data;
+        setWeather({
+          city: next.city,
+          tMin: next.t_min,
+          tMax: next.t_max,
+          humidity: next.humidity,
+          rain: next.rain,
+        });
+      } catch {
+        if (!active) return;
+        setError("날씨 정보를 불러오지 못했어요.");
+      } finally {
+        if (active) {
+          setIsLoading(false);
+        }
+      }
+    }
+
+    void fillWeather();
+    return () => {
+      active = false;
+    };
+  }, [defaultCity, sidoId, sigunguId]);
 
   return (
     <section className="outfit-weather-panel">
+      <input type="hidden" name="t_min" value={String(weather.tMin)} />
+      <input type="hidden" name="t_max" value={String(weather.tMax)} />
+      <input type="hidden" name="humidity" value={String(weather.humidity)} />
+      <input type="hidden" name="rain" value={weather.rain ? "1" : "0"} />
+
       <div className="outfit-weather-head">
-        <label className="outfit-city-field">
-          도시
-          <input
-            type="text"
-            value={city}
-            onChange={(event) => setCity(event.target.value)}
-            placeholder="서울"
-          />
-        </label>
-        <button type="button" className="ghost-button" onClick={handleFillWeather} disabled={isLoading}>
-          {isLoading ? "불러오는 중..." : "날씨 채우기"}
-        </button>
+        <div className="outfit-city-field">
+          <span>지역</span>
+          <strong>{weather.city}</strong>
+        </div>
+        {isLoading ? <span className="outfit-weather-loading">날씨 불러오는 중...</span> : null}
       </div>
 
-      {message ? <p className="outfit-weather-message">{message}</p> : null}
+      <div className="dashboard-region-grid">
+        <label className="dashboard-region-field">
+          <span className="dashboard-region-label">시/도</span>
+          <span className="dashboard-region-select-wrap">
+            <select
+              className="dashboard-region-select"
+              value={sidoId}
+              onChange={(event) => {
+                const nextSidoId = event.target.value;
+                const nextSido = regions.find((region) => region.id === nextSidoId);
+                setSidoId(nextSidoId);
+                setSigunguId(nextSido?.children[0]?.id || "");
+              }}
+              disabled={regions.length === 0}
+            >
+              <option value="">시/도를 선택해 주세요</option>
+              {regions.map((region) => (
+                <option key={region.id} value={region.id}>
+                  {region.name}
+                </option>
+              ))}
+            </select>
+            <span className="dashboard-region-select-icon">
+              <SelectArrow />
+            </span>
+          </span>
+        </label>
+        <label className="dashboard-region-field">
+          <span className="dashboard-region-label">시/군/구</span>
+          <span className="dashboard-region-select-wrap">
+            <select
+              className="dashboard-region-select"
+              value={sigunguId}
+              onChange={(event) => setSigunguId(event.target.value)}
+              disabled={!sidoId || sigunguOptions.length === 0}
+            >
+              <option value="">시/군/구를 선택해 주세요</option>
+              {sigunguOptions.map((region) => (
+                <option key={region.id} value={region.id}>
+                  {region.name}
+                </option>
+              ))}
+            </select>
+            <span className="dashboard-region-select-icon">
+              <SelectArrow />
+            </span>
+          </span>
+        </label>
+      </div>
+
       {error ? <p className="form-error">{error}</p> : null}
 
       <div className="outfit-weather-grid">
-        <label>
-          최저 기온
-          <input ref={tMinRef} type="number" step="0.1" name="t_min" defaultValue={String(defaultTMin)} />
-        </label>
-        <label>
-          최고 기온
-          <input ref={tMaxRef} type="number" step="0.1" name="t_max" defaultValue={String(defaultTMax)} />
-        </label>
-        <label>
-          습도
-          <input ref={humidityRef} type="number" name="humidity" defaultValue={String(defaultHumidity)} />
-        </label>
-        <label>
-          강수
-          <select ref={rainRef} name="rain" defaultValue={defaultRain ? "1" : "0"}>
-            <option value="0">비 없음</option>
-            <option value="1">비</option>
-          </select>
-        </label>
+        <div className="outfit-weather-stat">
+          <span>최저 기온</span>
+          <strong>{weather.tMin}°C</strong>
+        </div>
+        <div className="outfit-weather-stat">
+          <span>최고 기온</span>
+          <strong>{weather.tMax}°C</strong>
+        </div>
+        <div className="outfit-weather-stat">
+          <span>습도</span>
+          <strong>{weather.humidity}%</strong>
+        </div>
+        <div className="outfit-weather-stat">
+          <span>강수</span>
+          <strong>{weather.rain ? "비" : "비 없음"}</strong>
+        </div>
       </div>
     </section>
   );

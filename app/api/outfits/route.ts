@@ -21,6 +21,12 @@ function toNumber(raw: string, fallback = 0): number {
   return Number.isFinite(num) ? num : fallback;
 }
 
+function parseIdList(values: FormDataEntryValue[]): number[] {
+  return values
+    .map((value) => Number(toText(value)))
+    .filter((id, index, arr) => Number.isInteger(id) && id > 0 && arr.indexOf(id) === index);
+}
+
 function parseTagsJson(raw: string): number[][] {
   const value = raw.trim();
   if (!value) return [];
@@ -52,11 +58,19 @@ function parsePhotoUrlsJson(raw: string, bucketName: string): string[] {
   }
 }
 
-async function uploadOutfitPhoto(file: File) {
+function normalizePathSegment(value: string): string {
+  const raw = value.trim();
+  if (!raw) return "anonymous";
+  const cleaned = raw.replace(/[^a-zA-Z0-9_-]/g, "");
+  return cleaned || "anonymous";
+}
+
+async function uploadOutfitPhoto(file: File, appUserId: number) {
   const admin = createServiceRoleSupabaseClient();
   const bucket = getSupabaseBucket();
   const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
-  const objectPath = `outfits/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
+  const userPath = normalizePathSegment(String(appUserId));
+  const objectPath = `outfits/${userPath}/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
   const { error } = await admin.storage.from(bucket).upload(objectPath, buffer, {
@@ -129,6 +143,12 @@ export async function POST(request: Request) {
 
     const { data: userItems } = await admin.from("item").select("id").eq("user_id", appUserId);
     const allowedItemIds = new Set((userItems || []).map((row) => Number(row.id)));
+    const outfitItemIds = parseIdList(formData.getAll("outfit_item_ids")).filter((id) => allowedItemIds.has(id));
+
+    if (outfitItemIds.length > 0) {
+      const rows = outfitItemIds.map((itemId) => ({ outfit_id: outfitId, item_id: itemId }));
+      await admin.from("outfit_item").insert(rows);
+    }
 
     const photoCount = Math.max(uploadedPhotoUrls.length, files.length);
     for (let index = 0; index < photoCount; index += 1) {
@@ -136,7 +156,7 @@ export async function POST(request: Request) {
       const file = files[index];
       if (!uploadedUrl && !file) continue;
 
-      const publicPath = uploadedUrl || (await uploadOutfitPhoto(file));
+      const publicPath = uploadedUrl || (await uploadOutfitPhoto(file, appUserId));
       const uploadedByServer = !uploadedUrl;
 
       const { data: photoRow, error: photoInsertError } = await admin

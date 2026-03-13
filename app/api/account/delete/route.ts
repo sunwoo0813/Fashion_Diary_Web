@@ -60,11 +60,7 @@ async function fetchAppUserByEmail(email: string) {
   const normalized = email.trim().toLowerCase();
   if (!normalized) return null;
 
-  const { data, error } = await admin
-    .from("user")
-    .select("id,email")
-    .eq("email", normalized)
-    .maybeSingle();
+  const { data, error } = await admin.from("user").select("id,email").eq("email", normalized).maybeSingle();
   if (error) {
     throw new Error(`App user lookup failed: ${error.message}`);
   }
@@ -81,25 +77,19 @@ async function deleteAppDomainData(appUserId: number) {
 
   const [{ data: itemRows, error: itemError }, { data: outfitRows, error: outfitError }] = await Promise.all([
     admin.from("item").select("id,image_path").eq("user_id", appUserId),
-    admin.from("outfit").select("id,photo_path").eq("user_id", appUserId),
+    admin.from("outfit").select("id").eq("user_id", appUserId),
   ]);
   if (itemError) throw new Error(`Item query failed: ${itemError.message}`);
   if (outfitError) throw new Error(`Outfit query failed: ${outfitError.message}`);
 
   const itemIds = uniqueIds((itemRows || []).map((row) => toInt(row.id) ?? 0));
   const outfitIds = uniqueIds((outfitRows || []).map((row) => toInt(row.id) ?? 0));
-  const objectPathsSource: string[] = [
-    ...(itemRows || []).map((row) => toText(row.image_path)),
-    ...(outfitRows || []).map((row) => toText(row.photo_path)),
-  ];
+  const objectPathsSource: string[] = [...(itemRows || []).map((row) => toText(row.image_path))];
 
   const photoRows: Array<{ id: number; photo_path: string }> = [];
   for (const outfitChunk of chunk(outfitIds, CHUNK_SIZE)) {
     if (outfitChunk.length === 0) continue;
-    const { data, error } = await admin
-      .from("outfit_photo")
-      .select("id,photo_path")
-      .in("outfit_id", outfitChunk);
+    const { data, error } = await admin.from("outfit_photo").select("id,photo_path").in("outfit_id", outfitChunk);
     assertNoError(error, "Outfit photo query failed");
     (data || []).forEach((row) => {
       const id = toInt(row.id);
@@ -133,21 +123,13 @@ async function deleteAppDomainData(appUserId: number) {
     const { error: photoDeleteError } = await admin.from("outfit_photo").delete().in("outfit_id", outfitChunk);
     assertNoError(photoDeleteError, "Outfit photo delete failed");
 
-    const { error: outfitDeleteError } = await admin
-      .from("outfit")
-      .delete()
-      .in("id", outfitChunk)
-      .eq("user_id", appUserId);
+    const { error: outfitDeleteError } = await admin.from("outfit").delete().in("id", outfitChunk).eq("user_id", appUserId);
     assertNoError(outfitDeleteError, "Outfit delete failed");
   }
 
   for (const itemChunk of chunk(itemIds, CHUNK_SIZE)) {
     if (itemChunk.length === 0) continue;
-    const { error } = await admin
-      .from("item")
-      .delete()
-      .in("id", itemChunk)
-      .eq("user_id", appUserId);
+    const { error } = await admin.from("item").delete().in("id", itemChunk).eq("user_id", appUserId);
     assertNoError(error, "Item delete failed");
   }
 
@@ -175,7 +157,7 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const confirm = toText(formData.get("confirm")).toUpperCase();
     if (confirm !== "DELETE") {
-      return redirectWithQuery(request, "/account", "error", "계정 삭제 확인을 위해 DELETE를 입력해주세요.");
+      return redirectWithQuery(request, "/account", "error", "계정 삭제 확인을 위해 DELETE를 입력해 주세요.");
     }
 
     const appUser = await fetchAppUserByEmail(authUser.email);
@@ -186,8 +168,7 @@ export async function POST(request: Request) {
     try {
       await deleteAuthUser(authUser.id);
     } catch {
-      // Match Flask behavior: app data deletion should still complete
-      // even if auth admin delete call fails.
+      // 앱 데이터 삭제는 계속 진행합니다.
     }
     await clearSession();
 

@@ -375,6 +375,8 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   const [sizeTableImageName, setSizeTableImageName] = useState("");
   const [sizeTableLoading, setSizeTableLoading] = useState(false);
   const [sizeTableError, setSizeTableError] = useState("");
+  const [isDraggingSizeTable, setIsDraggingSizeTable] = useState(false);
+  const [formError, setFormError] = useState("");
 
   const [product, setProduct] = useState("");
   const [brand, setBrand] = useState("");
@@ -572,11 +574,24 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   }
 
   function toggleSeason(nextSeason: string) {
+    setFormError("");
     setSeasons((current) =>
       current.includes(nextSeason)
         ? current.filter((season) => season !== nextSeason)
         : [...current, nextSeason],
     );
+  }
+
+  function validateForm(): string {
+    if (!brand.trim()) return "브랜드를 입력해 주세요.";
+    if (!product.trim()) return "아이템명을 입력해 주세요.";
+    if (!category.trim()) return "카테고리를 선택해 주세요.";
+    if (showDetailCategory && !detailCategory.trim()) return "세부 카테고리를 선택해 주세요.";
+    if (!color.trim()) return "색상을 선택해 주세요.";
+    if (seasons.length === 0) return "시즌을 하나 이상 선택해 주세요.";
+    if (!thickness.trim()) return "두께를 선택해 주세요.";
+    if (!size.trim()) return "사이즈를 입력해 주세요.";
+    return "";
   }
 
   function applyProductItem(item: ProductItem) {
@@ -633,9 +648,13 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
 
   async function onSizeTableImageChange(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
-    setSizeTableImageName(file?.name || "");
-    setSizeTableError("");
     if (!file) return;
+    await processSizeTableFile(file);
+  }
+
+  async function processSizeTableFile(file: File) {
+    setSizeTableImageName(file.name || "");
+    setSizeTableError("");
     const requestSeq = sizeTableRequestSeqRef.current + 1;
     sizeTableRequestSeqRef.current = requestSeq;
 
@@ -689,6 +708,37 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
       }
     }
   }
+
+  const handleSizeTableDragOver = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  }, []);
+
+  const handleSizeTableDragEnter = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDraggingSizeTable(true);
+  }, []);
+
+  const handleSizeTableDragLeave = useCallback((event: React.DragEvent<HTMLLabelElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setIsDraggingSizeTable(false);
+  }, []);
+
+  const handleSizeTableDrop = useCallback(
+    async (event: React.DragEvent<HTMLLabelElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+      setIsDraggingSizeTable(false);
+
+      const file = event.dataTransfer.files?.[0];
+      if (!file || !file.type.startsWith("image/")) return;
+
+      await processSizeTableFile(file);
+    },
+    [],
+  );
 
   async function onFetchFromProductUrl() {
     const targetUrl = productUrl.trim();
@@ -881,7 +931,24 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
         </>
       ) : null}
 
-      <form id="itemCreateForm" action="/api/items" method="post" encType="multipart/form-data" className="item-form">
+      {formError ? <p className="form-error">{formError}</p> : null}
+
+      <form
+        id="itemCreateForm"
+        action="/api/items"
+        method="post"
+        encType="multipart/form-data"
+        className="item-form"
+        onSubmit={(event) => {
+          const nextError = validateForm();
+          if (!nextError) {
+            setFormError("");
+            return;
+          }
+          event.preventDefault();
+          setFormError(nextError);
+        }}
+      >
         <input type="hidden" name="input_mode" value={inputMode} />
         <div className="item-media-card">
           <p>상품 사진</p>
@@ -934,9 +1001,6 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               handleFileChange(event);
             }}
           />
-          <div className="item-image-meta">
-            <span>{imagePrefill && !localImageUrl ? "외부 이미지 선택됨" : ""}</span>
-          </div>
           {urlImageCandidates.length > 1 ? (
             <div className="item-image-candidates">
               <p>이미지 후보</p>
@@ -969,7 +1033,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               type="text"
               name="brand"
               value={brand}
-              onChange={(event) => setBrand(event.target.value)}
+              onChange={(event) => {
+                setBrand(event.target.value);
+                setFormError("");
+              }}
               placeholder="예: 리바이스"
               required
             />
@@ -980,14 +1047,25 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               type="text"
               name="product"
               value={product}
-              onChange={(event) => setProduct(event.target.value)}
+              onChange={(event) => {
+                setProduct(event.target.value);
+                setFormError("");
+              }}
               placeholder="예: 빈티지 실크 블라우스"
               required
             />
           </label>
           <label>
             카테고리
-            <select name="category" value={category} onChange={(event) => setCategory(event.target.value)}>
+            <select
+              name="category"
+              value={category}
+              onChange={(event) => {
+                setCategory(event.target.value);
+                setFormError("");
+              }}
+              required
+            >
               <option value="">카테고리를 선택해 주세요</option>
               {CATEGORY_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -1002,7 +1080,11 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               <select
                 name="detail_category"
                 value={detailCategory}
-                onChange={(event) => setDetailCategory(event.target.value)}
+                onChange={(event) => {
+                  setDetailCategory(event.target.value);
+                  setFormError("");
+                }}
+                required
               >
                 <option value="">세부 카테고리를 선택해 주세요</option>
                 {detailCategoryOptions.map((option) => (
@@ -1015,7 +1097,15 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           ) : null}
           <label>
             색상
-            <select name="color" value={color} onChange={(event) => setColor(event.target.value)}>
+            <select
+              name="color"
+              value={color}
+              onChange={(event) => {
+                setColor(event.target.value);
+                setFormError("");
+              }}
+              required
+            >
               <option value="">색상을 선택해 주세요</option>
               {colorOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -1043,7 +1133,15 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           </label>
           <label>
             두께
-            <select name="thickness" value={thickness} onChange={(event) => setThickness(event.target.value)}>
+            <select
+              name="thickness"
+              value={thickness}
+              onChange={(event) => {
+                setThickness(event.target.value);
+                setFormError("");
+              }}
+              required
+            >
               <option value="">두께를 선택해 주세요</option>
               {THICKNESS_OPTIONS.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -1061,8 +1159,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               onChange={(event) => {
                 setSize(event.target.value);
                 setSizeDetailJson("");
+                setFormError("");
               }}
               placeholder="S, M, 27, 240mm"
+              required
             />
           </label>
           {!sizeGuide && inputMode !== "search" ? (
@@ -1075,12 +1175,21 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                 className="size-table-upload-input"
                 onChange={onSizeTableImageChange}
               />
-              <label htmlFor="sizeTableImageInput" className="size-table-upload-box">
+              <label
+                htmlFor="sizeTableImageInput"
+                className={`size-table-upload-box${isDraggingSizeTable ? " is-dragging" : ""}`}
+                onDragOver={handleSizeTableDragOver}
+                onDragEnter={handleSizeTableDragEnter}
+                onDragLeave={handleSizeTableDragLeave}
+                onDrop={(event) => {
+                  void handleSizeTableDrop(event);
+                }}
+              >
                 <strong>사이즈표 이미지</strong>
                 <span>
                   {sizeTableLoading
                     ? "사이즈표 분석 중..."
-                    : sizeTableImageName || "클릭해서 사이즈표 이미지를 업로드해 주세요. 자동으로 분석합니다."}
+                    : sizeTableImageName || "클릭하거나 이미지를 드래그해서 사이즈표를 넣어 주세요. 자동으로 분석합니다."}
                 </span>
               </label>
               {sizeTableError ? <p className="item-url-error">{sizeTableError}</p> : null}

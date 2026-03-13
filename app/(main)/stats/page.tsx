@@ -15,16 +15,12 @@ function formatCount(value: number): string {
 function toCategoryLabel(category: string | null): string {
   const value = String(category || "").trim().toLowerCase();
   if (!value) return "미분류";
-  if (["outerwear", "아우터"].includes(value)) return "아우터";
+  if (["outerwear", "outer", "아우터"].includes(value)) return "아우터";
   if (["top", "tops", "상의"].includes(value)) return "상의";
   if (["bottom", "bottoms", "하의"].includes(value)) return "하의";
-  if (["footwear", "신발"].includes(value)) return "신발";
-  if (["accessories", "accessory", "액세서리"].includes(value)) return "액세서리";
+  if (["footwear", "shoes", "신발"].includes(value)) return "신발";
+  if (["accessories", "accessory", "acc", "액세서리"].includes(value)) return "액세서리";
   return category || "미분류";
-}
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
 }
 
 const DONUT_COLORS = ["#1ED760", "#45E07B", "#74E89A", "#A4F0B9", "#D2F8D7", "#EAFCEC"];
@@ -50,7 +46,7 @@ function buildDonutGradient(items: Array<{ category: string; count: number }>): 
 export default async function StatsPage() {
   const { appUserId } = await requireAppUserContext();
   const stats = await getStatsPageData(appUserId);
-  const diaryHref = `/diary/${todayIso()}`;
+  const diaryHref = "/diary";
   const categoryLegend = stats.categorySorted.slice(0, 6);
   const donutGradient = buildDonutGradient(categoryLegend);
 
@@ -58,17 +54,15 @@ export default async function StatsPage() {
     <section className="stats-next-page">
       <header className="stats-next-header">
         <div>
-          <p className="diary-kicker">분석 및 트렌드</p>
+          <p className="diary-kicker">분석 리포트</p>
           <h1>옷장 인사이트</h1>
-          <p>
-            {stats.currentYear}년 코디 기록, 태그, 날씨 데이터를 기반으로 한 요약입니다.
-          </p>
+          <p>{stats.currentYear}년 코디 기록과 날씨 데이터를 기준으로 옷장 사용 패턴을 요약합니다.</p>
         </div>
         <div className="stats-next-head-metrics">
           <span>아이템 {formatCount(stats.totalItems)}</span>
           <span>코디 {formatCount(stats.totalOutfits)}</span>
           <span>사진 {formatCount(stats.totalPhotos)}</span>
-          <span>강수 비율 {stats.rainRatio}%</span>
+          <span>비율 {stats.rainRatio}%</span>
         </div>
       </header>
 
@@ -99,7 +93,7 @@ export default async function StatsPage() {
             <div className="stats-next-empty">
               <p>아직 착용 데이터가 없어요.</p>
               <Link href="/outfits/new" className="solid-button">
-                오늘 코디 추가
+                오늘 코디 기록하기
               </Link>
             </div>
           )}
@@ -107,7 +101,7 @@ export default async function StatsPage() {
 
         <article className="stats-next-card stats-next-month">
           <div className="stats-next-card-head">
-            <h2>월별 스타일 추이</h2>
+            <h2>월별 코디 추이</h2>
             <span>{stats.currentYear}</span>
           </div>
           <div className="stats-next-month-bars">
@@ -123,22 +117,22 @@ export default async function StatsPage() {
           <div className="stats-next-summary-row">
             <div>
               <strong>{formatCount(stats.totalOutfits)}</strong>
-              <small>기록된 코디</small>
+              <small>기록한 코디</small>
             </div>
             <div>
               <strong>{stats.efficiencyRate}%</strong>
-              <small>효율 지수</small>
+              <small>활용 지수</small>
             </div>
             <div>
               <strong>{stats.curationPercent}%</strong>
-              <small>큐레이션 수준</small>
+              <small>정리 완성도</small>
             </div>
           </div>
         </article>
 
         <article className="stats-next-card">
           <div className="stats-next-card-head">
-            <h2>카테고리 집중도</h2>
+            <h2>카테고리 분포</h2>
             <span>상위 {Math.min(stats.categorySorted.length, 6)}</span>
           </div>
           {stats.categorySorted.length > 0 ? (
@@ -200,15 +194,15 @@ export default async function StatsPage() {
         <article className="stats-next-card stats-next-highlight">
           <h2>스타일 아카이브</h2>
           <p>
-            대표 카테고리는 <strong>{toCategoryLabel(stats.topCategory)}</strong>이며, {stats.currentYear}년에{" "}
-            {formatCount(stats.totalOutfits)}개의 코디가 기록되었어요.
+            가장 많은 카테고리는 <strong>{toCategoryLabel(stats.topCategory)}</strong>이고, {stats.currentYear}년에{" "}
+            {formatCount(stats.totalOutfits)}개의 코디가 기록됐어요.
           </p>
           <div className="stats-next-actions">
             <Link href={diaryHref} className="ghost-button">
               다이어리 보기
             </Link>
             <Link href="/wardrobe" className="ghost-button">
-              옷장 열기
+              옷장 보기
             </Link>
           </div>
         </article>

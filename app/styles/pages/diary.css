@@ -140,20 +140,28 @@
   }
 }
 
-.diary-feed-page .wardrobe-media {
-  aspect-ratio: auto;
-  height: 100%;
-  border-bottom: 0;
-}
-
 .diary-post-card {
   cursor: pointer;
   width: 100%;
-  height: auto;
-  aspect-ratio: 1 / 1.58;
+  aspect-ratio: 1 / 1.42;
   justify-self: stretch;
-  display: grid;
-  grid-template-rows: 75% 25%;
+  border-radius: 24px;
+  overflow: hidden;
+  position: relative;
+  background: #1f1713;
+  box-shadow:
+    0 18px 45px rgba(67, 44, 31, 0.16),
+    0 0 34px -14px rgba(145, 92, 58, 0.42);
+  transition:
+    transform 260ms ease,
+    box-shadow 260ms ease;
+}
+
+.diary-post-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow:
+    0 24px 56px rgba(67, 44, 31, 0.2),
+    0 0 42px -12px rgba(145, 92, 58, 0.55);
 }
 
 .diary-post-card:focus-visible {
@@ -161,71 +169,73 @@
   outline-offset: 1px;
 }
 
+.diary-post-shell {
+  width: 100%;
+  height: 100%;
+}
+
 .diary-post-open {
   display: block;
   width: 100%;
   height: 100%;
+  position: relative;
+}
+
+.diary-post-media {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
 }
 
 .diary-post-image {
   width: 100%;
   height: 100%;
-  min-height: 0;
   object-fit: cover;
   display: block;
+  transition: transform 500ms ease;
+}
+
+.diary-post-card:hover .diary-post-image {
+  transform: scale(1.08);
+}
+
+.diary-post-overlay {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(38, 22, 12, 0.03) 0%,
+      rgba(38, 22, 12, 0.08) 36%,
+      rgba(56, 33, 20, 0.34) 72%,
+      rgba(34, 20, 12, 0.58) 100%
+    );
 }
 
 .diary-post-info {
+  position: relative;
+  z-index: 1;
+  height: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 0.16rem;
-  padding: 0.45rem 0.5rem;
-  min-height: 0;
+  align-items: flex-end;
+  justify-content: flex-end;
+  padding: 1rem;
+  color: #fff9f4;
 }
 
-.diary-post-info h3 {
+.diary-post-date-badge {
   margin: 0;
-  font-size: 0.78rem;
-  line-height: 1.25;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.diary-post-info p {
-  margin: 0;
-  font-size: 0.62rem;
-  line-height: 1.3;
-  display: -webkit-box;
-  -webkit-line-clamp: 1;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.diary-post-info .diary-tag-list span {
-  font-size: 0.64rem;
-  padding: 0.15rem 0.35rem;
-}
-
-.diary-post-date {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.64rem;
-}
-
-.diary-post-footer {
-  margin-top: auto;
-  align-self: flex-start;
-  display: grid;
-  gap: 0.08rem;
-}
-
-.diary-post-weather {
-  margin: 0;
-  color: var(--muted-foreground);
-  font-size: 0.6rem;
-  line-height: 1.25;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 244, 235, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 244, 235, 0.12);
+  backdrop-filter: blur(10px);
+  padding: 0.34rem 0.72rem;
+  font-size: 0.76rem;
+  line-height: 1.1;
+  font-weight: 700;
+  color: #fff5ee;
 }
 
 .diary-modal-backdrop {
@@ -250,6 +260,7 @@
 }
 
 .diary-modal-media {
+  position: relative;
   background: #f8f5f2;
   display: flex;
   align-items: center;
@@ -267,6 +278,60 @@
   max-height: 100%;
   object-fit: contain;
   display: block;
+}
+
+.diary-modal-photo-nav {
+  position: absolute;
+  top: 50%;
+  z-index: 1;
+  width: 2.4rem;
+  height: 2.4rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: rgba(18, 13, 10, 0.42);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  transition:
+    background-color 0.18s ease,
+    border-color 0.18s ease,
+    opacity 0.18s ease;
+  backdrop-filter: blur(10px);
+}
+
+.diary-modal-photo-nav:hover,
+.diary-modal-photo-nav:focus-visible {
+  transform: translateY(-50%);
+  background: rgba(18, 13, 10, 0.56);
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+.diary-modal-photo-nav.is-prev {
+  left: 1rem;
+}
+
+.diary-modal-photo-nav.is-next {
+  right: 1rem;
+}
+
+.diary-modal-photo-counter {
+  position: absolute;
+  left: 50%;
+  bottom: 1rem;
+  transform: translateX(-50%);
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(255, 244, 235, 0.22);
+  border-radius: 999px;
+  background: rgba(18, 13, 10, 0.42);
+  color: #fff5ee;
+  padding: 0.32rem 0.68rem;
+  font-size: 0.76rem;
+  font-weight: 700;
+  backdrop-filter: blur(10px);
 }
 
 .diary-modal-body {
@@ -459,19 +524,9 @@
 }
 
 .diary-empty {
-  margin-top: 0.9rem;
-  border: 1px dashed #dacdc4;
-  border-radius: 14px;
-  background: #fff9f4;
-  padding: 1rem;
+  flex: 1;
   display: grid;
-  gap: 0.65rem;
-  justify-items: start;
-}
-
-.diary-empty p {
-  margin: 0;
-  color: var(--muted-foreground);
+  place-items: center;
 }
 
 .diary-outfit-list {
@@ -566,16 +621,13 @@
 }
 
 :root:is([data-theme="dark"], .dark) .diary-post-card {
-  background: var(--surface);
+  background: #17120f;
 }
 
 :root:is([data-theme="dark"], .dark) .diary-post-card:hover {
-  border-color: rgba(var(--accent-rgb), 0.42);
-  box-shadow: 0 0 18px rgba(var(--accent-rgb), 0.1);
-}
-
-:root:is([data-theme="dark"], .dark) .diary-post-info {
-  background: transparent;
+  box-shadow:
+    0 24px 58px rgba(0, 0, 0, 0.36),
+    0 0 44px -10px rgba(var(--accent-rgb), 0.24);
 }
 
 :root:is([data-theme="dark"], .dark) .diary-modal {
@@ -596,8 +648,7 @@
 
 :root:is([data-theme="dark"], .dark) .diary-modal-menu,
 :root:is([data-theme="dark"], .dark) .diary-modal-menu-button,
-:root:is([data-theme="dark"], .dark) .diary-feed-title-icon,
-:root:is([data-theme="dark"], .dark) .diary-empty {
+:root:is([data-theme="dark"], .dark) .diary-feed-title-icon {
   background: rgba(255, 255, 255, 0.03);
   color: var(--text);
   border-color: var(--line);
@@ -612,9 +663,13 @@
 
 :root:is([data-theme="dark"], .dark) .diary-modal-muted,
 :root:is([data-theme="dark"], .dark) .diary-feed-count,
-:root:is([data-theme="dark"], .dark) .diary-post-date,
-:root:is([data-theme="dark"], .dark) .diary-post-weather {
+:root:is([data-theme="dark"], .dark) .diary-post-date-badge {
   color: var(--muted-foreground);
+}
+
+:root:is([data-theme="dark"], .dark) .diary-post-date-badge {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 @media (max-width: 900px) {
@@ -679,6 +734,19 @@
   .diary-feed-page .wardrobe-grid,
   .diary-photo-row {
     grid-template-columns: 1fr;
+  }
+
+  .diary-post-card {
+    aspect-ratio: 1 / 1.28;
+  }
+
+  .diary-post-info {
+    padding: 0.85rem;
+  }
+
+  .diary-post-date-badge {
+    padding: 0.32rem 0.65rem;
+    font-size: 0.72rem;
   }
 
   .diary-feed-title-copy h1 {

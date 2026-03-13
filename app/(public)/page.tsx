@@ -1,13 +1,9 @@
 import { MarketingLanding } from "@/components/landing/marketing-landing";
 import { getCurrentUser } from "@/lib/auth";
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 export default async function LandingPage() {
   const user = await getCurrentUser();
-  const diaryHref = user ? `/diary/${todayIso()}` : "/login";
+  const diaryHref = user ? "/diary" : "/login";
 
   return (
     <MarketingLanding

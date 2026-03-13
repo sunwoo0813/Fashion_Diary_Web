@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { BlurFade } from "@/components/ui/blur-fade";
 import { getWeatherIconComponent } from "@/components/ui/weather-icons";
+import type { PreferredRegion } from "@/lib/user-preferences";
 
 type RegionOption = {
   id: string;
@@ -162,6 +163,8 @@ export function BlurFadeTextDemo() {
   const [regions, setRegions] = useState<RegionGroup[]>([]);
   const [regionsLoading, setRegionsLoading] = useState(true);
   const [regionsError, setRegionsError] = useState("");
+  const [preferredRegion, setPreferredRegion] = useState<PreferredRegion | null>(null);
+  const [preferredRegionLoaded, setPreferredRegionLoaded] = useState(false);
   const [draftSidoId, setDraftSidoId] = useState("");
   const [draftSigunguId, setDraftSigunguId] = useState("");
   const [appliedSidoId, setAppliedSidoId] = useState("");
@@ -202,6 +205,34 @@ export function BlurFadeTextDemo() {
   useEffect(() => {
     let active = true;
 
+    async function fetchPreferredRegion() {
+      try {
+        const response = await fetch("/api/account/preferred-region");
+        const payload = (await response.json()) as
+          | { ok: true; data: PreferredRegion | null }
+          | { ok: false; error?: string };
+
+        if (!active) return;
+        if (response.ok && payload.ok) {
+          setPreferredRegion(payload.data ?? null);
+        }
+      } finally {
+        if (active) {
+          setPreferredRegionLoaded(true);
+        }
+      }
+    }
+
+    void fetchPreferredRegion();
+
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    let active = true;
+
     async function fetchRegions() {
       setRegionsLoading(true);
       setRegionsError("");
@@ -237,6 +268,21 @@ export function BlurFadeTextDemo() {
       active = false;
     };
   }, []);
+
+  useEffect(() => {
+    if (!preferredRegionLoaded || regions.length === 0 || !preferredRegion) return;
+
+    const matchedSido = regions.find((region) => region.id === preferredRegion.sidoId);
+    const matchedSigungu = matchedSido?.children.find(
+      (region) => region.id === preferredRegion.sigunguId,
+    );
+    if (!matchedSido || !matchedSigungu) return;
+
+    setDraftSidoId((current) => current || matchedSido.id);
+    setDraftSigunguId((current) => current || matchedSigungu.id);
+    setAppliedSidoId((current) => current || matchedSido.id);
+    setAppliedSigunguId((current) => current || matchedSigungu.id);
+  }, [preferredRegion, preferredRegionLoaded, regions]);
 
   useEffect(() => {
     if (!appliedSido || !appliedSigungu) {
@@ -305,15 +351,41 @@ export function BlurFadeTextDemo() {
     setDraftSigunguId("");
   }
 
+  async function persistPreferredRegion(nextPreferredRegion: PreferredRegion) {
+    try {
+      const response = await fetch("/api/account/preferred-region", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ preferredRegion: nextPreferredRegion }),
+      });
+      const payload = (await response.json()) as
+        | { ok: true; data: PreferredRegion | null }
+        | { ok: false; error?: string };
+
+      if (!response.ok || !payload.ok) return;
+      setPreferredRegion(payload.data ?? nextPreferredRegion);
+    } catch {
+      // Ignore preference persistence failures and keep local selection.
+    }
+  }
+
   function handleConfirmSelection() {
     if (!draftSidoId || !draftSigunguId) return;
+
+    const nextPreferredRegion = {
+      sidoId: draftSidoId,
+      sigunguId: draftSigunguId,
+    };
+
     setAppliedSidoId(draftSidoId);
     setAppliedSigunguId(draftSigunguId);
+    setPreferredRegion(nextPreferredRegion);
     setWeather(null);
     setWeatherError("");
     setRecommendation(null);
     setRecommendError("");
     setIsOpen(false);
+    void persistPreferredRegion(nextPreferredRegion);
   }
 
   async function handleRecommendOutfit() {
@@ -480,10 +552,10 @@ export function BlurFadeTextDemo() {
             ) : null}
             {appliedSido && appliedSigungu && !isOpen ? (
               <div
-                className="outfit-weather-panel"
                 style={{
                   width: "min(100%, 72rem)",
                   textAlign: "left",
+                  display: "grid",
                   gap: "0.8rem",
                 }}
               >
