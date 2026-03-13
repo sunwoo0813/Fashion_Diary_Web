@@ -8,7 +8,6 @@ type ExistingPhoto = {
 };
 
 type NewPhotoTagPickerProps = {
-  items: Array<{ id: number; name: string; category: string | null }>;
   inputName: string;
   hiddenInputName: string;
   uploadedUrlsInputName: string;
@@ -139,7 +138,6 @@ function toExistingEntries(existingPhotos: ExistingPhoto[]): ExistingPhotoEntry[
 }
 
 export function NewPhotoTagPicker({
-  items: _items,
   inputName,
   hiddenInputName,
   uploadedUrlsInputName,

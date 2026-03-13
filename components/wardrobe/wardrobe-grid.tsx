@@ -10,7 +10,6 @@ type WardrobeGridProps = {
   items: WardrobeItem[];
   wearCounts: Record<number, number>;
   recentWearDates: Record<number, string>;
-  favoriteIds: number[];
   hasFilters: boolean;
 };
 
@@ -175,29 +174,6 @@ function parseName(name: string): { brand: string; itemName: string } {
   };
 }
 
-function getDetailValue(detail: unknown, keys: string[]): string {
-  if (!detail || typeof detail !== "object") return "-";
-  const source = detail as Record<string, unknown>;
-  const pairs = source.pairs && typeof source.pairs === "object" ? (source.pairs as Record<string, unknown>) : null;
-  const lowerKeys = keys.map((key) => key.toLowerCase());
-
-  if (pairs) {
-    for (const [key, value] of Object.entries(pairs)) {
-      if (!lowerKeys.includes(key.toLowerCase())) continue;
-      const text = String(value ?? "").trim();
-      if (text) return text;
-    }
-  }
-
-  for (const key of keys) {
-    const value = source[key];
-    const text = String(value ?? "").trim();
-    if (text && text !== "[object Object]") return text;
-  }
-
-  return "-";
-}
-
 function parseSizeGrid(detail: unknown): SizeGrid | null {
   if (!detail || typeof detail !== "object") return null;
   const source = detail as Record<string, unknown>;
@@ -239,27 +215,10 @@ function visibleSizeGridColumns(grid: SizeGrid): number[] {
     .map(({ index }) => index);
 }
 
-function buildSizeDetailFromGrid(headers: string[], values: string[]) {
-  const pairs: Record<string, string> = {};
-  headers.forEach((header, index) => {
-    pairs[header || `col_${index + 1}`] = values[index] || "";
-  });
-  return { headers, values, pairs };
-}
-
-function findSelectedSizeRowIndex(grid: SizeGrid | null, size: string | null): number | null {
-  if (!grid) return null;
-  const target = String(size || "").trim();
-  if (!target) return null;
-  const rowIndex = grid.rows.findIndex((row) => String(row[0] || "").trim() === target);
-  return rowIndex >= 0 ? rowIndex : null;
-}
-
 export function WardrobeGrid({
   items,
   wearCounts,
   recentWearDates,
-  favoriteIds,
   hasFilters,
 }: WardrobeGridProps) {
   const [localItems, setLocalItems] = useState<WardrobeItem[]>(items);
@@ -270,8 +229,6 @@ export function WardrobeGrid({
   const [editItem, setEditItem] = useState<WardrobeItem | null>(null);
   const [editSaving, setEditSaving] = useState(false);
   const [editError, setEditError] = useState("");
-  const [editSizeGrid, setEditSizeGrid] = useState<SizeGrid | null>(null);
-  const [editSelectedSizeRowIndex, setEditSelectedSizeRowIndex] = useState<number | null>(null);
   const [editForm, setEditForm] = useState<EditFormState>({
     brand: "",
     product: "",
@@ -283,7 +240,6 @@ export function WardrobeGrid({
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const favoriteSet = useMemo(() => new Set(favoriteIds), [favoriteIds]);
   const activeParsedName = activeItem ? parseName(activeItem.name) : null;
   const activeSizeGrid = activeItem ? parseSizeGrid(activeItem.size_detail) : null;
   const activeSizeGridColumns = activeSizeGrid ? visibleSizeGridColumns(activeSizeGrid) : [];
@@ -323,12 +279,9 @@ export function WardrobeGrid({
 
   function openEditModal(item: WardrobeItem) {
     const parsed = parseName(item.name);
-    const nextSizeGrid = parseSizeGrid(item.size_detail);
 
     setEditItem(item);
     setEditError("");
-    setEditSizeGrid(nextSizeGrid);
-    setEditSelectedSizeRowIndex(findSelectedSizeRowIndex(nextSizeGrid, item.size));
     setEditForm({
       brand: parsed.brand === "-" ? "" : parsed.brand,
       product: parsed.itemName,
@@ -336,19 +289,6 @@ export function WardrobeGrid({
       size: item.size || "",
       sizeDetail: item.size_detail ?? null,
     });
-  }
-
-  function selectEditSizeRow(rowIndex: number) {
-    if (!editSizeGrid) return;
-    const row = editSizeGrid.rows[rowIndex];
-    if (!row) return;
-
-    setEditSelectedSizeRowIndex(rowIndex);
-    setEditForm((prev) => ({
-      ...prev,
-      size: row[0] || "",
-      sizeDetail: buildSizeDetailFromGrid(editSizeGrid.headers, row),
-    }));
   }
 
   async function saveEdit() {
@@ -419,8 +359,6 @@ export function WardrobeGrid({
       }
 
       setEditItem(null);
-      setEditSizeGrid(null);
-      setEditSelectedSizeRowIndex(null);
     } catch (error) {
       setEditError(error instanceof Error ? error.message : "수정에 실패했어요.");
     } finally {
@@ -489,7 +427,6 @@ export function WardrobeGrid({
       <div className="wardrobe-grid">
         {localItems.map((item) => {
           const selected = selectedSet.has(item.id);
-          const count = wearCounts[item.id] ?? 0;
           const label = splitName(item.name);
           return (
             <article

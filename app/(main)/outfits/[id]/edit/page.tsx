@@ -75,7 +75,6 @@ export default async function OutfitEditPage({ params, searchParams }: OutfitEdi
 
         <div className="outfit-create-media-card">
           <NewPhotoTagPicker
-            items={items.map((item) => ({ id: item.id, name: item.name, category: item.category }))}
             inputName="photos"
             hiddenInputName="photo_tags_new_json"
             uploadedUrlsInputName="photo_urls_new_json"

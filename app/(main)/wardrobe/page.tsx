@@ -94,7 +94,6 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
         items={data.items}
         wearCounts={data.wearCounts}
         recentWearDates={data.recentWearDates}
-        favoriteIds={data.favoriteIds}
         hasFilters={data.hasFilters}
       />
     </section>
