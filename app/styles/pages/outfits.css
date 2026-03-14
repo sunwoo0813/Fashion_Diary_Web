@@ -629,8 +629,14 @@
     grid-template-columns: 1fr !important;
   }
 
+  .dashboard-weather-card {
+    padding: 1rem 1.25rem !important;
+  }
+
   .dashboard-weather-current {
-    flex-direction: column;
+    flex-direction: row;
+    justify-content: flex-start !important;
+    gap: 0.8rem !important;
   }
 
   .dashboard-region-grid {

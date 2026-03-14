@@ -574,6 +574,7 @@ export function BlurFadeTextDemo() {
                     }}
                   >
                     <div
+                      className="dashboard-weather-card"
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
@@ -601,6 +602,7 @@ export function BlurFadeTextDemo() {
                       </div>
                     </div>
                     <div
+                      className="dashboard-weather-card"
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
@@ -617,6 +619,7 @@ export function BlurFadeTextDemo() {
                       </span>
                     </div>
                     <div
+                      className="dashboard-weather-card"
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
@@ -633,6 +636,7 @@ export function BlurFadeTextDemo() {
                       </span>
                     </div>
                     <div
+                      className="dashboard-weather-card"
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
@@ -649,6 +653,7 @@ export function BlurFadeTextDemo() {
                       </span>
                     </div>
                     <div
+                      className="dashboard-weather-card"
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
