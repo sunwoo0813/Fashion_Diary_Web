@@ -105,6 +105,26 @@ export function ArrowRightIcon({ size, className }: IconProps) {
   );
 }
 
+export function ChevronDownIcon({ size, className }: IconProps) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <path d="m6 9 6 6 6-6" />
+    </BaseIcon>
+  );
+}
+
+export function TrashIcon({ size, className }: IconProps) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <path d="M3 6h18" />
+      <path d="M8 6V4h8v2" />
+      <path d="M19 6l-1 14H6L5 6" />
+      <path d="M10 11v6" />
+      <path d="M14 11v6" />
+    </BaseIcon>
+  );
+}
+
 export function KebabVerticalIcon({ size, className }: IconProps) {
   return (
     <svg

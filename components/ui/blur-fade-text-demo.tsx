@@ -437,6 +437,7 @@ export function BlurFadeTextDemo() {
       }}
     >
       <div
+        className="dashboard-mobile-stack"
         style={{
           display: "flex",
           flexDirection: "column",
@@ -459,6 +460,7 @@ export function BlurFadeTextDemo() {
         </BlurFade>
         <BlurFade delay={0.5} inView>
           <div
+            className="dashboard-mobile-panel"
             style={{
               display: "grid",
               gap: "1.5rem",
@@ -552,6 +554,7 @@ export function BlurFadeTextDemo() {
             ) : null}
             {appliedSido && appliedSigungu && !isOpen ? (
               <div
+                className="dashboard-weather-section"
                 style={{
                   width: "min(100%, 72rem)",
                   textAlign: "left",
@@ -673,6 +676,7 @@ export function BlurFadeTextDemo() {
                 ) : null}
                 {weather ? (
                   <div
+                    className="dashboard-weather-action"
                     style={{
                       display: "flex",
                       justifyContent: "center",

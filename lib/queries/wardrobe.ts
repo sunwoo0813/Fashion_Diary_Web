@@ -1,9 +1,11 @@
+import { buildWardrobeCategoryCounts } from "@/lib/wardrobe-filters";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 import { makeDisplayNameFromFields, normalizePublicImagePath, resolveCategoryFilter } from "@/lib/wardrobe";
 
 export type WardrobeItem = {
   id: number;
   user_id: number;
+  brand?: string | null;
   name: string;
   category: string | null;
   detail_category: string | null;
@@ -19,10 +21,12 @@ type GetWardrobePageDataInput = {
   appUserId: number;
   query: string;
   category: string;
+  itemId: number | null;
 };
 
 type WardrobePageData = {
   items: WardrobeItem[];
+  categoryCounts: Record<string, number>;
   wearCounts: Record<number, number>;
   recentWearDates: Record<number, string>;
   favoriteIds: number[];
@@ -61,13 +65,14 @@ function cleanupWardrobeCache(now: number) {
   }
 }
 
-function buildWardrobeCacheKey(appUserId: number, query: string, category: string): string {
-  return `${appUserId}|q=${query}|c=${category}`;
+function buildWardrobeCacheKey(appUserId: number, query: string, category: string, itemId: number | null): string {
+  return `${appUserId}|q=${query}|c=${category}|i=${itemId ?? ""}`;
 }
 
 function cloneWardrobePageData(data: WardrobePageData): WardrobePageData {
   return {
     items: data.items.map((item) => ({ ...item })),
+    categoryCounts: { ...data.categoryCounts },
     wearCounts: { ...data.wearCounts },
     recentWearDates: { ...data.recentWearDates },
     favoriteIds: [...data.favoriteIds],
@@ -79,6 +84,7 @@ export async function getWardrobePageData({
   appUserId,
   query,
   category,
+  itemId,
 }: GetWardrobePageDataInput): Promise<WardrobePageData> {
   const admin = createServiceRoleSupabaseClient();
   const normalizedQuery = query.trim();
@@ -86,7 +92,8 @@ export async function getWardrobePageData({
   const now = Date.now();
   cleanupWardrobeCache(now);
 
-  const cacheKey = buildWardrobeCacheKey(appUserId, normalizedQuery, normalizedCategory);
+  const normalizedItemId = Number.isInteger(itemId) && itemId && itemId > 0 ? itemId : null;
+  const cacheKey = buildWardrobeCacheKey(appUserId, normalizedQuery, normalizedCategory, normalizedItemId);
   const cached = wardrobePageCache.get(cacheKey);
   if (cached && cached.expiresAt > now) {
     return cloneWardrobePageData(cached.data);
@@ -97,13 +104,20 @@ export async function getWardrobePageData({
     .select("id,user_id,brand,product_name,category,detail_category,season,thickness,size,size_detail,image_path,created_at")
     .eq("user_id", appUserId)
     .order("created_at", { ascending: false });
+  let categoryCountQuery = admin.from("item").select("category").eq("user_id", appUserId);
 
-  if (normalizedQuery) {
+  if (normalizedItemId) {
+    itemsQuery = itemsQuery.eq("id", normalizedItemId);
+    categoryCountQuery = categoryCountQuery.eq("id", normalizedItemId);
+  } else if (normalizedQuery) {
     const escaped = normalizedQuery.replace(/,/g, "\\,");
-    itemsQuery = itemsQuery.or(`brand.ilike.%${escaped}%,product_name.ilike.%${escaped}%,category.ilike.%${escaped}%`);
+    itemsQuery = itemsQuery.or(`brand.ilike.%${escaped}%,product_name.ilike.%${escaped}%`);
+    categoryCountQuery = categoryCountQuery.or(
+      `brand.ilike.%${escaped}%,product_name.ilike.%${escaped}%`,
+    );
   }
 
-  if (normalizedCategory) {
+  if (!normalizedItemId && normalizedCategory) {
     const categories = resolveCategoryFilter(normalizedCategory);
     if (categories && categories.length > 0) {
       if (categories.length === 1) {
@@ -119,9 +133,15 @@ export async function getWardrobePageData({
     throw new Error(`Wardrobe item query failed: ${itemsError.message}`);
   }
 
+  const { data: categoryCountRows, error: categoryCountError } = await categoryCountQuery;
+  if (categoryCountError) {
+    throw new Error(`Wardrobe category count query failed: ${categoryCountError.message}`);
+  }
+
   const items = (rawItems || []).map((row) => ({
     id: Number(row.id),
     user_id: Number(row.user_id),
+    brand: row.brand ? String(row.brand) : null,
     name: makeDisplayNameFromFields(row.brand, row.product_name),
     category: row.category ? String(row.category) : null,
     detail_category: row.detail_category ? String(row.detail_category) : null,
@@ -132,6 +152,7 @@ export async function getWardrobePageData({
     image_path: row.image_path ? normalizePublicImagePath(String(row.image_path)) : null,
     created_at: row.created_at ? String(row.created_at) : null,
   }));
+  const categoryCounts = buildWardrobeCategoryCounts((categoryCountRows || []).map((row) => row.category));
 
   const wearCounts: Record<number, number> = {};
   const recentWearDates: Record<number, string> = {};
@@ -223,10 +244,11 @@ export async function getWardrobePageData({
 
   const result: WardrobePageData = {
     items,
+    categoryCounts,
     wearCounts,
     recentWearDates,
     favoriteIds,
-    hasFilters: Boolean(normalizedQuery || normalizedCategory),
+    hasFilters: Boolean(normalizedQuery || normalizedCategory || normalizedItemId),
   };
 
   wardrobePageCache.set(cacheKey, {

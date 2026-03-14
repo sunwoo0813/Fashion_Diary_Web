@@ -625,12 +625,29 @@
 }
 
 @media (max-width: 640px) {
+  .dashboard-mobile-stack {
+    gap: 1rem !important;
+  }
+
+  .dashboard-mobile-panel {
+    gap: 0.75rem !important;
+  }
+
+  .dashboard-weather-section {
+    gap: 0.8rem !important;
+  }
+
   .dashboard-weather-grid {
     grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
   }
 
   .dashboard-weather-card {
-    padding: 1rem 1.25rem !important;
+    width: calc(100% + 1.5rem);
+    margin-inline: -0.75rem;
+    padding: 0.7rem 1.5rem !important;
+    min-height: 0;
+    box-sizing: border-box;
   }
 
   .dashboard-weather-current {
@@ -639,8 +656,13 @@
     gap: 0.8rem !important;
   }
 
+  .dashboard-weather-action {
+    margin-top: 0.2rem !important;
+  }
+
   .dashboard-region-grid {
     grid-template-columns: 1fr;
+    gap: 0.75rem;
   }
 }
 

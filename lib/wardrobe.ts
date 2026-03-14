@@ -3,9 +3,9 @@ import { getSupabaseBucket, getSupabaseUrl } from "@/lib/env";
 const categoryMap: Record<string, string[]> = {
   Top: ["Top", "Tops"],
   Bottom: ["Bottom", "Bottoms"],
-  Outerwear: ["Outerwear"],
+  Outerwear: ["Outerwear", "Outer"],
   Footwear: ["Footwear", "Shoes"],
-  Accessories: ["Accessories", "Accessory"],
+  Accessories: ["Accessories", "Accessory", "ACC"],
 };
 
 export type ProductSearchRow = {

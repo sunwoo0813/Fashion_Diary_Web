@@ -35,6 +35,10 @@
   gap: 0.6rem;
 }
 
+.wardrobe-mobile-toolbar {
+  display: none;
+}
+
 .wardrobe-header > div:first-child {
   min-width: 0;
 }
@@ -87,7 +91,7 @@
   position: absolute;
   top: calc(100% + 0.45rem);
   left: 0;
-  right: 0;
+  width: 120%;
   z-index: 20;
   display: grid;
   gap: 0.3rem;
@@ -103,10 +107,29 @@
   border-radius: 0.7rem;
   padding: 0.55rem 0.7rem;
   background: transparent;
+  display: flex;
+  width: 100%;
   text-align: left;
   font: inherit;
   color: inherit;
   cursor: pointer;
+}
+
+.wardrobe-search-suggestion strong {
+  font-weight: 700;
+}
+
+.wardrobe-search-suggestion-copy {
+  display: inline-flex;
+  width: 100%;
+  align-items: baseline;
+  gap: 0.5rem;
+  min-width: 0;
+}
+
+.wardrobe-search-suggestion-copy span {
+  flex: 1;
+  min-width: 0;
 }
 
 .wardrobe-search-suggestion:hover {
@@ -128,6 +151,15 @@
   gap: 0.5rem;
 }
 
+.wardrobe-filter-form-desktop {
+  display: flex;
+}
+
+.wardrobe-filter-dropdown-mobile {
+  display: none;
+  margin-top: 0.8rem;
+}
+
 .wardrobe-filter-form :is(button, .filter-chip) {
   display: inline-flex;
   align-items: center;
@@ -137,6 +169,95 @@
   padding: 0.45rem 0.72rem;
   background: var(--surface);
   font-size: 0.82rem;
+}
+
+.count-filter-dropdown {
+  position: relative;
+  width: 7rem;
+  max-width: 100%;
+}
+
+.count-filter-dropdown-button {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: #ffffff;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #111111;
+}
+
+.count-filter-dropdown-button.is-selected {
+  color: #111111;
+}
+
+.count-filter-dropdown-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.count-filter-dropdown-chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.count-filter-dropdown-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.count-filter-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  left: 0;
+  z-index: 20;
+  width: 100%;
+  overflow: hidden;
+  border: 0;
+  border-radius: 10px;
+  background: #ffffff;
+}
+
+.count-filter-dropdown-option {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+  padding: 0.75rem 1rem;
+  text-align: left;
+  font-size: 0.75rem;
+  color: #111111;
+  background: #ffffff;
+}
+
+.count-filter-dropdown-option:hover {
+  background: #ffffff;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+
+.count-filter-dropdown-option:focus-visible {
+  background: #ffffff;
+  border: 0;
+  outline: none;
+  box-shadow: none;
+}
+
+.count-filter-dropdown-count {
+  font-size: 10px;
+  color: #666666;
 }
 
 .wardrobe-filter-form :is(button, .filter-chip).is-active {
@@ -628,6 +749,12 @@
   border-color: var(--line);
 }
 
+:root:is([data-theme="dark"], .dark) .count-filter-dropdown-button,
+:root:is([data-theme="dark"], .dark) .count-filter-dropdown-panel {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: rgba(17, 24, 39, 0.96);
+}
+
 :root:is([data-theme="dark"], .dark) .wardrobe-card {
   background: var(--surface);
 }
@@ -640,6 +767,10 @@
 :root:is([data-theme="dark"], .dark) .wardrobe-search-suggestion:hover {
   background: rgba(var(--accent-rgb), 0.12);
   color: var(--primary);
+}
+
+:root:is([data-theme="dark"], .dark) .count-filter-dropdown-option:hover {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 :root:is([data-theme="dark"], .dark) .wardrobe-inline-modal,
@@ -848,6 +979,10 @@
     align-self: flex-start;
   }
 
+  .wardrobe-header-actions {
+    display: none;
+  }
+
   .wardrobe-filter-form {
     gap: 0.4rem;
   }
@@ -857,9 +992,56 @@
     font-size: 0.78rem;
   }
 
+  .wardrobe-filter-form-desktop {
+    display: none;
+  }
+
+  .wardrobe-filter-dropdown-mobile {
+    display: block;
+  }
+
+  .wardrobe-mobile-toolbar {
+    display: grid;
+    gap: 0.7rem;
+    margin-top: 0.8rem;
+  }
+
+  .wardrobe-mobile-toolbar-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    align-items: start;
+    gap: 0.45rem;
+  }
+
+  .wardrobe-mobile-search {
+    min-width: 0;
+  }
+
+  .wardrobe-mobile-search .wardrobe-search-shell {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .wardrobe-mobile-search .wardrobe-search-form input {
+    min-width: 0;
+  }
+
+  .wardrobe-mobile-delete {
+    min-width: fit-content;
+    white-space: nowrap;
+  }
+
+  .wardrobe-mobile-toolbar-filter {
+    display: flex;
+    justify-content: flex-end;
+  }
+
+  .wardrobe-mobile-toolbar-filter .wardrobe-filter-dropdown-mobile {
+    margin-top: 0;
+  }
+
   .wardrobe-action-row {
-    margin-top: 0.7rem;
-    justify-content: flex-start;
+    display: none;
   }
 
   .wardrobe-delete-hint {
@@ -872,17 +1054,95 @@
 
   .wardrobe-page .wardrobe-card {
     aspect-ratio: auto;
+    display: grid;
+    grid-template-columns: 4fr 6fr;
+    grid-template-areas:
+      "media brand"
+      "media info";
+    grid-template-rows: auto 1fr;
+    column-gap: 0.7rem;
+    row-gap: 1rem;
+    align-items: center;
+    padding: 0 0.5rem;
+    height: 9rem;
   }
 
   .wardrobe-page .wardrobe-media {
-    min-height: 280px;
+    grid-area: media;
+    display: flex;
+    width: 95%;
+    height: 95%;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    border: 0;
+    padding: 0;
+    align-self: center;
+    justify-self: center;
+    background: var(--surface);
+    overflow: hidden;
+  }
+
+  .wardrobe-page .wardrobe-media img {
+    width: 95%;
+    height: 95%;
+    object-fit: cover;
+    object-position: center;
+    border-radius: 12px;
+    display: block;
+  }
+
+  .wardrobe-page .wardrobe-media-placeholder {
+    width: 100%;
+    height: 100%;
+    border-radius: 12px;
+    font-size: 0.72rem;
+  }
+
+  .wardrobe-page .wardrobe-brand-bar {
+    grid-area: brand;
+    border-bottom: 0;
+    padding: 1rem 0 0;
+    min-width: 0;
+    align-self: start;
+    text-align: left;
+    font-size: 0.9rem;
+    margin-bottom: 0;
+  }
+
+  .wardrobe-page .wardrobe-brand-bar span {
+    display: block;
+    padding-left: 0;
+    text-align: left;
+  }
+
+  .wardrobe-page .wardrobe-info {
+    grid-area: info;
+    display: block;
+    align-self: start;
+    min-width: 0;
+    padding: 0;
+    overflow: hidden;
+    margin-top: 0;
+  }
+
+  .wardrobe-page .wardrobe-info h3 {
+    width: auto;
+    margin: 0;
+    text-align: left;
+    line-height: 1.2;
+    font-size: 0.78rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 
   .wardrobe-inline-modal {
-    width: calc(100vw - 20px);
-    max-height: calc(100vh - 20px);
-    top: 10px !important;
-    left: 10px !important;
+    width: calc((100vw - 20px) * 0.8);
+    max-height: calc((100vh - 20px) * 0.8);
+    top: calc(10px + ((100vh - 20px) * 0.1)) !important;
+    left: calc(10px + ((100vw - 20px) * 0.1)) !important;
     padding: 0.8rem;
   }
 }
@@ -897,13 +1157,15 @@
   }
 
   .wardrobe-page .wardrobe-media {
-    min-height: 240px;
+    min-height: 100%;
+    height: 100%;
   }
 
   .wardrobe-inline-modal {
-    width: calc(100vw - 14px);
-    top: 7px !important;
-    left: 7px !important;
+    width: calc((100vw - 14px) * 0.8);
+    max-height: calc((100vh - 14px) * 0.8);
+    top: calc(7px + ((100vh - 14px) * 0.1)) !important;
+    left: calc(7px + ((100vw - 14px) * 0.1)) !important;
     border-radius: 14px;
   }
 }

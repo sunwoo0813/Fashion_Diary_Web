@@ -1,6 +1,6 @@
 "use client";
 
-import { useDeferredValue, useMemo, useState } from "react";
+import { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { ArrowRightIcon } from "@/components/common/icons";
@@ -12,53 +12,98 @@ type WardrobeSearchBarProps = {
   items: WardrobeItem[];
 };
 
-function buildSearchHref(query: string, category: string): string {
+type SuggestionItem = {
+  itemId: number | null;
+  value: string;
+  brand: string | null;
+  label: string;
+};
+
+function buildSearchHref(query: string, category: string, itemId?: number | null): string {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
   if (category) params.set("category", category);
+  if (itemId) params.set("itemId", String(itemId));
   const queryString = params.toString();
   return queryString ? `/wardrobe?${queryString}` : "/wardrobe";
 }
 
-function normalizeTerm(term: string | null): string {
+function normalizeTerm(term: string | null | undefined): string {
   return (term || "").trim();
+}
+
+function splitSuggestionLabel(item: WardrobeItem) {
+  const brand = normalizeTerm(item.brand);
+  const name = normalizeTerm(item.name);
+  if (!brand) {
+    return { brand: null, label: name };
+  }
+
+  const escapedBrand = brand.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const label = name.replace(new RegExp(`^${escapedBrand}\\s*`, "i"), "").trim() || name;
+
+  return { brand, label };
 }
 
 export function WardrobeSearchBar({ initialQuery, category, items }: WardrobeSearchBarProps) {
   const router = useRouter();
   const [query, setQuery] = useState(initialQuery);
+  const [isSuggestionOpen, setIsSuggestionOpen] = useState(false);
+  const searchShellRef = useRef<HTMLDivElement>(null);
   const deferredQuery = useDeferredValue(query);
   const normalizedQuery = deferredQuery.trim().toLowerCase();
 
   const suggestions = useMemo(() => {
     if (!normalizedQuery) return [];
 
-    const uniqueSuggestions = new Set<string>();
+    const uniqueSuggestions = new Map<string, SuggestionItem>();
 
     items.forEach((item) => {
       const name = normalizeTerm(item.name);
-      const itemCategory = normalizeTerm(item.category);
 
       if (name.toLowerCase().includes(normalizedQuery)) {
-        uniqueSuggestions.add(name);
-      }
-      if (itemCategory && itemCategory.toLowerCase().includes(normalizedQuery)) {
-        uniqueSuggestions.add(itemCategory);
+        const suggestion = splitSuggestionLabel(item);
+        uniqueSuggestions.set(name, {
+          itemId: item.id,
+          value: name,
+          brand: suggestion.brand,
+          label: suggestion.label,
+        });
       }
     });
 
-    return Array.from(uniqueSuggestions).slice(0, 6);
+    return Array.from(uniqueSuggestions.values()).slice(0, 6);
   }, [items, normalizedQuery]);
 
   const showSubmit = query.trim().length > 0;
-  const showSuggestions = query.trim().length > 0;
+  const showSuggestions = query.trim().length > 0 && isSuggestionOpen;
 
-  function submitSearch(nextQuery: string) {
-    router.push(buildSearchHref(nextQuery.trim(), category));
+  useEffect(() => {
+    if (!query.trim()) {
+      setIsSuggestionOpen(false);
+      return;
+    }
+
+    setIsSuggestionOpen(true);
+  }, [query]);
+
+  useEffect(() => {
+    function handleOutsideClick(event: MouseEvent) {
+      if (!searchShellRef.current?.contains(event.target as Node)) {
+        setIsSuggestionOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", handleOutsideClick);
+    return () => document.removeEventListener("mousedown", handleOutsideClick);
+  }, []);
+
+  function submitSearch(nextQuery: string, itemId?: number | null) {
+    router.push(buildSearchHref(nextQuery.trim(), category, itemId));
   }
 
   return (
-    <div className="wardrobe-search-shell">
+    <div ref={searchShellRef} className="wardrobe-search-shell">
       <form
         className="wardrobe-search-form"
         onSubmit={(event) => {
@@ -72,13 +117,16 @@ export function WardrobeSearchBar({ initialQuery, category, items }: WardrobeSea
             name="q"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="검색..."
+            onFocus={() => {
+              if (query.trim()) setIsSuggestionOpen(true);
+            }}
+            placeholder="search..."
             autoComplete="off"
-            aria-label="검색"
+            aria-label="Search"
             aria-controls="wardrobe-search-suggestions"
           />
           {showSubmit ? (
-            <button type="submit" className="wardrobe-search-submit" aria-label="검색">
+            <button type="submit" className="wardrobe-search-submit" aria-label="Search">
               <ArrowRightIcon size={16} />
             </button>
           ) : null}
@@ -90,19 +138,27 @@ export function WardrobeSearchBar({ initialQuery, category, items }: WardrobeSea
           {suggestions.length > 0 ? (
             suggestions.map((suggestion) => (
               <button
-                key={suggestion}
+                key={suggestion.value}
                 type="button"
                 className="wardrobe-search-suggestion"
                 onClick={() => {
-                  setQuery(suggestion);
-                  submitSearch(suggestion);
+                  setQuery("");
+                  setIsSuggestionOpen(false);
+                  submitSearch(suggestion.itemId ? "" : suggestion.value, suggestion.itemId);
                 }}
               >
-                {suggestion}
+                {suggestion.brand ? (
+                  <span className="wardrobe-search-suggestion-copy">
+                    <strong>{suggestion.brand}</strong>
+                    <span>{suggestion.label}</span>
+                  </span>
+                ) : (
+                  suggestion.label
+                )}
               </button>
             ))
           ) : (
-            <p className="wardrobe-search-empty">관련 검색어가 없어요.</p>
+            <p className="wardrobe-search-empty">No matches found.</p>
           )}
         </div>
       ) : null}

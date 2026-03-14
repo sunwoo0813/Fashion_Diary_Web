@@ -676,6 +676,7 @@
   }
 
   .app-rail-mobile-overlay .topbar-right {
+    margin-top: auto;
     justify-content: initial;
     align-items: stretch;
   }
