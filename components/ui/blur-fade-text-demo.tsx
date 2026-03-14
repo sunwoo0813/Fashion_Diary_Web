@@ -566,6 +566,7 @@ export function BlurFadeTextDemo() {
                 ) : null}
                 {weather ? (
                   <div
+                    className="dashboard-weather-grid"
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
@@ -585,6 +586,7 @@ export function BlurFadeTextDemo() {
                         현재 날씨 상태
                       </strong>
                       <div
+                        className="dashboard-weather-current"
                         style={{
                           display: "flex",
                           alignItems: "center",

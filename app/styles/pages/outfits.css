@@ -625,6 +625,14 @@
 }
 
 @media (max-width: 640px) {
+  .dashboard-weather-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .dashboard-weather-current {
+    flex-direction: column;
+  }
+
   .dashboard-region-grid {
     grid-template-columns: 1fr;
   }
