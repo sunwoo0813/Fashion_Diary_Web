@@ -441,7 +441,7 @@ export function BlurFadeTextDemo() {
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "1rem",
+          gap: "2rem",
           width: "min(100%, 72rem)",
         }}
       >
@@ -461,7 +461,7 @@ export function BlurFadeTextDemo() {
           <div
             style={{
               display: "grid",
-              gap: "0.75rem",
+              gap: "1.5rem",
               justifyItems: "center",
               width: "100%",
             }}
@@ -556,7 +556,7 @@ export function BlurFadeTextDemo() {
                   width: "min(100%, 72rem)",
                   textAlign: "left",
                   display: "grid",
-                  gap: "0.8rem",
+                  gap: "1.6rem",
                 }}
               >
                 {weatherLoading ? (
@@ -569,14 +569,14 @@ export function BlurFadeTextDemo() {
                     style={{
                       display: "grid",
                       gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-                      gap: "0.65rem",
+                      gap: "1.3rem",
                     }}
                   >
                     <div
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
-                        padding: "0.8rem",
+                        padding: "1.6rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
                         textAlign: "center",
                       }}
@@ -589,7 +589,7 @@ export function BlurFadeTextDemo() {
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
-                          gap: "0.7rem",
+                          gap: "1.4rem",
                         }}
                       >
                         {WeatherIcon ? <WeatherIcon size={42} /> : null}
@@ -602,7 +602,7 @@ export function BlurFadeTextDemo() {
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
-                        padding: "0.8rem",
+                        padding: "1.6rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
                         textAlign: "center",
                       }}
@@ -618,7 +618,7 @@ export function BlurFadeTextDemo() {
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
-                        padding: "0.8rem",
+                        padding: "1.6rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
                         textAlign: "center",
                       }}
@@ -634,7 +634,7 @@ export function BlurFadeTextDemo() {
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
-                        padding: "0.8rem",
+                        padding: "1.6rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
                         textAlign: "center",
                       }}
@@ -650,7 +650,7 @@ export function BlurFadeTextDemo() {
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "12px",
-                        padding: "0.8rem",
+                        padding: "1.6rem",
                         background: "rgba(var(--surface-rgb), 0.55)",
                         textAlign: "center",
                       }}
@@ -669,7 +669,7 @@ export function BlurFadeTextDemo() {
                     style={{
                       display: "flex",
                       justifyContent: "center",
-                      marginTop: "0.2rem",
+                      marginTop: "0.4rem",
                     }}
                   >
                     <button
@@ -681,7 +681,7 @@ export function BlurFadeTextDemo() {
                         display: "inline-flex",
                         alignItems: "center",
                         justifyContent: "center",
-                        gap: "0.45rem",
+                        gap: "0.9rem",
                       }}
                     >
                       {recommendLoading ? <RecommendLoader /> : null}
@@ -694,14 +694,14 @@ export function BlurFadeTextDemo() {
                   <div
                     style={{
                       display: "grid",
-                      gap: "0.8rem",
+                      gap: "1.6rem",
                     }}
                   >
                     <div
                       style={{
                         border: "1px solid var(--line)",
                         borderRadius: "16px",
-                        padding: "1rem",
+                        padding: "2rem",
                         background: "rgba(var(--surface-rgb), 0.68)",
                       }}
                     >
@@ -719,7 +719,7 @@ export function BlurFadeTextDemo() {
                       style={{
                         display: "grid",
                         gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                        gap: "0.75rem",
+                        gap: "1.5rem",
                       }}
                     >
                       {recommendation.parts.map((part) => (
@@ -728,10 +728,10 @@ export function BlurFadeTextDemo() {
                           style={{
                             border: "1px solid var(--line)",
                             borderRadius: "14px",
-                            padding: "0.85rem",
+                            padding: "1.7rem",
                             background: "rgba(var(--surface-rgb), 0.6)",
                             display: "grid",
-                            gap: "0.55rem",
+                            gap: "1.1rem",
                           }}
                         >
                           <span
@@ -756,7 +756,7 @@ export function BlurFadeTextDemo() {
                               }}
                             />
                           ) : null}
-                          <div style={{ display: "grid", gap: "0.2rem" }}>
+                          <div style={{ display: "grid", gap: "0.4rem" }}>
                             <strong>{part.item.name}</strong>
                             <span className="outfit-weather-message" style={{ margin: 0 }}>
                               {[part.item.detail_category, part.item.color, part.item.thickness]
@@ -765,7 +765,7 @@ export function BlurFadeTextDemo() {
                             </span>
                           </div>
                           {part.reasons.length > 0 ? (
-                            <div style={{ display: "grid", gap: "0.18rem" }}>
+                            <div style={{ display: "grid", gap: "0.36rem" }}>
                               {part.reasons.map((reason) => (
                                 <span key={reason} className="outfit-weather-message" style={{ margin: 0 }}>
                                   {reason}
