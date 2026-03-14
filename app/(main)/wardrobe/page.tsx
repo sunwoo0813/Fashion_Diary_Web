@@ -36,8 +36,8 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
     <section className="wardrobe-page">
       <header className="wardrobe-header">
         <div>
-          <p className="wardrobe-kicker">디지털 아카이브</p>
-          <h1>내 옷장</h1>
+          <h1>옷장</h1>
+          <p className="wardrobe-copy">보유한 옷을 저장하고, 찾고, 정리하는 공간입니다.</p>
         </div>
         <div className="wardrobe-header-actions">
           <WardrobeSearchBar initialQuery={q} category={category} items={data.items} />

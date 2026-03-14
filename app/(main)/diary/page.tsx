@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 
 import { PlusIcon } from "@/components/common/icons";
 import { DiaryFeedGrid } from "@/components/diary/diary-feed-grid";
@@ -22,7 +22,8 @@ export default async function DiaryRootPage() {
       <header className="diary-feed-header">
         <div className="diary-feed-title-wrap">
           <div className="diary-feed-title-copy">
-            <h1>다이어리</h1>
+            <h1>아카이브</h1>
+            <p>코디를 저장하고, 쌓인 기록을 다시 꺼내보는 공간입니다.</p>
           </div>
         </div>
         <div className="diary-feed-actions">

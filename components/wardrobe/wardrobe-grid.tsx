@@ -93,7 +93,7 @@ function toCategoryLabel(category: string | null): string {
   if (["top", "tops", "상의"].includes(value)) return "상의";
   if (["bottom", "bottoms", "하의"].includes(value)) return "하의";
   if (["footwear", "신발"].includes(value)) return "신발";
-  if (["accessories", "accessory", "액세서리"].includes(value)) return "액세서리";
+  if (["acc", "accessories", "accessory", "액세서리", "악세서리"].includes(value)) return "액세서리";
 
   return category || "아이템";
 }
@@ -126,6 +126,7 @@ function toDetailCategoryLabel(detailCategory: string | null): string {
     jeans: "청바지",
     slacks: "슬랙스",
     cotton_pants: "면바지/치노",
+    cargo_pants: "카고팬츠",
     jogger_pants: "조거팬츠",
     leggings: "레깅스",
     skirt: "스커트",
@@ -168,16 +169,16 @@ function splitName(name: string): { brand: string; product: string } {
   };
 }
 
-function parseName(name: string): { brand: string; itemName: string } {
-  const text = name.trim();
-  if (!text) return { brand: "-", itemName: "이름 없음" };
-  const parts = text.split(/\s+/);
-  if (parts.length < 2) return { brand: "-", itemName: text };
-  const brandWordCount = detectBrandWordCount(parts);
-  return {
-    brand: parts.slice(0, brandWordCount).join(" "),
-    itemName: parts.slice(brandWordCount).join(" ") || text,
-  };
+function getItemBrand(item: WardrobeItem): string {
+  const brand = String(item.brand || "").trim();
+  if (brand) return brand;
+  return splitName(item.name).brand;
+}
+
+function getItemProductName(item: WardrobeItem): string {
+  const productName = String(item.product_name || "").trim();
+  if (productName) return productName;
+  return splitName(item.name).product;
 }
 
 function parseSizeGrid(detail: unknown): SizeGrid | null {
@@ -249,7 +250,6 @@ export function WardrobeGrid({
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const activeParsedName = activeItem ? parseName(activeItem.name) : null;
   const activeSizeGrid = activeItem ? parseSizeGrid(activeItem.size_detail) : null;
   const activeSizeGridColumns = activeSizeGrid ? visibleSizeGridColumns(activeSizeGrid) : [];
   const activeWearCount = activeItem ? wearCounts[activeItem.id] ?? 0 : 0;
@@ -287,13 +287,11 @@ export function WardrobeGrid({
   }
 
   function openEditModal(item: WardrobeItem) {
-    const parsed = parseName(item.name);
-
     setEditItem(item);
     setEditError("");
     setEditForm({
-      brand: parsed.brand === "-" ? "" : parsed.brand,
-      product: parsed.itemName,
+      brand: getItemBrand(item) === "-" ? "" : getItemBrand(item),
+      product: getItemProductName(item),
       category: item.category || "",
       size: item.size || "",
       sizeDetail: item.size_detail ?? null,
@@ -344,6 +342,8 @@ export function WardrobeGrid({
           row.id === editItem.id
             ? {
                 ...row,
+                brand: editForm.brand.trim() || null,
+                product_name: editForm.product.trim() || null,
                 name: nextName || row.name,
                 category: nextCategory,
                 size: nextSize,
@@ -358,6 +358,8 @@ export function WardrobeGrid({
           prev
             ? {
                 ...prev,
+                brand: editForm.brand.trim() || null,
+                product_name: editForm.product.trim() || null,
                 name: nextName || prev.name,
                 category: nextCategory,
                 size: nextSize,
@@ -475,7 +477,8 @@ export function WardrobeGrid({
       <div className="wardrobe-grid">
         {localItems.map((item) => {
           const selected = selectedSet.has(item.id);
-          const label = splitName(item.name);
+          const brandLabel = getItemBrand(item);
+          const productLabel = getItemProductName(item);
           return (
             <article
               key={item.id}
@@ -505,11 +508,11 @@ export function WardrobeGrid({
               }}
             >
               <div className="wardrobe-brand-bar">
-                <span>{label.brand}</span>
+                <span>{brandLabel}</span>
                 <button
                   type="button"
                   className="wardrobe-edit-icon"
-                  aria-label={`${label.product} 수정`}
+                  aria-label={`${productLabel} 수정`}
                   onClick={(event) => {
                     event.stopPropagation();
                     openEditModal(item);
@@ -527,7 +530,7 @@ export function WardrobeGrid({
                 )}
               </div>
               <div className="wardrobe-info">
-                <h3>{label.product}</h3>
+                <h3>{productLabel}</h3>
               </div>
             </article>
           );
@@ -549,8 +552,8 @@ export function WardrobeGrid({
           >
             <div className="wardrobe-inline-modal-head">
               <div className="wardrobe-inline-modal-title">
-                <strong>{activeParsedName?.brand || "-"}</strong>
-                <p>{activeParsedName?.itemName || "이름 없음"}</p>
+                <strong>{getItemBrand(activeItem)}</strong>
+                <p>{getItemProductName(activeItem) || "이름 없음"}</p>
                 <small>
                   {toCategoryLabel(activeItem.category)} / {toDetailCategoryLabel(activeItem.detail_category)}
                 </small>

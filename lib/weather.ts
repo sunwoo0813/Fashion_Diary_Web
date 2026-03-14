@@ -80,6 +80,7 @@ const YO = 136;
 
 const geoCache = new Map<string, CacheRecord<GridCoord | null>>();
 const weatherCache = new Map<string, CacheRecord<WeatherSummary | null>>();
+const dailyMinMaxCache = new Map<string, CacheRecord<{ t_min: number; t_max: number } | null>>();
 
 function cacheGet<T>(cache: Map<string, CacheRecord<T>>, key: string): T | undefined {
   const record = cache.get(key);
@@ -411,6 +412,10 @@ function weatherCacheKey(cityName: string, location?: WeatherLocationInput): str
   return `${dateKey}::${cityKey(cityName || "Seoul")}`;
 }
 
+function dailyMinMaxCacheKey(cityName: string, location?: WeatherLocationInput): string {
+  return weatherCacheKey(cityName, location);
+}
+
 async function fetchKmaItems(
   endpoint: string,
   params: Record<string, string>,
@@ -560,6 +565,7 @@ export async function getTodayWeatherSummary(
   if (!hasWeatherApiKey()) return null;
 
   const key = weatherCacheKey(cityName, location);
+  const minMaxKey = dailyMinMaxCacheKey(cityName, location);
   const cached = cacheGet(weatherCache, key);
   if (cached !== undefined) return cached;
 
@@ -654,6 +660,7 @@ export async function getTodayWeatherSummary(
     const ultraForecast = ultraForecastMap[ultraForecastTime] || {};
     const shortForecast = shortForecastMap[shortForecastTime] || {};
     const minMax = minMaxFromShortForecast(shortForecastItems, todayKey);
+    const cachedDailyMinMax = cacheGet(dailyMinMaxCache, minMaxKey);
 
     const currentTemp =
       roundToOne(
@@ -684,8 +691,18 @@ export async function getTodayWeatherSummary(
       nowcast.RN1 ?? ultraForecast.RN1 ?? shortForecast.PCP,
     );
 
-    const tMin = minMax?.min ?? currentTemp;
-    const tMax = minMax?.max ?? currentTemp;
+    const resolvedDailyMinMax = minMax
+      ? { t_min: minMax.min, t_max: minMax.max }
+      : cachedDailyMinMax ?? null;
+
+    if (minMax) {
+      cacheSet(dailyMinMaxCache, minMaxKey, resolvedDailyMinMax, GEO_TTL_MS);
+    } else if (cachedDailyMinMax === undefined) {
+      cacheSet(dailyMinMaxCache, minMaxKey, null, WEATHER_ERR_TTL_MS);
+    }
+
+    const tMin = resolvedDailyMinMax?.t_min ?? currentTemp;
+    const tMax = resolvedDailyMinMax?.t_max ?? currentTemp;
     const result: WeatherSummary = {
       city: effectiveCoord.displayName,
       current_temp: currentTemp,

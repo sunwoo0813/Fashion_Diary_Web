@@ -120,7 +120,7 @@ export function MarketingLanding({
   const headerSecondaryHref = isAuthenticated ? diaryHref : loginHref;
   const headerSecondaryLabel = isAuthenticated ? "Open Diary" : "Log In";
   const heroPrimaryHref = isAuthenticated ? dashboardHref : signupHref;
-  const heroPrimaryLabel = isAuthenticated ? "대시보드로 이동" : "기록 시작하기";
+  const heroPrimaryLabel = isAuthenticated ? "오뭐입?으로 이동" : "기록 시작하기";
   const heroSecondaryHref = isAuthenticated ? diaryHref : "#preview";
   const heroSecondaryLabel = isAuthenticated ? "다이어리 열기" : "미리보기 보기";
 

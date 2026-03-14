@@ -16,16 +16,14 @@
 }
 
 .wardrobe-header h1 {
-  margin: 0.3rem 0 0;
+  margin: 0;
   font-family: var(--font-serif);
 }
 
-.wardrobe-kicker {
-  margin: 0;
-  text-transform: uppercase;
-  font-size: 0.75rem;
-  letter-spacing: 0.08em;
+.wardrobe-copy {
+  margin: 0.55rem 0 0;
   color: var(--muted-foreground);
+  line-height: 1.6;
 }
 
 .wardrobe-header-actions {
@@ -915,7 +913,6 @@
     flex: 0 0 auto;
   }
 
-  .wardrobe-kicker,
   .wardrobe-header h1 {
     white-space: nowrap;
   }

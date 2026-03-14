@@ -60,6 +60,7 @@ const DETAIL_CATEGORY_OPTIONS = {
     { value: "jeans", label: "청바지" },
     { value: "slacks", label: "슬랙스" },
     { value: "cotton_pants", label: "면바지/치노팬츠류" },
+    { value: "cargo_pants", label: "카고팬츠" },
     { value: "jogger_pants", label: "조거팬츠/트레이닝팬츠" },
     { value: "leggings", label: "레깅스" },
     { value: "skirt", label: "스커트" },
@@ -73,12 +74,14 @@ const SEASON_OPTIONS = [
 ] as const;
 const COLOR_OPTIONS = [
   { value: "black", label: "블랙" },
+  { value: "charcoal", label: "차콜" },
   { value: "white", label: "화이트" },
   { value: "gray", label: "그레이" },
   { value: "navy", label: "네이비" },
   { value: "blue", label: "블루" },
   { value: "beige", label: "베이지" },
   { value: "brown", label: "브라운" },
+  { value: "burgundy", label: "버건디" },
   { value: "khaki", label: "카키" },
   { value: "green", label: "그린" },
   { value: "red", label: "레드" },
@@ -89,6 +92,7 @@ const COLOR_OPTIONS = [
   { value: "ivory", label: "아이보리" },
 ] as const;
 const DENIM_COLOR_OPTIONS = [
+  { value: "black_denim", label: "블랙 데님" },
   { value: "light_blue_denim", label: "연청" },
   { value: "medium_blue_denim", label: "중청" },
   { value: "dark_blue_denim", label: "진청" },
@@ -153,10 +157,37 @@ function normalizeCategory(value: string): string {
   if (["footwear", "shoe", "sneaker", "boot", "loafer", "sandals"].some((key) => raw.includes(key))) {
     return "Shoes";
   }
-  if (["accessories", "accessory", "bag", "hat", "belt", "jewelry", "scarf"].some((key) => raw.includes(key))) {
+  if (
+    [
+      "accessories",
+      "accessory",
+      "acc",
+      "bag",
+      "hat",
+      "belt",
+      "jewelry",
+      "scarf",
+      "accessorie",
+      "액세서리",
+      "악세서리",
+      "잡화",
+    ].some((key) => raw.includes(key))
+  ) {
     return "ACC";
   }
   return "";
+}
+
+function requiresThickness(category: string): boolean {
+  return category !== "Shoes" && category !== "ACC";
+}
+
+function requiresColor(category: string): boolean {
+  return category !== "ACC";
+}
+
+function requiresSize(category: string): boolean {
+  return category !== "ACC";
 }
 
 function parseSizeGuide(rawValue: unknown): SizeGuide | null {
@@ -412,6 +443,9 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
 
   const previewSrc = localImageUrl || imagePrefill;
   const showDetailCategory = category === "Outer" || category === "Top" || category === "Bottom";
+  const showThickness = requiresThickness(category);
+  const colorRequired = requiresColor(category);
+  const sizeRequired = requiresSize(category);
   const detailCategoryOptions =
     category === "Top" || category === "Outer" || category === "Bottom"
       ? DETAIL_CATEGORY_OPTIONS[category]
@@ -587,10 +621,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     if (!product.trim()) return "아이템명을 입력해 주세요.";
     if (!category.trim()) return "카테고리를 선택해 주세요.";
     if (showDetailCategory && !detailCategory.trim()) return "세부 카테고리를 선택해 주세요.";
-    if (!color.trim()) return "색상을 선택해 주세요.";
+    if (requiresColor(category) && !color.trim()) return "색상을 선택해 주세요.";
     if (seasons.length === 0) return "시즌을 하나 이상 선택해 주세요.";
-    if (!thickness.trim()) return "두께를 선택해 주세요.";
-    if (!size.trim()) return "사이즈를 입력해 주세요.";
+    if (requiresThickness(category) && !thickness.trim()) return "두께를 선택해 주세요.";
+    if (requiresSize(category) && !size.trim()) return "사이즈를 입력해 주세요.";
     return "";
   }
 
@@ -625,7 +659,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     setSearchResults([]);
     setSearchError("");
     setHasSearched(false);
-    setSearchQuery(item.name || "");
+    setSearchQuery("");
   }
 
   function selectSizeGuideRow(rowIndex: number) {
@@ -1104,7 +1138,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                 setColor(event.target.value);
                 setFormError("");
               }}
-              required
+              required={colorRequired}
             >
               <option value="">색상을 선택해 주세요</option>
               {colorOptions.map((option) => (
@@ -1131,25 +1165,27 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               ))}
             </div>
           </label>
-          <label>
-            두께
-            <select
-              name="thickness"
-              value={thickness}
-              onChange={(event) => {
-                setThickness(event.target.value);
-                setFormError("");
-              }}
-              required
-            >
-              <option value="">두께를 선택해 주세요</option>
-              {THICKNESS_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </label>
+          {showThickness ? (
+            <label>
+              두께
+              <select
+                name="thickness"
+                value={thickness}
+                onChange={(event) => {
+                  setThickness(event.target.value);
+                  setFormError("");
+                }}
+                required
+              >
+                <option value="">두께를 선택해 주세요</option>
+                {THICKNESS_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <label>
             사이즈
             <input
@@ -1162,7 +1198,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                 setFormError("");
               }}
               placeholder="S, M, 27, 240mm"
-              required
+              required={sizeRequired}
             />
           </label>
           {!sizeGuide && inputMode !== "search" ? (

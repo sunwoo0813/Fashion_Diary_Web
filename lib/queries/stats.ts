@@ -1,19 +1,29 @@
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
 import { makeDisplayNameFromFields, normalizePublicImagePath } from "@/lib/wardrobe";
 
-const MONTH_LABELS = ["1월", "2월", "3월", "4월", "5월", "6월", "7월", "8월", "9월", "10월", "11월", "12월"];
-const TEMP_BUCKET_ORDER = ["0-4C", "5-13C", "14-22C", "23-28C", "29C+"] as const;
 const CHUNK_SIZE = 200;
-
-type TempBucketKey = (typeof TEMP_BUCKET_ORDER)[number];
+const STATS_CACHE_TTL_MS = 20_000;
 
 type OutfitRow = {
   id: number;
   date: string;
-  t_min: number | null;
-  t_max: number | null;
-  humidity: number | null;
-  rain: boolean;
+};
+
+type ItemMeta = {
+  id: number;
+  name: string;
+  category: string | null;
+  image_path: string | null;
+};
+
+type OutfitPhotoRow = {
+  id: number;
+  outfitId: number;
+};
+
+type WearLink = {
+  itemId: number;
+  outfitId: number;
 };
 
 export type StatsTopItem = {
@@ -24,51 +34,36 @@ export type StatsTopItem = {
   count: number;
 };
 
+export type StatsDormantItem = {
+  id: number;
+  name: string;
+  category: string | null;
+  image_path: string | null;
+  wearCount: number;
+  recentWearDate: string | null;
+};
+
 export type StatsCategoryCount = {
   category: string;
-  count: number;
-};
-
-export type StatsMonthPair = {
-  label: string;
-  count: number;
-};
-
-export type StatsTempBucket = {
-  label: TempBucketKey;
-  count: number;
+  ownedCount: number;
+  wearCount: number;
 };
 
 export type StatsPageData = {
   topItems: StatsTopItem[];
-  monthPairs: StatsMonthPair[];
-  tempBuckets: StatsTempBucket[];
+  dormantItems: StatsDormantItem[];
   categorySorted: StatsCategoryCount[];
   totalItems: number;
   totalOutfits: number;
   totalPhotos: number;
-  maxMonthCount: number;
-  weatherTotal: number;
-  rainCount: number;
-  clearCount: number;
-  rainRatio: number;
-  maxTempCount: number;
-  efficiencyRate: number;
-  curationPercent: number;
-  topCategory: string;
-  currentYear: number;
+  activeItemRate: number;
+  dormantItemCount: number;
+  recentActiveItemCount: number;
 };
-
-const STATS_CACHE_TTL_MS = 20_000;
 
 type StatsCacheEntry = {
   data: StatsPageData;
   expiresAt: number;
-};
-
-type OutfitPhotoRow = {
-  id: number;
-  outfitId: number;
 };
 
 const statsPageCache = new Map<number, StatsCacheEntry>();
@@ -79,39 +74,33 @@ function normalizeCategory(value: unknown): string {
 }
 
 function toNumber(value: unknown): number | null {
-  const n = typeof value === "number" ? value : Number(value);
-  if (!Number.isFinite(n)) return null;
-  return n;
+  const parsed = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(parsed)) return null;
+  return parsed;
 }
 
 function toInt(value: unknown): number | null {
-  const n = toNumber(value);
-  if (n == null) return null;
-  return Math.trunc(n);
-}
-
-function toBoolean(value: unknown): boolean {
-  if (typeof value === "boolean") return value;
-  if (typeof value === "number") return value !== 0;
-  if (typeof value === "string") return ["1", "true", "yes", "on"].includes(value.toLowerCase());
-  return false;
+  const parsed = toNumber(value);
+  if (parsed == null) return null;
+  return Math.trunc(parsed);
 }
 
 function toDateOnly(value: unknown): string | null {
   if (typeof value === "string" && /^\d{4}-\d{2}-\d{2}/.test(value)) {
     return value.slice(0, 10);
   }
+
   const date = new Date(String(value));
   if (Number.isNaN(date.getTime())) return null;
   return date.toISOString().slice(0, 10);
 }
 
 function chunks<T>(values: T[], size: number): T[][] {
-  const out: T[][] = [];
-  for (let i = 0; i < values.length; i += size) {
-    out.push(values.slice(i, i + size));
+  const result: T[][] = [];
+  for (let index = 0; index < values.length; index += size) {
+    result.push(values.slice(index, index + size));
   }
-  return out;
+  return result;
 }
 
 function cleanupStatsCache(now: number) {
@@ -126,14 +115,14 @@ function cloneStatsPageData(data: StatsPageData): StatsPageData {
   return {
     ...data,
     topItems: data.topItems.map((item) => ({ ...item })),
-    monthPairs: data.monthPairs.map((pair) => ({ ...pair })),
-    tempBuckets: data.tempBuckets.map((bucket) => ({ ...bucket })),
+    dormantItems: data.dormantItems.map((item) => ({ ...item })),
     categorySorted: data.categorySorted.map((row) => ({ ...row })),
   };
 }
 
 async function fetchPhotosByOutfitIds(outfitIds: number[]): Promise<OutfitPhotoRow[]> {
   if (outfitIds.length === 0) return [];
+
   const admin = createServiceRoleSupabaseClient();
   const photos: OutfitPhotoRow[] = [];
 
@@ -154,59 +143,56 @@ async function fetchPhotosByOutfitIds(outfitIds: number[]): Promise<OutfitPhotoR
   return photos;
 }
 
-async function fetchRecentWearCounts(
-  recentOutfitIds: number[],
-  recentPhotoIds: number[],
-  allowedItemIds: Set<number>,
-): Promise<Record<number, number>> {
-  const wearCounts: Record<number, number> = {};
-  if (allowedItemIds.size === 0) return wearCounts;
-
+async function fetchWearLinks(outfitIds: number[], photos: OutfitPhotoRow[]): Promise<WearLink[]> {
   const admin = createServiceRoleSupabaseClient();
+  const links: WearLink[] = [];
 
-  if (recentOutfitIds.length > 0) {
-    for (const outfitChunk of chunks(recentOutfitIds, CHUNK_SIZE)) {
-      const { data, error } = await admin.from("outfit_item").select("item_id").in("outfit_id", outfitChunk);
+  if (outfitIds.length > 0) {
+    for (const chunkIds of chunks(outfitIds, CHUNK_SIZE)) {
+      const { data, error } = await admin.from("outfit_item").select("item_id,outfit_id").in("outfit_id", chunkIds);
       if (error) {
         throw new Error(`Outfit wear query failed: ${error.message}`);
       }
+
       (data || []).forEach((row) => {
         const itemId = toInt(row.item_id);
-        if (!itemId || !allowedItemIds.has(itemId)) return;
-        wearCounts[itemId] = (wearCounts[itemId] ?? 0) + 1;
+        const outfitId = toInt(row.outfit_id);
+        if (!itemId || !outfitId) return;
+        links.push({ itemId, outfitId });
       });
     }
   }
 
-  if (recentPhotoIds.length > 0) {
-    for (const photoChunk of chunks(recentPhotoIds, CHUNK_SIZE)) {
-      const { data, error } = await admin.from("outfit_photo_item").select("item_id").in("photo_id", photoChunk);
+  if (photos.length > 0) {
+    const outfitIdByPhotoId = new Map<number, number>();
+    photos.forEach((photo) => {
+      outfitIdByPhotoId.set(photo.id, photo.outfitId);
+    });
+
+    for (const photoChunk of chunks(
+      photos.map((photo) => photo.id),
+      CHUNK_SIZE,
+    )) {
+      const { data, error } = await admin.from("outfit_photo_item").select("item_id,photo_id").in("photo_id", photoChunk);
       if (error) {
         throw new Error(`Outfit photo wear query failed: ${error.message}`);
       }
+
       (data || []).forEach((row) => {
         const itemId = toInt(row.item_id);
-        if (!itemId || !allowedItemIds.has(itemId)) return;
-        wearCounts[itemId] = (wearCounts[itemId] ?? 0) + 1;
+        const photoId = toInt(row.photo_id);
+        const outfitId = photoId ? outfitIdByPhotoId.get(photoId) : null;
+        if (!itemId || !outfitId) return;
+        links.push({ itemId, outfitId });
       });
     }
   }
 
-  return wearCounts;
-}
-
-function bucketKey(avgTemp: number): TempBucketKey {
-  if (avgTemp <= 4) return "0-4C";
-  if (avgTemp <= 13) return "5-13C";
-  if (avgTemp <= 22) return "14-22C";
-  if (avgTemp <= 28) return "23-28C";
-  return "29C+";
+  return links;
 }
 
 export async function getStatsPageData(appUserId: number): Promise<StatsPageData> {
   const admin = createServiceRoleSupabaseClient();
-  const today = new Date();
-  const currentYear = today.getFullYear();
   const now = Date.now();
   cleanupStatsCache(now);
 
@@ -215,17 +201,14 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
     return cloneStatsPageData(cached.data);
   }
 
-  const yearStart = `${currentYear}-01-01`;
-  const nextYearStart = `${currentYear + 1}-01-01`;
+  const today = new Date();
   const cutoffDate = new Date(today);
   cutoffDate.setDate(cutoffDate.getDate() - 30);
   const cutoffIso = cutoffDate.toISOString().slice(0, 10);
 
   const [{ data: itemRows, error: itemError }, { data: outfitRowsRaw, error: outfitError }] = await Promise.all([
     admin.from("item").select("id,brand,product_name,category,image_path").eq("user_id", appUserId),
-    admin.from("outfit").select("id,date,t_min,t_max,humidity,rain").eq("user_id", appUserId).order("date", {
-      ascending: false,
-    }),
+    admin.from("outfit").select("id,date").eq("user_id", appUserId).order("date", { ascending: false }),
   ]);
 
   if (itemError) {
@@ -235,107 +218,85 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
     throw new Error(`Stats outfit query failed: ${outfitError.message}`);
   }
 
-  const itemRowsSafe = (itemRows || []).map((row) => ({
-    id: toInt(row.id) ?? 0,
-    name: makeDisplayNameFromFields(row.brand, row.product_name),
-    category: typeof row.category === "string" && row.category.trim() ? row.category.trim() : null,
-    image_path:
-      typeof row.image_path === "string" && row.image_path.trim()
-        ? normalizePublicImagePath(row.image_path.trim())
-        : null,
-  }));
+  const items: ItemMeta[] = (itemRows || [])
+    .map((row) => ({
+      id: toInt(row.id) ?? 0,
+      name: makeDisplayNameFromFields(row.brand, row.product_name),
+      category: typeof row.category === "string" && row.category.trim() ? row.category.trim() : null,
+      image_path:
+        typeof row.image_path === "string" && row.image_path.trim()
+          ? normalizePublicImagePath(row.image_path.trim())
+          : null,
+    }))
+    .filter((item) => item.id > 0);
 
-  const outfitRows: OutfitRow[] = (outfitRowsRaw || [])
+  const outfits: OutfitRow[] = (outfitRowsRaw || [])
     .map((row) => ({
       id: toInt(row.id) ?? 0,
       date: toDateOnly(row.date) || "",
-      t_min: toNumber(row.t_min),
-      t_max: toNumber(row.t_max),
-      humidity: toInt(row.humidity),
-      rain: toBoolean(row.rain),
     }))
     .filter((row) => row.id > 0 && row.date);
 
-  const totalItems = itemRowsSafe.length;
-  const totalOutfits = outfitRows.length;
-  const outfitIds = outfitRows.map((row) => row.id);
+  const totalItems = items.length;
+  const totalOutfits = outfits.length;
+  const outfitIds = outfits.map((row) => row.id);
   const photos = await fetchPhotosByOutfitIds(outfitIds);
   const totalPhotos = photos.length;
+  const wearLinks = await fetchWearLinks(outfitIds, photos);
 
-  const categoryCounts: Record<string, number> = {};
-  const itemById: Record<number, (typeof itemRowsSafe)[number]> = {};
-  itemRowsSafe.forEach((item) => {
-    if (item.id <= 0) return;
-    itemById[item.id] = item;
-    const key = normalizeCategory(item.category);
-    categoryCounts[key] = (categoryCounts[key] ?? 0) + 1;
-  });
-  const categorySorted = Object.entries(categoryCounts)
-    .map(([category, count]) => ({ category, count }))
-    .sort((a, b) => b.count - a.count || a.category.localeCompare(b.category));
-
-  const monthCounts: Record<number, number> = {};
-  for (let month = 1; month <= 12; month += 1) {
-    monthCounts[month] = 0;
-  }
-  outfitRows
-    .filter((row) => row.date >= yearStart && row.date < nextYearStart)
-    .forEach((row) => {
-      const month = Number(row.date.slice(5, 7));
-      if (month >= 1 && month <= 12) {
-        monthCounts[month] = (monthCounts[month] ?? 0) + 1;
-      }
-    });
-  const monthPairs = MONTH_LABELS.map((label, index) => ({
-    label,
-    count: monthCounts[index + 1] ?? 0,
-  }));
-  const maxMonthCount = Math.max(0, ...monthPairs.map((pair) => pair.count));
-
-  let weatherTotal = 0;
-  let rainCount = 0;
-  let clearCount = 0;
-  const tempBucketCounts: Record<TempBucketKey, number> = {
-    "0-4C": 0,
-    "5-13C": 0,
-    "14-22C": 0,
-    "23-28C": 0,
-    "29C+": 0,
-  };
-
-  outfitRows.forEach((row) => {
-    if (row.t_min == null || row.t_max == null) return;
-    const humidity = row.humidity ?? null;
-    if (row.t_min === 0 && row.t_max === 0 && (humidity == null || humidity === 0)) return;
-
-    weatherTotal += 1;
-    if (row.rain) rainCount += 1;
-    else clearCount += 1;
-
-    const avgTemp = (row.t_min + row.t_max) / 2;
-    const key = bucketKey(avgTemp);
-    tempBucketCounts[key] += 1;
+  const outfitDateById = new Map<number, string>();
+  outfits.forEach((outfit) => {
+    outfitDateById.set(outfit.id, outfit.date);
   });
 
-  const rainRatio = weatherTotal > 0 ? Math.round((rainCount / weatherTotal) * 100) : 0;
-  const tempBuckets = TEMP_BUCKET_ORDER.map((label) => ({ label, count: tempBucketCounts[label] }));
-  const maxTempCount = Math.max(0, ...tempBuckets.map((bucket) => bucket.count));
+  const itemById = new Map<number, ItemMeta>();
+  const categoryOwnedCounts: Record<string, number> = {};
+  items.forEach((item) => {
+    itemById.set(item.id, item);
+    const category = normalizeCategory(item.category);
+    categoryOwnedCounts[category] = (categoryOwnedCounts[category] ?? 0) + 1;
+  });
 
-  const allowedItemIds = new Set(itemRowsSafe.map((row) => row.id).filter((id) => id > 0));
-  const recentOutfitIds = outfitRows.filter((row) => row.date >= cutoffIso).map((row) => row.id);
-  const recentOutfitIdSet = new Set(recentOutfitIds);
-  const recentPhotoIds = photos.filter((photo) => recentOutfitIdSet.has(photo.outfitId)).map((photo) => photo.id);
-  const wearCounts = await fetchRecentWearCounts(recentOutfitIds, recentPhotoIds, allowedItemIds);
-  const topItems = Object.entries(wearCounts)
-    .map(([idText, count]) => ({
-      id: Number(idText),
-      count,
+  const recentWearCounts: Record<number, number> = {};
+  const totalWearCounts: Record<number, number> = {};
+  const recentWearDates: Record<number, string> = {};
+  const categoryWearCounts: Record<string, number> = {};
+
+  wearLinks.forEach((link) => {
+    const item = itemById.get(link.itemId);
+    const outfitDate = outfitDateById.get(link.outfitId) || "";
+    if (!item || !outfitDate) return;
+
+    totalWearCounts[link.itemId] = (totalWearCounts[link.itemId] ?? 0) + 1;
+    const category = normalizeCategory(item.category);
+    categoryWearCounts[category] = (categoryWearCounts[category] ?? 0) + 1;
+
+    const currentRecentDate = recentWearDates[link.itemId] || "";
+    if (!currentRecentDate || outfitDate > currentRecentDate) {
+      recentWearDates[link.itemId] = outfitDate;
+    }
+
+    if (outfitDate >= cutoffIso) {
+      recentWearCounts[link.itemId] = (recentWearCounts[link.itemId] ?? 0) + 1;
+    }
+  });
+
+  const categoryKeys = Array.from(new Set([...Object.keys(categoryOwnedCounts), ...Object.keys(categoryWearCounts)]));
+  const categorySorted = categoryKeys
+    .map((category) => ({
+      category,
+      ownedCount: categoryOwnedCounts[category] ?? 0,
+      wearCount: categoryWearCounts[category] ?? 0,
     }))
-    .filter((row) => row.count > 0 && Number.isInteger(row.id) && row.id > 0)
+    .sort((a, b) => b.ownedCount - a.ownedCount || b.wearCount - a.wearCount || a.category.localeCompare(b.category));
+
+  const topItems = Object.entries(recentWearCounts)
+    .map(([idText, count]) => ({ id: Number(idText), count }))
+    .filter((row) => row.id > 0 && row.count > 0)
     .sort((a, b) => b.count - a.count || a.id - b.id)
     .slice(0, 5)
     .map((row) => {
-      const item = itemById[row.id];
+      const item = itemById.get(row.id);
       return {
         id: row.id,
         name: item?.name || "아이템",
@@ -345,28 +306,41 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
       };
     });
 
-  const efficiencyRate = totalItems > 0 ? Math.min(100, Math.round((totalOutfits / totalItems) * 100)) : 0;
-  const curationPercent = totalItems > 0 ? Math.min(100, Math.round(60 + efficiencyRate * 0.4)) : 0;
-  const topCategory = categorySorted[0]?.category || "미분류";
+  const dormantItems = items
+    .map((item) => ({
+      id: item.id,
+      name: item.name,
+      category: item.category,
+      image_path: item.image_path,
+      wearCount: totalWearCounts[item.id] ?? 0,
+      recentWearDate: recentWearDates[item.id] || null,
+    }))
+    .sort((a, b) => {
+      if (a.wearCount !== b.wearCount) return a.wearCount - b.wearCount;
+      if (!a.recentWearDate && !b.recentWearDate) return a.name.localeCompare(b.name);
+      if (!a.recentWearDate) return -1;
+      if (!b.recentWearDate) return 1;
+      return a.recentWearDate.localeCompare(b.recentWearDate);
+    })
+    .slice(0, 5);
+
+  const wornItemCount = Object.keys(totalWearCounts).filter((idText) => (totalWearCounts[Number(idText)] ?? 0) > 0).length;
+  const recentActiveItemCount = Object.keys(recentWearCounts).filter(
+    (idText) => (recentWearCounts[Number(idText)] ?? 0) > 0,
+  ).length;
+  const activeItemRate = totalItems > 0 ? Math.round((wornItemCount / totalItems) * 100) : 0;
+  const dormantItemCount = Math.max(0, totalItems - wornItemCount);
 
   const result: StatsPageData = {
     topItems,
-    monthPairs,
-    tempBuckets,
+    dormantItems,
     categorySorted,
     totalItems,
     totalOutfits,
     totalPhotos,
-    maxMonthCount,
-    weatherTotal,
-    rainCount,
-    clearCount,
-    rainRatio,
-    maxTempCount,
-    efficiencyRate,
-    curationPercent,
-    topCategory,
-    currentYear,
+    activeItemRate,
+    dormantItemCount,
+    recentActiveItemCount,
   };
 
   statsPageCache.set(appUserId, {
