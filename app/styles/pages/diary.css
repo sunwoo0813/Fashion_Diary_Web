@@ -1,11 +1,3 @@
-.diary-kicker {
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-size: 0.75rem;
-  color: var(--muted-foreground);
-}
-
 .diary-feed-page {
   border: 1px solid var(--line);
   border-radius: 24px;
@@ -25,13 +17,14 @@
 }
 
 .diary-feed-header h1 {
-  margin: 0.35rem 0 0;
+  margin: 0;
   font-family: var(--font-serif);
 }
 
 .diary-feed-header p {
   margin: 0.55rem 0 0;
   color: var(--muted-foreground);
+  line-height: 1.6;
 }
 
 .diary-feed-actions {

@@ -30,10 +30,10 @@ function BaseIcon({
 export function DashboardIcon({ size, className }: IconProps) {
   return (
     <BaseIcon size={size} className={className}>
-      <rect x="3" y="3" width="8" height="8" />
-      <rect x="13" y="3" width="8" height="5" />
-      <rect x="13" y="10" width="8" height="11" />
-      <rect x="3" y="13" width="8" height="8" />
+      <circle cx="8" cy="8" r="3" />
+      <path d="M8 2v2M8 12v2M2 8h2M12 8h2M3.8 3.8l1.4 1.4M10.8 10.8l1.4 1.4M12.2 3.8l-1.4 1.4M5.2 10.8l-1.4 1.4" />
+      <path d="M14 17a3 3 0 0 1 2.9-2.2A3.6 3.6 0 0 1 20.5 18H14Z" />
+      <path d="M12.5 18a2.5 2.5 0 0 1 2.5-2" />
     </BaseIcon>
   );
 }
@@ -41,8 +41,10 @@ export function DashboardIcon({ size, className }: IconProps) {
 export function WardrobeIcon({ size, className }: IconProps) {
   return (
     <BaseIcon size={size} className={className}>
-      <path d="M3 7h18v13H3z" />
-      <path d="M9 7V4h6v3" />
+      <path d="M12 6a2 2 0 1 0-2-2" />
+      <path d="M10 4h4" />
+      <path d="M12 6v2" />
+      <path d="M12 8 5 13a2 2 0 0 0 1.16 3.63h11.68A2 2 0 0 0 19 13l-7-5Z" />
     </BaseIcon>
   );
 }
@@ -61,6 +63,16 @@ export function DiaryIcon({ size, className }: IconProps) {
     <BaseIcon size={size} className={className}>
       <rect x="3" y="4" width="18" height="17" rx="2" />
       <path d="M8 2v4M16 2v4M3 9h18" />
+    </BaseIcon>
+  );
+}
+
+export function ArchiveIcon({ size, className }: IconProps) {
+  return (
+    <BaseIcon size={size} className={className}>
+      <rect x="3" y="5" width="18" height="4" rx="1.5" />
+      <path d="M5 9h14v10a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V9Z" />
+      <path d="M10 13h4" />
     </BaseIcon>
   );
 }

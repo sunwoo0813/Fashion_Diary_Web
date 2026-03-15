@@ -1,5 +1,7 @@
 import { getWeatherApiKey, hasWeatherApiKey } from "@/lib/env";
 import { resolveRegionCoordinate } from "@/lib/region-coordinates";
+import { parseKmaDailyTemperatures } from "@/lib/weather/parseKmaWeather";
+import type { KmaForecastItem } from "@/lib/weather/types";
 
 type CacheRecord<T> = {
   expiresAt: number;
@@ -18,7 +20,7 @@ type WeatherLocationInput = {
   displayName?: string;
 };
 
-type ForecastItem = Record<string, unknown>;
+type ForecastItem = KmaForecastItem;
 
 export type WeatherSummary = {
   city: string;
@@ -27,6 +29,7 @@ export type WeatherSummary = {
   t_min: number;
   t_max: number;
   humidity: number;
+  wind_speed: number;
   rain: boolean;
   desc: string;
   icon: string;
@@ -77,9 +80,20 @@ const OLON = 126.0;
 const OLAT = 38.0;
 const XO = 43;
 const YO = 136;
+const SEOUL_TIME_ZONE = "Asia/Seoul";
+const SEOUL_DATE_FORMATTER = new Intl.DateTimeFormat("en-CA", {
+  timeZone: SEOUL_TIME_ZONE,
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  hourCycle: "h23",
+});
 
 const geoCache = new Map<string, CacheRecord<GridCoord | null>>();
 const weatherCache = new Map<string, CacheRecord<WeatherSummary | null>>();
+const dailyMinMaxCache = new Map<string, CacheRecord<{ t_min: number; t_max: number } | null>>();
 
 function cacheGet<T>(cache: Map<string, CacheRecord<T>>, key: string): T | undefined {
   const record = cache.get(key);
@@ -115,31 +129,49 @@ function roundToOne(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+function getSeoulDateParts(date = new Date()) {
+  const parts = SEOUL_DATE_FORMATTER.formatToParts(date);
+  const lookup = (type: Intl.DateTimeFormatPartTypes) =>
+    parts.find((part) => part.type === type)?.value || "";
+
+  return {
+    year: Number(lookup("year")),
+    month: Number(lookup("month")),
+    day: Number(lookup("day")),
+    hour: Number(lookup("hour")),
+    minute: Number(lookup("minute")),
+  };
+}
+
 function nowDateKey(now = new Date()): string {
   return toYYYYMMDD(now);
 }
 
 function toYYYYMMDD(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-  return `${year}${month}${day}`;
+  const { year, month, day } = getSeoulDateParts(date);
+  const monthText = String(month).padStart(2, "0");
+  const dayText = String(day).padStart(2, "0");
+  return `${year}${monthText}${dayText}`;
 }
 
 function toHHMM(date: Date): string {
-  return `${String(date.getHours()).padStart(2, "0")}${String(date.getMinutes()).padStart(2, "0")}`;
+  const { hour, minute } = getSeoulDateParts(date);
+  return `${String(hour).padStart(2, "0")}${String(minute).padStart(2, "0")}`;
 }
 
 function currentForecastTime(now = new Date()): string {
   return toHHMM(now);
 }
 
-function weatherDesc(pty: number, sky: number): string {
+function weatherDesc(pty: number, sky: number, now = new Date()): string {
+  const { hour } = getSeoulDateParts(now);
+  const isNight = hour < 6 || hour >= 18;
+
   if (pty === 1) return "Rain";
   if (pty === 2) return "Rain/Snow";
   if (pty === 3) return "Snow";
   if (pty === 4) return "Shower";
-  if (sky === 1) return "Sunny";
+  if (sky === 1) return isNight ? "Clear" : "Sunny";
   if (sky === 3) return "Mostly Cloudy";
   if (sky === 4) return "Cloudy";
   return "Clear";
@@ -226,24 +258,19 @@ function latLonToGrid(lat: number, lon: number): { nx: number; ny: number } {
 
 function latestShortBase(now = new Date()): { baseDate: string; baseTime: string } {
   const reference = new Date(now.getTime() - 15 * 60 * 1000);
-  const year = reference.getFullYear();
-  const month = reference.getMonth();
-  const day = reference.getDate();
-  const minute = reference.getMinutes();
-  const currentHour = reference.getHours();
+  const { hour: currentHour, minute } = getSeoulDateParts(reference);
 
   for (let i = SHORT_BASE_HOURS.length - 1; i >= 0; i -= 1) {
     const hour = SHORT_BASE_HOURS[i];
     if (currentHour > hour || (currentHour === hour && minute >= 0)) {
-      const date = new Date(year, month, day, hour, 0, 0, 0);
       return {
-        baseDate: toYYYYMMDD(date),
+        baseDate: toYYYYMMDD(reference),
         baseTime: `${String(hour).padStart(2, "0")}00`,
       };
     }
   }
 
-  const prev = new Date(year, month, day - 1, 23, 0, 0, 0);
+  const prev = new Date(reference.getTime() - 24 * 60 * 60 * 1000);
   return {
     baseDate: toYYYYMMDD(prev),
     baseTime: "2300",
@@ -252,9 +279,35 @@ function latestShortBase(now = new Date()): { baseDate: string; baseTime: string
 
 function latestUltraBase(now = new Date()): { baseDate: string; baseTime: string } {
   const reference = new Date(now.getTime() - 45 * 60 * 1000);
+  const { hour } = getSeoulDateParts(reference);
   return {
     baseDate: toYYYYMMDD(reference),
-    baseTime: `${String(reference.getHours()).padStart(2, "0")}00`,
+    baseTime: `${String(hour).padStart(2, "0")}00`,
+  };
+}
+
+function dailyMinMaxBase(now = new Date()): { baseDate: string; baseTime: string } {
+  // TMN/TMX are not guaranteed to appear in the same short-forecast response
+  // we use for "current" weather. Late-day base times often only contain future
+  // hourly TMP slots, so today's TMN/TMX can be missing entirely.
+  //
+  // To keep "today's low/high" stable like portal weather services, fetch a
+  // dedicated daily-min/max short forecast from the earliest daytime base
+  // available for today. If it is still too early in the day, fall back to the
+  // previous day's 2300 publication.
+  const { hour, minute } = getSeoulDateParts(now);
+
+  if (hour > 2 || (hour === 2 && minute >= 10)) {
+    return {
+      baseDate: toYYYYMMDD(now),
+      baseTime: "0200",
+    };
+  }
+
+  const prev = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+  return {
+    baseDate: toYYYYMMDD(prev),
+    baseTime: "2300",
   };
 }
 
@@ -411,6 +464,10 @@ function weatherCacheKey(cityName: string, location?: WeatherLocationInput): str
   return `${dateKey}::${cityKey(cityName || "Seoul")}`;
 }
 
+function dailyMinMaxCacheKey(cityName: string, location?: WeatherLocationInput): string {
+  return weatherCacheKey(cityName, location);
+}
+
 async function fetchKmaItems(
   endpoint: string,
   params: Record<string, string>,
@@ -516,35 +573,6 @@ function findNearestFutureTime(times: string[], nowHHMM: string): string {
   return times[times.length - 1];
 }
 
-function minMaxFromShortForecast(items: ForecastItem[], dateKey: string): { min: number; max: number } | null {
-  const todayItems = items.filter((item) => String(item.fcstDate || "") === dateKey);
-  if (todayItems.length === 0) return null;
-
-  const tmnValues = todayItems
-    .filter((item) => String(item.category || "") === "TMN")
-    .map((item) => toFloat(item.fcstValue))
-    .filter((value): value is number => value != null);
-  const tmxValues = todayItems
-    .filter((item) => String(item.category || "") === "TMX")
-    .map((item) => toFloat(item.fcstValue))
-    .filter((value): value is number => value != null);
-  const tmpValues = todayItems
-    .filter((item) => String(item.category || "") === "TMP")
-    .map((item) => toFloat(item.fcstValue))
-    .filter((value): value is number => value != null);
-
-  if (tmnValues.length === 0 && tmxValues.length === 0 && tmpValues.length === 0) return null;
-
-  const minSource = tmnValues.length > 0 ? tmnValues : tmpValues;
-  const maxSource = tmxValues.length > 0 ? tmxValues : tmpValues;
-  if (minSource.length === 0 || maxSource.length === 0) return null;
-
-  return {
-    min: roundToOne(Math.min(...minSource)),
-    max: roundToOne(Math.max(...maxSource)),
-  };
-}
-
 function currentPtyFromNowcast(nowcast: Record<string, unknown>): number {
   const pty = toInt(nowcast.PTY);
   if (pty != null) return pty;
@@ -560,6 +588,7 @@ export async function getTodayWeatherSummary(
   if (!hasWeatherApiKey()) return null;
 
   const key = weatherCacheKey(cityName, location);
+  const minMaxKey = dailyMinMaxCacheKey(cityName, location);
   const cached = cacheGet(weatherCache, key);
   if (cached !== undefined) return cached;
 
@@ -586,6 +615,7 @@ export async function getTodayWeatherSummary(
   const todayKey = nowDateKey(now);
   const ultraBase = latestUltraBase(now);
   const shortBase = latestShortBase(now);
+  const minMaxBase = dailyMinMaxBase(now);
 
   try {
     const nowcastItems = await fetchKmaItems(ULTRA_NOWCAST_ENDPOINT, {
@@ -606,8 +636,17 @@ export async function getTodayWeatherSummary(
       nx: String(effectiveCoord.nx),
       ny: String(effectiveCoord.ny),
     });
+    const dailyMinMaxItems =
+      minMaxBase.baseDate === shortBase.baseDate && minMaxBase.baseTime === shortBase.baseTime
+        ? shortForecastItems
+        : await fetchKmaItems(SHORT_FORECAST_ENDPOINT, {
+            base_date: minMaxBase.baseDate,
+            base_time: minMaxBase.baseTime,
+            nx: String(effectiveCoord.nx),
+            ny: String(effectiveCoord.ny),
+          });
 
-    if (!nowcastItems || !ultraForecastItems || !shortForecastItems) {
+    if (!nowcastItems || !ultraForecastItems || !shortForecastItems || !dailyMinMaxItems) {
       cacheSet(weatherCache, key, null, WEATHER_ERR_TTL_MS);
       return null;
     }
@@ -653,7 +692,7 @@ export async function getTodayWeatherSummary(
     const nowcast = nowcastMap[nowcastTime] || {};
     const ultraForecast = ultraForecastMap[ultraForecastTime] || {};
     const shortForecast = shortForecastMap[shortForecastTime] || {};
-    const minMax = minMaxFromShortForecast(shortForecastItems, todayKey);
+    const cachedDailyMinMax = cacheGet(dailyMinMaxCache, minMaxKey);
 
     const currentTemp =
       roundToOne(
@@ -683,18 +722,40 @@ export async function getTodayWeatherSummary(
     const precipitationAmount = precipitationAmountLabel(
       nowcast.RN1 ?? ultraForecast.RN1 ?? shortForecast.PCP,
     );
+    const feelsLike = feelsLikeCelsius(currentTemp, humidity, windSpeed);
 
-    const tMin = minMax?.min ?? currentTemp;
-    const tMax = minMax?.max ?? currentTemp;
+    const dailyTemperatures = parseKmaDailyTemperatures({
+      items: dailyMinMaxItems,
+      todayDateKey: todayKey,
+      currentTemp,
+      feelsLike,
+      fallbackMinTemp: cachedDailyMinMax?.t_min ?? null,
+      fallbackMaxTemp: cachedDailyMinMax?.t_max ?? null,
+    });
+
+    if (
+      dailyTemperatures.minTempSource === "tmn" ||
+      dailyTemperatures.maxTempSource === "tmx"
+    ) {
+      cacheSet(
+        dailyMinMaxCache,
+        minMaxKey,
+        { t_min: dailyTemperatures.minTemp, t_max: dailyTemperatures.maxTemp },
+        GEO_TTL_MS,
+      );
+    } else if (cachedDailyMinMax === undefined) {
+      cacheSet(dailyMinMaxCache, minMaxKey, null, WEATHER_ERR_TTL_MS);
+    }
     const result: WeatherSummary = {
       city: effectiveCoord.displayName,
       current_temp: currentTemp,
-      feels_like: feelsLikeCelsius(currentTemp, humidity, windSpeed),
-      t_min: Math.min(tMin, tMax),
-      t_max: Math.max(tMin, tMax),
+      feels_like: feelsLike,
+      t_min: dailyTemperatures.minTemp,
+      t_max: dailyTemperatures.maxTemp,
       humidity,
+      wind_speed: roundToOne(windSpeed),
       rain: ptyNow > 0,
-      desc: weatherDesc(ptyNow, skyNow),
+      desc: weatherDesc(ptyNow, skyNow, now),
       icon: "",
       precipitation_type: precipitationTypeLabel(ptyNow),
       precipitation_probability: precipitationProbability,

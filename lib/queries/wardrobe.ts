@@ -6,6 +6,7 @@ export type WardrobeItem = {
   id: number;
   user_id: number;
   brand?: string | null;
+  product_name?: string | null;
   name: string;
   category: string | null;
   detail_category: string | null;
@@ -142,6 +143,7 @@ export async function getWardrobePageData({
     id: Number(row.id),
     user_id: Number(row.user_id),
     brand: row.brand ? String(row.brand) : null,
+    product_name: row.product_name ? String(row.product_name) : null,
     name: makeDisplayNameFromFields(row.brand, row.product_name),
     category: row.category ? String(row.category) : null,
     detail_category: row.detail_category ? String(row.detail_category) : null,

@@ -47,6 +47,18 @@ export function hasWeatherApiKey(): boolean {
   return Boolean(getEnv("WEATHER_API_KEY", "KMA_API_KEY"));
 }
 
+export function getOpenAiApiKey(): string {
+  return requireEnv("OpenAI API key", "OPENAI_API_KEY");
+}
+
+export function hasOpenAiApiKey(): boolean {
+  return Boolean(getEnv("OPENAI_API_KEY"));
+}
+
+export function getOpenAiRecommendModel(): string {
+  return getEnv("OPENAI_RECOMMEND_MODEL") ?? "gpt-4.1-mini";
+}
+
 export function isAuthEmailConfirmDisabled(): boolean {
   const raw = getEnv("AUTH_DISABLE_EMAIL_CONFIRM");
   if (!raw) return false;

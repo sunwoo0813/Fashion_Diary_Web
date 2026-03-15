@@ -240,6 +240,38 @@ export function ThunderIcon({ size = 48, className }: WeatherIconProps) {
   );
 }
 
+export function WindIcon({ size = 48, className }: WeatherIconProps) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={cn(className)} style={iconStyle(size)}>
+      <motion.path
+        d="M6 18h26a4 4 0 000-8"
+        stroke="#94a3b8"
+        strokeWidth={2}
+        strokeLinecap="round"
+        animate={{ pathLength: [0, 1] }}
+        transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.path
+        d="M6 24h32a3 3 0 010 6"
+        stroke="#94a3b8"
+        strokeWidth={2}
+        strokeLinecap="round"
+        animate={{ pathLength: [0, 1] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
+      />
+      <motion.path
+        d="M10 30h18"
+        stroke="#94a3b8"
+        strokeWidth={2}
+        strokeLinecap="round"
+        opacity={0.5}
+        animate={{ pathLength: [0, 1] }}
+        transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut", delay: 0.6 }}
+      />
+    </svg>
+  );
+}
+
 export function FogIcon({ size = 48, className }: WeatherIconProps) {
   const lines = [
     { y: 16, w: 28, d: 0 },
@@ -307,26 +339,130 @@ export function PartlyCloudyIcon({ size = 48, className }: WeatherIconProps) {
   );
 }
 
+export function SunriseIcon({ size = 48, className }: WeatherIconProps) {
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={cn(className)} style={iconStyle(size)}>
+      <line x1="6" y1="34" x2="42" y2="34" stroke="#94a3b8" strokeWidth={2} strokeLinecap="round" />
+      <motion.g
+        animate={{ y: [4, 0] }}
+        transition={{ duration: 3, repeat: Infinity, repeatType: "reverse", ease: "easeInOut" }}
+      >
+        <path d="M12 34a12 12 0 0124 0" fill="#f5b625" opacity={0.15} />
+        <path d="M12 34a12 12 0 0124 0" stroke="#f5b625" strokeWidth={2} strokeLinecap="round" />
+        {[0, 30, 60, 90, 120, 150, 180].map((deg) => (
+          <line
+            key={deg}
+            x1="24"
+            y1="14"
+            x2="24"
+            y2="17"
+            stroke="#f5b625"
+            strokeWidth={1.5}
+            strokeLinecap="round"
+            style={{ transformOrigin: "24px 34px", rotate: `${deg - 90}deg` }}
+          />
+        ))}
+      </motion.g>
+      <motion.path
+        d="M24 42V36"
+        stroke="#f5b625"
+        strokeWidth={2}
+        strokeLinecap="round"
+        animate={{ y: [2, -2, 2] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.path
+        d="M20 38l4-4 4 4"
+        stroke="#f5b625"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        animate={{ y: [2, -2, 2] }}
+        transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+      />
+    </svg>
+  );
+}
+
+export function RainbowIcon({ size = 48, className }: WeatherIconProps) {
+  const arcs = [
+    { r: 16, color: "#ef4444", d: 0 },
+    { r: 13, color: "#f59e0b", d: 0.1 },
+    { r: 10, color: "#22c55e", d: 0.2 },
+    { r: 7, color: "#3b82f6", d: 0.3 },
+  ];
+
+  return (
+    <svg viewBox="0 0 48 48" fill="none" className={cn(className)} style={iconStyle(size)}>
+      {arcs.map((arc) => (
+        <motion.path
+          key={arc.r}
+          d={`M${24 - arc.r} 34a${arc.r} ${arc.r} 0 01${arc.r * 2} 0`}
+          stroke={arc.color}
+          strokeWidth={2}
+          strokeLinecap="round"
+          fill="none"
+          initial={{ pathLength: 0, opacity: 0 }}
+          animate={{ pathLength: 1, opacity: 0.7 }}
+          transition={{
+            duration: 1.5,
+            delay: arc.d,
+            repeat: Infinity,
+            repeatType: "reverse",
+            repeatDelay: 1,
+          }}
+        />
+      ))}
+    </svg>
+  );
+}
+
 export function getWeatherIconComponent(
   desc: string,
   precipitationType: string,
   precipitationAmount: string,
+  windSpeed = 0,
+  precipitationProbability = 0,
 ) {
   const normalizedDesc = desc.toLowerCase();
   const normalizedPty = precipitationType.toLowerCase();
+  const hour = new Date().getHours();
+  const isNight = hour < 6 || hour >= 18;
+  const isSunriseWindow = hour >= 5 && hour < 7;
+  const hasVisibleRainAmount =
+    precipitationAmount !== "-" && precipitationAmount !== "0mm";
+  const isWindy = windSpeed >= 7;
+  const looksLikeBriefClearing =
+    !normalizedPty.includes("rain") &&
+    !normalizedPty.includes("snow") &&
+    hasVisibleRainAmount &&
+    !isNight;
 
   if (normalizedPty.includes("snow")) return SnowIcon;
+  if (normalizedDesc.includes("thunder")) return ThunderIcon;
   if (normalizedPty.includes("shower")) return HeavyRainIcon;
   if (normalizedPty.includes("rain")) {
-    return precipitationAmount !== "-" && precipitationAmount !== "0mm"
+    return hasVisibleRainAmount
       ? HeavyRainIcon
       : RainIcon;
   }
-  if (normalizedDesc.includes("thunder")) return ThunderIcon;
   if (normalizedDesc.includes("fog")) return FogIcon;
+  if (isWindy) return WindIcon;
+  if (isSunriseWindow && (normalizedDesc.includes("clear") || normalizedDesc.includes("sun"))) {
+    return SunriseIcon;
+  }
+  if (
+    looksLikeBriefClearing ||
+    (!isNight &&
+      precipitationProbability >= 55 &&
+      (normalizedDesc.includes("clear") || normalizedDesc.includes("mostly cloudy")))
+  ) {
+    return RainbowIcon;
+  }
   if (normalizedDesc.includes("mostly cloudy")) return PartlyCloudyIcon;
   if (normalizedDesc.includes("cloud")) return CloudIcon;
-  if (normalizedDesc.includes("clear") || normalizedDesc.includes("sun")) return SunIcon;
+  if (normalizedDesc.includes("clear")) return isNight ? MoonIcon : SunIcon;
+  if (normalizedDesc.includes("sun")) return SunIcon;
   if (normalizedDesc.includes("night")) return MoonIcon;
   return PartlyCloudyIcon;
 }

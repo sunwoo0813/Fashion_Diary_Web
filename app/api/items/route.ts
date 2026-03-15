@@ -70,6 +70,18 @@ function requiresDetailCategory(category: string): boolean {
   return category === "Top" || category === "Outer" || category === "Bottom";
 }
 
+function requiresThickness(category: string): boolean {
+  return category !== "Shoes" && category !== "ACC";
+}
+
+function requiresColor(category: string): boolean {
+  return category !== "ACC";
+}
+
+function requiresSize(category: string): boolean {
+  return category !== "ACC";
+}
+
 export async function POST(request: Request) {
   const authUser = await getCurrentUser();
   if (!authUser?.email) {
@@ -96,7 +108,15 @@ export async function POST(request: Request) {
     const prefillImagePath = toText(formData.get("image_path_prefill"));
     const appUserId = await getOrCreateAppUserId(authUser.email);
 
-    if (!brand || !product || !category || !color || !thickness || !explicitSize || seasons.length === 0) {
+    if (
+      !brand ||
+      !product ||
+      !category ||
+      seasons.length === 0 ||
+      (requiresColor(category) && !color) ||
+      (requiresThickness(category) && !thickness)
+      || (requiresSize(category) && !explicitSize)
+    ) {
       return redirectWithMessage(
         request.url,
         "/wardrobe/new",

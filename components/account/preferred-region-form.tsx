@@ -170,7 +170,7 @@ export function PreferredRegionForm() {
       <div className="account-card-head">
         <div>
           <h2>기본 지역</h2>
-          <p className="account-card-copy">대시보드와 코디 기록에서 이 지역의 날씨를 먼저 보여줍니다.</p>
+          <p className="account-card-copy">오뭐입?과 코디 기록에서 이 지역의 날씨를 먼저 보여줍니다.</p>
         </div>
       </div>
 

@@ -26,6 +26,7 @@ type WeatherDetails = {
   t_min: number;
   t_max: number;
   humidity: number;
+  wind_speed: number;
   rain: boolean;
   desc: string;
   icon: string;
@@ -50,15 +51,23 @@ type RecommendationPart = {
 };
 
 type RecommendationData = {
-  summary: string;
+  summary?: string;
   context: {
     effectiveTemp: number;
     tempBand: string;
     isRainy: boolean;
     regionLabel: string;
   };
-  parts: RecommendationPart[];
-  missingSlots: string[];
+  parts?: RecommendationPart[];
+  missingSlots?: string[];
+  looks: Array<{
+    title: string;
+    summary: string;
+    reasons: string[];
+    parts: RecommendationPart[];
+    missingSlots: string[];
+    totalScore: number;
+  }>;
 };
 
 function SelectArrow() {
@@ -158,6 +167,43 @@ function slotLabel(slot: RecommendationPart["slot"]) {
   return "악세서리";
 }
 
+function splitItemName(name: string) {
+  const trimmed = name.trim();
+  const separatorIndex = trimmed.indexOf(" ");
+
+  if (separatorIndex <= 0) {
+    return { brand: "", productName: trimmed };
+  }
+
+  return {
+    brand: trimmed.slice(0, separatorIndex),
+    productName: trimmed.slice(separatorIndex + 1).trim(),
+  };
+}
+
+function lookLabel(title: string) {
+  if (title === "single") return "AI 추천";
+  if (title === "stable") return "무난하게";
+  if (title === "variation") return "조금 다르게";
+  if (title === "underused") return "안 입던 옷 활용";
+  return title;
+}
+
+function todayLookSummary(recommendation: RecommendationData) {
+  const { context } = recommendation;
+
+  if (context.isRainy) {
+    return "오늘은 비를 고려해서 무난하고 안정적인 룩으로 가는 게 좋아요.";
+  }
+  if (context.tempBand === "freezing" || context.tempBand === "cold") {
+    return "오늘은 보온감 있는 레이어드 룩이 가장 잘 어울려요.";
+  }
+  if (context.tempBand === "warm" || context.tempBand === "hot") {
+    return "오늘은 가볍고 답답하지 않은 룩으로 가는 게 좋아요.";
+  }
+  return "오늘은 기본 조합에 가벼운 변주를 주기 좋은 날이에요.";
+}
+
 export function BlurFadeTextDemo() {
   const [isOpen, setIsOpen] = useState(false);
   const [regions, setRegions] = useState<RegionGroup[]>([]);
@@ -175,6 +221,9 @@ export function BlurFadeTextDemo() {
   const [recommendation, setRecommendation] = useState<RecommendationData | null>(null);
   const [recommendLoading, setRecommendLoading] = useState(false);
   const [recommendError, setRecommendError] = useState("");
+  const [aiRecommendLoading, setAiRecommendLoading] = useState(false);
+  const [aiComposerOpen, setAiComposerOpen] = useState(false);
+  const [aiComment, setAiComment] = useState("");
 
   const draftSido = useMemo(
     () => regions.find((region) => region.id === draftSidoId),
@@ -199,7 +248,13 @@ export function BlurFadeTextDemo() {
   const selectedRegionLabel = regionLabel(appliedSido, appliedSigungu);
   const draftRegionLabel = regionLabel(draftSido, draftSigungu);
   const WeatherIcon = weather
-    ? getWeatherIconComponent(weather.desc, weather.precipitation_type, weather.precipitation_amount)
+    ? getWeatherIconComponent(
+        weather.desc,
+        weather.precipitation_type,
+        weather.precipitation_amount,
+        weather.wind_speed,
+        weather.precipitation_probability,
+      )
     : null;
 
   useEffect(() => {
@@ -425,6 +480,51 @@ export function BlurFadeTextDemo() {
     }
   }
 
+  async function handleAiRecommendOutfit() {
+    if (!weather) return;
+    if (!aiComposerOpen) {
+      setAiComposerOpen(true);
+      setRecommendError("");
+      return;
+    }
+    if (!aiComment.trim()) {
+      setRecommendError("AI 추천을 위해 오늘 상황을 입력해 주세요.");
+      return;
+    }
+
+    setAiRecommendLoading(true);
+    setRecommendError("");
+    setRecommendation(null);
+
+    try {
+      const response = await fetch("/api/outfits/recommend-ai", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          comment: aiComment.trim(),
+          regionLabel: selectedRegionLabel,
+          weather: {
+            ...weather,
+            regionLabel: selectedRegionLabel,
+          },
+        }),
+      });
+
+      const payload = (await response.json()) as
+        | { ok: true; data: RecommendationData }
+        | { ok: false; error?: string };
+
+      if (!response.ok || !payload.ok) {
+        setRecommendError(payload.ok ? "" : payload.error || "AI 추천을 만들지 못했습니다.");
+        return;
+      }
+
+      setRecommendation(payload.data);
+    } finally {
+      setAiRecommendLoading(false);
+    }
+  }
+
   return (
     <section
       id="header"
@@ -599,9 +699,6 @@ export function BlurFadeTextDemo() {
                         }}
                       >
                         {WeatherIcon ? <WeatherIcon size={42} /> : null}
-                        <span className="outfit-weather-message" style={{ margin: 0 }}>
-                          {weather.desc}
-                        </span>
                       </div>
                     </div>
                     <div
@@ -674,20 +771,68 @@ export function BlurFadeTextDemo() {
                     </div>
                   </div>
                 ) : null}
+                {weather && aiComposerOpen ? (
+                  <div
+                    style={{
+                      display: "grid",
+                      gap: "0.6rem",
+                      justifyItems: "center",
+                    }}
+                  >
+                    <label>
+                      <textarea
+                        value={aiComment}
+                        onChange={(event) => setAiComment(event.target.value)}
+                        placeholder="오늘 어떤 느낌으로 입고싶나요?"
+                        rows={3}
+                        style={{
+                          width: "min(100%, 38rem)",
+                          minHeight: "5.8rem",
+                          resize: "vertical",
+                          borderRadius: "14px",
+                          border: "1px solid var(--line)",
+                          background: "rgba(var(--surface-rgb), 0.55)",
+                          color: "var(--foreground)",
+                          padding: "0.95rem 1rem",
+                          font: "inherit",
+                        }}
+                      />
+                    </label>
+                  </div>
+                ) : null}
                 {weather ? (
                   <div
                     className="dashboard-weather-action"
                     style={{
                       display: "flex",
                       justifyContent: "center",
+                      gap: "0.8rem",
+                      flexWrap: "wrap",
                       marginTop: "0.4rem",
                     }}
                   >
+                    {!aiComposerOpen ? (
+                      <button
+                        type="button"
+                        className="solid-button"
+                        onClick={handleRecommendOutfit}
+                        disabled={recommendLoading || aiRecommendLoading}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          gap: "0.9rem",
+                        }}
+                      >
+                        {recommendLoading ? <RecommendLoader /> : null}
+                        <span>{recommendLoading ? "무료 추천 중..." : "무료 추천"}</span>
+                      </button>
+                    ) : null}
                     <button
                       type="button"
-                      className="solid-button"
-                      onClick={handleRecommendOutfit}
-                      disabled={recommendLoading}
+                      className="ghost-button"
+                      onClick={handleAiRecommendOutfit}
+                      disabled={recommendLoading || aiRecommendLoading}
                       style={{
                         display: "inline-flex",
                         alignItems: "center",
@@ -695,8 +840,10 @@ export function BlurFadeTextDemo() {
                         gap: "0.9rem",
                       }}
                     >
-                      {recommendLoading ? <RecommendLoader /> : null}
-                      <span>{recommendLoading ? "코디 추천 중..." : "코디 추천"}</span>
+                      {aiRecommendLoading ? <RecommendLoader /> : null}
+                      <span>
+                        {aiRecommendLoading ? "AI 추천 중..." : aiComposerOpen ? "AI 추천 실행" : "AI 추천"}
+                      </span>
                     </button>
                   </div>
                 ) : null}
@@ -708,82 +855,110 @@ export function BlurFadeTextDemo() {
                       gap: "1.6rem",
                     }}
                   >
-                    <div
-                      style={{
-                        border: "1px solid var(--line)",
-                        borderRadius: "16px",
-                        padding: "2rem",
-                        background: "rgba(var(--surface-rgb), 0.68)",
-                      }}
-                    >
-                      <strong style={{ display: "block", marginBottom: "0.45rem" }}>추천 코디</strong>
-                      <p className="outfit-weather-message" style={{ margin: 0 }}>
-                        {recommendation.summary}
-                      </p>
-                      {recommendation.missingSlots.length > 0 ? (
-                        <p className="outfit-weather-message" style={{ margin: "0.55rem 0 0" }}>
-                          부족한 카테고리: {recommendation.missingSlots.map((slot) => slotLabel(slot as RecommendationPart["slot"])).join(", ")}
+                    {recommendation.looks[0]?.title !== "single" ? (
+                      <div
+                        style={{
+                          border: "1px solid var(--line)",
+                          borderRadius: "16px",
+                          padding: "2rem",
+                          background: "rgba(var(--surface-rgb), 0.68)",
+                        }}
+                      >
+                        <strong style={{ display: "block", marginBottom: "0.45rem" }}>추천 코디</strong>
+                        <p className="outfit-weather-message" style={{ margin: 0 }}>
+                          {todayLookSummary(recommendation)}
                         </p>
-                      ) : null}
-                    </div>
+                      </div>
+                    ) : null}
                     <div
                       style={{
                         display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
-                        gap: "1.5rem",
+                        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                        gap: "1.2rem",
                       }}
                     >
-                      {recommendation.parts.map((part) => (
+                      {recommendation.looks.map((look, lookIndex) => (
                         <div
-                          key={`${part.slot}-${part.item.id}`}
+                          key={`${look.title}-${lookIndex}`}
                           style={{
                             border: "1px solid var(--line)",
-                            borderRadius: "14px",
-                            padding: "1.7rem",
+                            borderRadius: "16px",
+                            padding: "1.4rem",
                             background: "rgba(var(--surface-rgb), 0.6)",
                             display: "grid",
-                            gap: "1.1rem",
+                            gap: "1rem",
+                            alignContent: "start",
                           }}
                         >
-                          <span
+                          <div style={{ display: "grid", gap: "0.35rem" }}>
+                            <strong>{lookLabel(look.title)}</strong>
+                            {look.title === "single" && look.reasons[0] ? (
+                              <p className="outfit-weather-message" style={{ margin: 0 }}>
+                                {look.reasons[0]}
+                              </p>
+                            ) : null}
+                            {look.missingSlots.length > 0 ? (
+                              <p className="outfit-weather-message" style={{ margin: 0 }}>
+                                부족한 카테고리: {look.missingSlots.map((slot) => slotLabel(slot as RecommendationPart["slot"])).join(", ")}
+                              </p>
+                            ) : null}
+                          </div>
+                          <div
                             style={{
-                              fontSize: "0.78rem",
-                              color: "var(--muted-foreground)",
+                              display: "grid",
+                              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                              gap: "0.9rem",
                             }}
                           >
-                            {slotLabel(part.slot)}
-                          </span>
-                          {part.item.image_path ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={part.item.image_path}
-                              alt={part.item.name}
-                              style={{
-                                width: "100%",
-                                aspectRatio: "4 / 5",
-                                objectFit: "cover",
-                                borderRadius: "12px",
-                                border: "1px solid var(--line)",
-                              }}
-                            />
-                          ) : null}
-                          <div style={{ display: "grid", gap: "0.4rem" }}>
-                            <strong>{part.item.name}</strong>
-                            <span className="outfit-weather-message" style={{ margin: 0 }}>
-                              {[part.item.detail_category, part.item.color, part.item.thickness]
-                                .filter(Boolean)
-                                .join(" / ") || "기본 추천"}
-                            </span>
+                            {look.parts.map((part) => {
+                              const { brand, productName } = splitItemName(part.item.name);
+
+                              return (
+                                <div
+                                  key={`${look.title}-${part.slot}-${part.item.id}`}
+                                  style={{
+                                    border: "1px solid var(--line)",
+                                    borderRadius: "14px",
+                                    padding: "1rem",
+                                    background: "rgba(var(--surface-rgb), 0.55)",
+                                    display: "grid",
+                                    gap: "0.8rem",
+                                  }}
+                                >
+                                  <span
+                                    style={{
+                                      fontSize: "0.78rem",
+                                      color: "var(--muted-foreground)",
+                                    }}
+                                  >
+                                    {slotLabel(part.slot)}
+                                  </span>
+                                  {part.item.image_path ? (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={part.item.image_path}
+                                      alt={part.item.name}
+                                      style={{
+                                        width: "100%",
+                                        aspectRatio: "4 / 5",
+                                        objectFit: "cover",
+                                        borderRadius: "12px",
+                                        border: "1px solid var(--line)",
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div style={{ display: "grid", gap: "0.35rem" }}>
+                                    {brand ? (
+                                      <span className="outfit-weather-message" style={{ margin: 0 }}>
+                                        {brand}
+                                      </span>
+                                    ) : null}
+                                    <strong>{productName || part.item.name}</strong>
+                                  </div>
+                                </div>
+                              );
+                            })}
                           </div>
-                          {part.reasons.length > 0 ? (
-                            <div style={{ display: "grid", gap: "0.36rem" }}>
-                              {part.reasons.map((reason) => (
-                                <span key={reason} className="outfit-weather-message" style={{ margin: 0 }}>
-                                  {reason}
-                                </span>
-                              ))}
-                            </div>
-                          ) : null}
                         </div>
                       ))}
                     </div>
