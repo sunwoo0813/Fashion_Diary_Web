@@ -102,6 +102,7 @@ const THICKNESS_OPTIONS = [
   { value: "medium", label: "보통" },
   { value: "heavy", label: "두꺼움" },
 ] as const;
+const SEARCH_RESULTS_INITIAL_LIMIT = 7;
 
 function ImagePlusIcon() {
   return (
@@ -368,6 +369,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   const [searchError, setSearchError] = useState("");
   const [searchLoading, setSearchLoading] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [isSearchResultsExpanded, setIsSearchResultsExpanded] = useState(false);
   const [productUrl, setProductUrl] = useState("");
   const [urlFetchLoading, setUrlFetchLoading] = useState(false);
   const [urlFetchError, setUrlFetchError] = useState("");
@@ -542,6 +544,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     setSearchError("");
     setSearchLoading(false);
     setHasSearched(false);
+    setIsSearchResultsExpanded(false);
 
     setProductUrl("");
     setUrlFetchLoading(false);
@@ -815,12 +818,20 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   }
 
   const normalizedSearchQuery = searchQuery.trim();
+  const visibleSearchResults = isSearchResultsExpanded
+    ? searchResults
+    : searchResults.slice(0, SEARCH_RESULTS_INITIAL_LIMIT);
+  const hiddenSearchResultsCount = Math.max(searchResults.length - SEARCH_RESULTS_INITIAL_LIMIT, 0);
   const hasSearchResults = useMemo(
     () =>
       Boolean(normalizedSearchQuery) &&
       (searchResults.length > 0 || searchLoading || Boolean(searchError) || hasSearched),
     [hasSearched, normalizedSearchQuery, searchError, searchLoading, searchResults.length],
   );
+
+  useEffect(() => {
+    setIsSearchResultsExpanded(false);
+  }, [normalizedSearchQuery, searchResults]);
 
   return (
     <section className="item-new-page">
@@ -889,17 +900,36 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
             <div className="item-search-results">
               {searchError ? <p>{searchError}</p> : null}
               {!searchError && searchResults.length === 0 && !searchLoading ? <p>일치하는 상품이 없어요.</p> : null}
-              {searchResults.map((item, index) => (
+              {visibleSearchResults.map((item, index) => (
                 <button
                   type="button"
                   key={`${item.brand}-${item.name}-${index}`}
                   className="item-search-result"
                   onClick={() => applyProductItem(item)}
                 >
-                  <span>{item.name || "이름 없음"}</span>
-                  <small>{[item.brand, item.category].filter(Boolean).join(" / ")}</small>
+                  {item.image_path ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img className="item-search-result-image" src={item.image_path} alt="" aria-hidden="true" />
+                  ) : (
+                    <div className="item-search-result-image item-search-result-image-placeholder" aria-hidden="true">
+                      No Image
+                    </div>
+                  )}
+                  <div className="item-search-result-copy">
+                    <span>{item.name || "이름 없음"}</span>
+                    <small>{[item.brand, item.category].filter(Boolean).join(" / ")}</small>
+                  </div>
                 </button>
               ))}
+              {!searchError && hiddenSearchResultsCount > 0 ? (
+                <button
+                  type="button"
+                  className="item-search-result item-search-result-more"
+                  onClick={() => setIsSearchResultsExpanded(true)}
+                >
+                  더보기 ({hiddenSearchResultsCount}개)
+                </button>
+              ) : null}
             </div>
           ) : null}
         </>
