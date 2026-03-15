@@ -80,6 +80,7 @@ const OLON = 126.0;
 const OLAT = 38.0;
 const XO = 43;
 const YO = 136;
+const SEOUL_OFFSET_MS = 9 * 60 * 60 * 1000;
 
 const geoCache = new Map<string, CacheRecord<GridCoord | null>>();
 const weatherCache = new Map<string, CacheRecord<WeatherSummary | null>>();
@@ -119,19 +120,27 @@ function roundToOne(value: number): number {
   return Math.round(value * 10) / 10;
 }
 
+function toSeoulDate(date = new Date()): Date {
+  return new Date(date.getTime() + SEOUL_OFFSET_MS);
+}
+
 function nowDateKey(now = new Date()): string {
   return toYYYYMMDD(now);
 }
 
 function toYYYYMMDD(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
+  const seoulDate = toSeoulDate(date);
+  const year = seoulDate.getUTCFullYear();
+  const month = String(seoulDate.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(seoulDate.getUTCDate()).padStart(2, "0");
   return `${year}${month}${day}`;
 }
 
 function toHHMM(date: Date): string {
-  return `${String(date.getHours()).padStart(2, "0")}${String(date.getMinutes()).padStart(2, "0")}`;
+  const seoulDate = toSeoulDate(date);
+  return `${String(seoulDate.getUTCHours()).padStart(2, "0")}${String(
+    seoulDate.getUTCMinutes(),
+  ).padStart(2, "0")}`;
 }
 
 function currentForecastTime(now = new Date()): string {
@@ -139,7 +148,7 @@ function currentForecastTime(now = new Date()): string {
 }
 
 function weatherDesc(pty: number, sky: number, now = new Date()): string {
-  const hour = now.getHours();
+  const hour = toSeoulDate(now).getUTCHours();
   const isNight = hour < 6 || hour >= 18;
 
   if (pty === 1) return "Rain";
@@ -232,17 +241,17 @@ function latLonToGrid(lat: number, lon: number): { nx: number; ny: number } {
 }
 
 function latestShortBase(now = new Date()): { baseDate: string; baseTime: string } {
-  const reference = new Date(now.getTime() - 15 * 60 * 1000);
-  const year = reference.getFullYear();
-  const month = reference.getMonth();
-  const day = reference.getDate();
-  const minute = reference.getMinutes();
-  const currentHour = reference.getHours();
+  const reference = toSeoulDate(new Date(now.getTime() - 15 * 60 * 1000));
+  const year = reference.getUTCFullYear();
+  const month = reference.getUTCMonth();
+  const day = reference.getUTCDate();
+  const minute = reference.getUTCMinutes();
+  const currentHour = reference.getUTCHours();
 
   for (let i = SHORT_BASE_HOURS.length - 1; i >= 0; i -= 1) {
     const hour = SHORT_BASE_HOURS[i];
     if (currentHour > hour || (currentHour === hour && minute >= 0)) {
-      const date = new Date(year, month, day, hour, 0, 0, 0);
+      const date = new Date(Date.UTC(year, month, day, hour, 0, 0, 0));
       return {
         baseDate: toYYYYMMDD(date),
         baseTime: `${String(hour).padStart(2, "0")}00`,
@@ -250,7 +259,7 @@ function latestShortBase(now = new Date()): { baseDate: string; baseTime: string
     }
   }
 
-  const prev = new Date(year, month, day - 1, 23, 0, 0, 0);
+  const prev = new Date(Date.UTC(year, month, day - 1, 23, 0, 0, 0));
   return {
     baseDate: toYYYYMMDD(prev),
     baseTime: "2300",
@@ -258,10 +267,10 @@ function latestShortBase(now = new Date()): { baseDate: string; baseTime: string
 }
 
 function latestUltraBase(now = new Date()): { baseDate: string; baseTime: string } {
-  const reference = new Date(now.getTime() - 45 * 60 * 1000);
+  const reference = toSeoulDate(new Date(now.getTime() - 45 * 60 * 1000));
   return {
     baseDate: toYYYYMMDD(reference),
-    baseTime: `${String(reference.getHours()).padStart(2, "0")}00`,
+    baseTime: `${String(reference.getUTCHours()).padStart(2, "0")}00`,
   };
 }
 
@@ -274,24 +283,36 @@ function dailyMinMaxBase(now = new Date()): { baseDate: string; baseTime: string
   // dedicated daily-min/max short forecast from the earliest daytime base
   // available for today. If it is still too early in the day, fall back to the
   // previous day's 2300 publication.
+  const seoulNow = toSeoulDate(now);
   const twoAm = new Date(
-    now.getFullYear(),
-    now.getMonth(),
-    now.getDate(),
+    Date.UTC(
+    seoulNow.getUTCFullYear(),
+    seoulNow.getUTCMonth(),
+    seoulNow.getUTCDate(),
     2,
     10,
     0,
-    0,
+    0),
   );
 
-  if (now >= twoAm) {
+  if (seoulNow >= twoAm) {
     return {
       baseDate: toYYYYMMDD(now),
       baseTime: "0200",
     };
   }
 
-  const prev = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 0, 0, 0);
+  const prev = new Date(
+    Date.UTC(
+      seoulNow.getUTCFullYear(),
+      seoulNow.getUTCMonth(),
+      seoulNow.getUTCDate() - 1,
+      23,
+      0,
+      0,
+      0,
+    ),
+  );
   return {
     baseDate: toYYYYMMDD(prev),
     baseTime: "2300",
