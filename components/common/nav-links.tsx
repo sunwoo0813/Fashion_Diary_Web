@@ -15,7 +15,7 @@ export type AppNavLink = {
 export const APP_NAV_LINKS: AppNavLink[] = [
   {
     href: "/dashboard",
-    label: "오뭐입?",
+    label: "대시보드",
     icon: <DashboardIcon size={16} />,
     matchPrefix: "/dashboard",
   },
