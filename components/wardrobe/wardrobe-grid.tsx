@@ -13,6 +13,7 @@ type WardrobeGridProps = {
   query: string;
   category: string;
   categoryCounts: Record<string, number>;
+  totalItemCount: number;
   items: WardrobeItem[];
   wearCounts: Record<number, number>;
   recentWearDates: Record<number, string>;
@@ -226,6 +227,7 @@ export function WardrobeGrid({
   query,
   category,
   categoryCounts,
+  totalItemCount,
   items,
   wearCounts,
   recentWearDates,
@@ -446,6 +448,9 @@ export function WardrobeGrid({
         <p className={`wardrobe-delete-hint${deleteMode ? " is-visible" : ""}`}>
           삭제할 아이템을 선택하세요.
         </p>
+        <span className="wardrobe-total-count" aria-label="총 등록 수">
+          {totalItemCount}
+        </span>
         {!deleteMode || selectedIds.length === 0 ? (
           <button
             type="button"

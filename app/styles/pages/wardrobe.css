@@ -162,11 +162,19 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.28rem;
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: 0.45rem 0.72rem;
   background: var(--surface);
   font-size: 0.82rem;
+}
+
+.wardrobe-filter-chip-count {
+  font-size: 0.68rem;
+  font-weight: 500;
+  line-height: 1;
+  color: #9ca3af;
 }
 
 .count-filter-dropdown {
@@ -265,12 +273,16 @@
   font-weight: 700;
 }
 
+.wardrobe-filter-form :is(button, .filter-chip).is-active .wardrobe-filter-chip-count {
+  color: #9ca3af;
+}
+
 .wardrobe-action-row {
   margin-top: -2.95rem;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
-  align-items: flex-start;
+  align-items: center;
   gap: 0.7rem;
 }
 
@@ -287,6 +299,23 @@
 
 .wardrobe-delete-hint.is-visible {
   opacity: 1;
+}
+
+.wardrobe-total-count {
+  min-width: 2.2rem;
+  height: 2.2rem;
+  padding: 0 0.55rem;
+  border: 1px solid #F97316;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  font-size: 0.95rem;
+  font-weight: 700;
+  line-height: 1;
+  text-align: center;
+  color: #4b5563;
 }
 
 .wardrobe-grid {

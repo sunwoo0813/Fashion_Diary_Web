@@ -34,6 +34,7 @@ export function WardrobeCategoryFilter({
         <nav className="wardrobe-filter-form wardrobe-filter-form-desktop" aria-label="옷장 카테고리">
           {CATEGORY_FILTERS.map((filter) => {
             const active = isCategoryActive(category, filter);
+            const count = counts[filter.value] ?? 0;
             return (
               <Link
                 key={filter.label}
@@ -42,7 +43,10 @@ export function WardrobeCategoryFilter({
                 className={`filter-chip${active ? " is-active" : ""}`}
                 aria-current={active ? "page" : undefined}
               >
-                {filter.label}
+                <span>{filter.label}</span>
+                <span className="wardrobe-filter-chip-count" aria-hidden="true">
+                  {count}
+                </span>
               </Link>
             );
           })}
