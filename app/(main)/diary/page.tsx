@@ -3,11 +3,11 @@ import Link from "next/link";
 import { PlusIcon } from "@/components/common/icons";
 import { DiaryFeedGrid } from "@/components/diary/diary-feed-grid";
 import { requireAppUserContext } from "@/lib/app-user";
-import { getDiaryFeedData } from "@/lib/queries/diary";
+import { getDiaryFeedData, getUserWardrobeItems } from "@/lib/queries/diary";
 
 export default async function DiaryRootPage() {
   const { appUserId } = await requireAppUserContext();
-  const posts = await getDiaryFeedData(appUserId, 120);
+  const [posts, wardrobeItems] = await Promise.all([getDiaryFeedData(appUserId, 120), getUserWardrobeItems(appUserId)]);
   const sortedPosts = [...posts].sort((a, b) => {
     const byDate = b.date.localeCompare(a.date);
     if (byDate !== 0) return byDate;
@@ -41,7 +41,14 @@ export default async function DiaryRootPage() {
         </div>
       ) : (
         <div className="diary-feed-scroll">
-          <DiaryFeedGrid posts={sortedPosts} />
+          <DiaryFeedGrid
+            posts={sortedPosts}
+            wardrobeItems={wardrobeItems.map((item) => ({
+              id: item.id,
+              name: item.name,
+              category: item.category,
+            }))}
+          />
         </div>
       )}
     </section>
