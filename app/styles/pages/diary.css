@@ -292,7 +292,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem 0 1rem;
+  padding: 3rem 0 1rem;
 }
 
 .diary-modal-media img {
@@ -887,7 +887,7 @@
 :root:is([data-theme="dark"], .dark) .diary-modal-muted,
 :root:is([data-theme="dark"], .dark) .diary-feed-count,
 :root:is([data-theme="dark"], .dark) .diary-post-date-badge {
-  color: #4b5563;
+  color: #ffffff;
 }
 
 :root:is([data-theme="dark"], .dark) .diary-post-date-badge {
