@@ -1,15 +1,27 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { useFormStatus } from "react-dom";
 
 export function LoginSubmitButton() {
-  const { pending } = useFormStatus();
+  const buttonRef = useRef<HTMLButtonElement | null>(null);
   const [mounted, setMounted] = useState(false);
+  const [pending, setPending] = useState(false);
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    const form = buttonRef.current?.form;
+    if (!form) return;
+
+    function handleSubmit() {
+      setPending(true);
+    }
+
+    form.addEventListener("submit", handleSubmit);
+    return () => form.removeEventListener("submit", handleSubmit);
   }, []);
 
   useEffect(() => {
@@ -28,7 +40,7 @@ export function LoginSubmitButton() {
 
   return (
     <>
-      <button type="submit" className="solid-button auth-submit" disabled={pending}>
+      <button ref={buttonRef} type="submit" className="solid-button auth-submit" disabled={pending}>
         Log In
       </button>
       {mounted && pending
