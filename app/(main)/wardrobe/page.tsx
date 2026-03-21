@@ -1,7 +1,6 @@
-import Link from "next/link";
-
-import { PlusIcon } from "@/components/common/icons";
 import { WardrobeCategoryFilter } from "@/components/wardrobe/wardrobe-category-filter";
+import { WardrobeDeleteProvider } from "@/components/wardrobe/wardrobe-delete-context";
+import { WardrobeDesktopActions } from "@/components/wardrobe/wardrobe-desktop-actions";
 import { WardrobeGrid } from "@/components/wardrobe/wardrobe-grid";
 import { WardrobeSearchBar } from "@/components/wardrobe/wardrobe-search-bar";
 import { requireAppUserContext } from "@/lib/app-user";
@@ -33,33 +32,32 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
   });
 
   return (
-    <section className="wardrobe-page">
-      <header className="wardrobe-header">
-        <div>
-          <h1>옷장</h1>
-          <p className="wardrobe-copy">보유한 옷을 저장하고, 찾고, 정리하는 공간입니다.</p>
-        </div>
-        <div className="wardrobe-header-actions">
-          <WardrobeSearchBar initialQuery={q} category={category} items={data.items} />
-          <Link href="/wardrobe/new" className="solid-button diary-icon-button" aria-label="새 아이템 추가">
-            <PlusIcon size={18} />
-          </Link>
-        </div>
-      </header>
+    <WardrobeDeleteProvider>
+      <section className="wardrobe-page">
+        <header className="wardrobe-header">
+          <div>
+            <h1>옷장</h1>
+          </div>
+          <div className="wardrobe-header-actions">
+            <WardrobeSearchBar initialQuery={q} category={category} items={data.items} />
+            <WardrobeDesktopActions />
+          </div>
+        </header>
 
-      <WardrobeCategoryFilter query={q} category={category} counts={data.categoryCounts} desktopOnly />
+        <WardrobeCategoryFilter query={q} category={category} counts={data.categoryCounts} desktopOnly />
 
-      {error ? <p className="form-error">{error}</p> : null}
+        {error ? <p className="form-error">{error}</p> : null}
 
-      <WardrobeGrid
-        query={q}
-        category={category}
-        categoryCounts={data.categoryCounts}
-        items={data.items}
-        wearCounts={data.wearCounts}
-        recentWearDates={data.recentWearDates}
-        hasFilters={data.hasFilters}
-      />
-    </section>
+        <WardrobeGrid
+          query={q}
+          category={category}
+          categoryCounts={data.categoryCounts}
+          items={data.items}
+          wearCounts={data.wearCounts}
+          recentWearDates={data.recentWearDates}
+          hasFilters={data.hasFilters}
+        />
+      </section>
+    </WardrobeDeleteProvider>
   );
 }

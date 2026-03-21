@@ -1,10 +1,12 @@
-﻿"use client";
+"use client";
 
-import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 
 import { KebabVerticalIcon } from "@/components/common/icons";
+import { OutfitItemSelector } from "@/components/diary/outfit-item-selector";
 import type { DiaryFeedPost } from "@/lib/queries/diary";
+import type { WardrobeItem } from "@/lib/queries/wardrobe";
 
 function formatDisplayDate(isoDate: string): string {
   return new Date(`${isoDate}T00:00:00Z`).toLocaleDateString("ko-KR", {
@@ -15,49 +17,208 @@ function formatDisplayDate(isoDate: string): string {
   });
 }
 
+const MULTI_WORD_BRANDS = [
+  "surface edition",
+  "alexander wang",
+  "comme des garcons",
+  "maison margiela",
+  "isabel marant",
+  "ami paris",
+  "acne studios",
+  "studio nicholson",
+  "rag and bone",
+];
+
+const MULTI_WORD_BRAND_TOKENS = MULTI_WORD_BRANDS.map((brand) =>
+  brand
+    .toLowerCase()
+    .split(/\s+/)
+    .filter(Boolean),
+).sort((a, b) => b.length - a.length);
+
+function detectBrandWordCount(parts: string[]): number {
+  if (parts.length < 2) return 1;
+  const lowerParts = parts.map((part) => part.toLowerCase());
+  for (const tokens of MULTI_WORD_BRAND_TOKENS) {
+    if (tokens.length > lowerParts.length) continue;
+    const matches = tokens.every((token, index) => lowerParts[index] === token);
+    if (matches) return tokens.length;
+  }
+  return 1;
+}
+
+function splitItemName(name: string): { brand: string; product: string } {
+  const text = name.trim();
+  if (!text) return { brand: "", product: "이름 없음" };
+  const parts = text.split(/\s+/);
+  if (parts.length === 1) return { brand: parts[0], product: parts[0] };
+  const brandWordCount = detectBrandWordCount(parts);
+  return {
+    brand: parts.slice(0, brandWordCount).join(" "),
+    product: parts.slice(brandWordCount).join(" ") || text,
+  };
+}
+
 type DiaryFeedGridProps = {
   posts: DiaryFeedPost[];
+  wardrobeItems: WardrobeItem[];
 };
 
-export function DiaryFeedGrid({ posts }: DiaryFeedGridProps) {
+export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
+  const [localPosts, setLocalPosts] = useState(posts);
   const [selectedPost, setSelectedPost] = useState<DiaryFeedPost | null>(null);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editNote, setEditNote] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  useEffect(() => { setIsMounted(true); }, []);
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
+      if (isEditing) { setIsEditing(false); return; }
+      if (menuOpen) { setMenuOpen(false); return; }
       setSelectedPost(null);
       setActivePhotoIndex(0);
     }
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
-  }, []);
+  }, [isEditing, menuOpen]);
+
+  function openPost(post: DiaryFeedPost) {
+    setSelectedPost(post);
+    setActivePhotoIndex(0);
+    setMenuOpen(false);
+    setIsEditing(false);
+  }
+
+  function closeModal() {
+    setSelectedPost(null);
+    setActivePhotoIndex(0);
+    setMenuOpen(false);
+    setIsEditing(false);
+  }
+
+  function handleMenuOpen() {
+    if (!menuButtonRef.current) return;
+    const rect = menuButtonRef.current.getBoundingClientRect();
+    setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
+    setMenuOpen((v) => !v);
+  }
+
+  function enterEditMode() {
+    if (!selectedPost) return;
+    setEditNote(selectedPost.note || "");
+    setIsEditing(true);
+    setMenuOpen(false);
+  }
+
+  async function handleDelete() {
+    if (!selectedPost) return;
+    if (!confirm("이 코디를 삭제할까요?")) return;
+    setIsSubmitting(true);
+    try {
+      await fetch(`/api/outfits/${selectedPost.outfit_id}`, { method: "DELETE" });
+      setLocalPosts((prev) => prev.filter((p) => p.outfit_id !== selectedPost.outfit_id));
+      closeModal();
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!selectedPost || !formRef.current) return;
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData(formRef.current);
+      const itemIds = formData.getAll("outfit_item_ids").map(Number).filter(Boolean);
+
+      const response = await fetch(`/api/outfits/${selectedPost.outfit_id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          note: editNote || null,
+          outfit_item_ids: itemIds,
+          t_min: selectedPost.t_min,
+          t_max: selectedPost.t_max,
+          humidity: selectedPost.humidity ?? 0,
+          rain: selectedPost.rain ?? false,
+        }),
+      });
+      if (!response.ok) return;
+
+      const updatedItems = itemIds
+        .map((id) => wardrobeItems.find((w) => w.id === id))
+        .filter(Boolean)
+        .map((w) => ({
+          id: w!.id,
+          name: w!.name,
+          category: w!.category,
+          image_path: w!.image_path ?? null,
+        }));
+
+      const updatedPost: DiaryFeedPost = {
+        ...selectedPost,
+        note: editNote || null,
+        outfit_items: updatedItems,
+      };
+
+      setSelectedPost(updatedPost);
+      setLocalPosts((prev) =>
+        prev.map((p) => (p.outfit_id === selectedPost.outfit_id ? updatedPost : p)),
+      );
+      setIsEditing(false);
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
+
+  const selectorItems = wardrobeItems.map((item) => ({
+    id: item.id,
+    name: item.name,
+    brand: item.brand,
+    product_name: item.product_name,
+    category: item.category,
+    image_path: item.image_path,
+  }));
 
   return (
     <>
       <div className="wardrobe-grid">
-        {posts.map((post) => (
+        {localPosts.map((post) => (
           <article
             key={post.outfit_id}
             className="diary-post-card"
             role="button"
             tabIndex={0}
-            onClick={() => {
-              setSelectedPost(post);
-              setActivePhotoIndex(0);
-            }}
+            onClick={() => openPost(post)}
             onKeyDown={(event) => {
               if (event.key !== "Enter" && event.key !== " ") return;
               event.preventDefault();
-              setSelectedPost(post);
-              setActivePhotoIndex(0);
+              openPost(post);
             }}
           >
             <div className="diary-post-shell">
               <div className="diary-post-open">
                 <div className="diary-post-media">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={post.photos[0]?.photo_path || ""} alt={`코디 게시물 ${post.outfit_id}`} className="diary-post-image" />
+                  {post.photos[0]?.photo_path ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={post.photos[0].photo_path} alt={`코디 게시물 ${post.outfit_id}`} className="diary-post-image" />
+                  ) : (
+                    <div className="diary-post-placeholder">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z" stroke="currentColor" strokeWidth="1.4"/>
+                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.4"/>
+                        <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                  )}
                 </div>
                 <div className="diary-post-overlay" />
                 <div className="diary-post-info">
@@ -72,10 +233,7 @@ export function DiaryFeedGrid({ posts }: DiaryFeedGridProps) {
       {selectedPost ? (
         <div
           className="diary-modal-backdrop"
-          onClick={() => {
-            setSelectedPost(null);
-            setActivePhotoIndex(0);
-          }}
+          onClick={closeModal}
         >
           <article className="diary-modal" onClick={(event) => event.stopPropagation()}>
             <div className="diary-modal-media">
@@ -112,34 +270,128 @@ export function DiaryFeedGrid({ posts }: DiaryFeedGridProps) {
                 </p>
               ) : null}
             </div>
+
             <div className="diary-modal-body">
               <div className="diary-modal-head">
-                <h2>{selectedPost.note || "코디 기록"}</h2>
-                <Link
-                  href={`/outfits/${selectedPost.outfit_id}/edit`}
-                  className="diary-modal-menu-button"
-                  aria-label="코디 수정"
-                >
-                  <KebabVerticalIcon size={16} />
-                </Link>
-              </div>
-              <p className="diary-modal-weather">
-                {selectedPost.t_min ?? 0}°C / {selectedPost.t_max ?? 0}°C | {selectedPost.humidity ?? 0}% |{" "}
-                {selectedPost.rain ? "비" : "비 없음"}
-              </p>
-              {selectedPost.outfit_items.length > 0 ? (
-                <div className="diary-tag-list">
-                  {selectedPost.outfit_items.map((item) => (
-                    <span key={`${selectedPost.outfit_id}-${item.id}`}>{item.name}</span>
-                  ))}
+                <div>
+                  <p className="diary-modal-date">
+                    {formatDisplayDate(selectedPost.date)}
+                    {selectedPost.city ? <span className="diary-modal-city">{selectedPost.city}</span> : null}
+                  </p>
+                  {selectedPost.t_min != null || selectedPost.t_max != null ? (
+                    <p className="diary-modal-weather">
+                      최저 {selectedPost.t_min ?? "?"}° · 최고 {selectedPost.t_max ?? "?"}°
+                    </p>
+                  ) : null}
                 </div>
+                <div className="diary-modal-menu-wrap">
+                  {isEditing ? (
+                    <div className="diary-modal-edit-actions">
+                      <button type="button" className="ghost-button" onClick={() => setIsEditing(false)}>
+                        취소
+                      </button>
+                      <button type="button" className="solid-button" onClick={handleSave} disabled={isSubmitting}>
+                        저장
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      ref={menuButtonRef}
+                      type="button"
+                      className="diary-modal-menu-button"
+                      aria-label="더보기"
+                      onClick={handleMenuOpen}
+                    >
+                      <KebabVerticalIcon size={16} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {isEditing ? (
+                <textarea
+                  className="diary-modal-note-input"
+                  value={editNote}
+                  onChange={(e) => setEditNote(e.target.value)}
+                  placeholder="코디를 기록해 보세요..."
+                  rows={3}
+                />
               ) : (
-                <p className="diary-modal-muted">연결한 아이템 없음</p>
+                selectedPost.note ? <p className="diary-modal-note">{selectedPost.note}</p> : null
               )}
-              <p className="diary-modal-date">{formatDisplayDate(selectedPost.date)}</p>
+
+              {isEditing ? (
+                <form ref={formRef}>
+                  <OutfitItemSelector
+                    items={selectorItems}
+                    defaultSelectedIds={selectedPost.outfit_items.map((i) => i.id)}
+                  />
+                </form>
+              ) : (
+                selectedPost.outfit_items.length > 0 ? (
+                  <div className="diary-modal-items-section">
+                    <p className="diary-modal-items-label">착용 아이템</p>
+                    <div className="diary-modal-items-list">
+                      {selectedPost.outfit_items.map((item) => {
+                        const { brand, product } = splitItemName(item.name);
+                        return (
+                          <div key={`${selectedPost.outfit_id}-${item.id}`} className="diary-modal-item-row">
+                            <div className="diary-modal-item-thumb">
+                              {item.image_path ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img src={item.image_path} alt={item.name} />
+                              ) : (
+                                <div className="diary-modal-item-placeholder">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z" stroke="currentColor" strokeWidth="1.4"/>
+                                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.4"/>
+                                    <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                                  </svg>
+                                </div>
+                              )}
+                            </div>
+                            <div className="diary-modal-item-info">
+                              {brand && product !== brand ? <small className="diary-modal-item-brand">{brand}</small> : null}
+                              <span className="diary-modal-item-name">{product}</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="diary-modal-muted">연결한 아이템 없음</p>
+                )
+              )}
             </div>
           </article>
         </div>
+      ) : null}
+
+      {isMounted && menuOpen && menuPos ? createPortal(
+        <>
+          <div
+            style={{ position: "fixed", inset: 0, zIndex: 200 }}
+            onClick={() => setMenuOpen(false)}
+          />
+          <div
+            className="diary-modal-menu"
+            style={{ position: "fixed", top: menuPos.top, right: menuPos.right, zIndex: 201 }}
+          >
+            <button type="button" className="diary-modal-menu-item" onClick={enterEditMode}>
+              수정
+            </button>
+            <button
+              type="button"
+              className="diary-modal-menu-item is-danger"
+              onClick={handleDelete}
+              disabled={isSubmitting}
+            >
+              삭제
+            </button>
+          </div>
+        </>,
+        document.body,
       ) : null}
     </>
   );

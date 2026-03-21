@@ -87,6 +87,7 @@ type RecommendationContext = {
   wantsOuter: boolean;
   wantsAccessories: boolean;
   isRainy: boolean;
+  tempRange: number; // 일교차 (t_max - t_min)
   regionLabel: string;
 };
 
@@ -199,66 +200,60 @@ function buildContext(weather: RecommendationWeatherInput): RecommendationContex
   const tMax = toFiniteNumber(weather.t_max);
   const fallbackAverage = tMin != null && tMax != null ? (tMin + tMax) / 2 : current ?? 20;
   const effectiveTemp = feelsLike ?? current ?? fallbackAverage;
+  const tempRange = tMin != null && tMax != null ? Math.max(0, tMax - tMin) : 0;
   const precipType = toText(weather.precipitation_type).toLowerCase();
   const isRainy =
     Boolean(weather.rain) ||
     ["rain", "shower", "snow", "drizzle"].some((token) => precipType.includes(token));
   if (effectiveTemp <= 4) {
     return {
-      effectiveTemp,
-      tempBand: "freezing",
+      effectiveTemp, tempBand: "freezing",
       expectedSeasons: ["winter"],
       preferredThicknesses: ["heavy", "medium"],
-      wantsOuter: true,
-      wantsAccessories: true,
-      isRainy,
+      wantsOuter: true, wantsAccessories: true,
+      isRainy, tempRange,
       regionLabel: toText(weather.regionLabel) || "선택 지역",
     };
   }
   if (effectiveTemp <= 12) {
     return {
-      effectiveTemp,
-      tempBand: "cold",
+      effectiveTemp, tempBand: "cold",
       expectedSeasons: ["winter", "fall"],
       preferredThicknesses: ["medium", "heavy"],
-      wantsOuter: true,
-      wantsAccessories: isRainy,
-      isRainy,
+      wantsOuter: true, wantsAccessories: isRainy,
+      isRainy, tempRange,
       regionLabel: toText(weather.regionLabel) || "선택 지역",
     };
   }
   if (effectiveTemp <= 22) {
     return {
-      effectiveTemp,
-      tempBand: "mild",
+      effectiveTemp, tempBand: "mild",
       expectedSeasons: ["spring", "fall"],
       preferredThicknesses: ["medium", "light"],
-      wantsOuter: isRainy,
+      wantsOuter: isRainy || tempRange >= 10,
       wantsAccessories: false,
-      isRainy,
+      isRainy, tempRange,
       regionLabel: toText(weather.regionLabel) || "선택 지역",
     };
   }
   if (effectiveTemp <= 28) {
     return {
-      effectiveTemp,
-      tempBand: "warm",
+      effectiveTemp, tempBand: "warm",
       expectedSeasons: ["summer", "spring"],
       preferredThicknesses: ["light", "medium"],
-      wantsOuter: isRainy,
+      wantsOuter: isRainy || tempRange >= 12,
       wantsAccessories: false,
-      isRainy,
+      isRainy, tempRange,
       regionLabel: toText(weather.regionLabel) || "선택 지역",
     };
   }
   return {
-    effectiveTemp,
-    tempBand: "hot",
+    effectiveTemp, tempBand: "hot",
     expectedSeasons: ["summer"],
     preferredThicknesses: ["light"],
-    wantsOuter: false,
+    wantsOuter: isRainy,
     wantsAccessories: false,
-    isRainy,
+    isRainy, tempRange,
     regionLabel: toText(weather.regionLabel) || "선택 지역",
   };
 }
@@ -304,6 +299,14 @@ function scoreDetail(item: NormalizedItem, slot: Slot, context: RecommendationCo
     if ((context.tempBand === "freezing" || context.tempBand === "cold") && ["padding", "coat", "fleece", "leather_jacket"].includes(detail)) {
       pushReason(reasons, "보온감이 좋아요");
       score += 14;
+    }
+    // 일교차가 크면 가벼운 아우터 보너스
+    if (context.tempRange >= 10 && ["jacket", "windbreaker", "hood_zipup", "cardigan", "blazer"].includes(detail)) {
+      pushReason(reasons, "일교차가 커서 레이어링하기 좋아요");
+      score += 12;
+    }
+    if (context.tempRange >= 10 && ["padding", "coat", "fleece"].includes(detail) && (context.tempBand === "mild" || context.tempBand === "warm")) {
+      score -= 10; // 일교차 크더라도 현재 온도가 높으면 두꺼운 아우터는 불필요
     }
   }
 
@@ -573,30 +576,16 @@ function detailComboScore(parts: RecommendationPart[], context: RecommendationCo
   return score;
 }
 
-function candidateFreshnessBonus(candidate: Candidate): number {
-  const days = daysSince(candidate.item.recentWearDate);
-  if (candidate.item.wearCount === 0) return 18;
-  if (days == null) return 0;
-  if (days >= 30) return 16;
-  if (days >= 14) return 10;
-  if (days <= 2) return -12;
-  return 0;
-}
-
 function profileLookBonus(selected: Candidate[], profile: Profile, stableIds: Set<number>): number {
   const ids = new Set(selected.map((candidate) => candidate.item.id));
   const neutralCount = selected.filter((candidate) => NEUTRAL_COLORS.has(candidate.item.color || "")).length;
   const vividCount = selected.filter((candidate) => VIVID_COLORS.has(candidate.item.color || "")).length;
-  const freshScore = selected.reduce((sum, candidate) => sum + candidateFreshnessBonus(candidate), 0);
   const overlapCount = Array.from(ids).filter((id) => stableIds.has(id)).length;
 
-  if (profile === "stable") {
-    return neutralCount * 6 - vividCount * 4;
-  }
-  if (profile === "variation") {
-    return vividCount * 10 - overlapCount * 8;
-  }
-  return freshScore - overlapCount * 6;
+  if (profile === "stable") return neutralCount * 6 - vividCount * 4;
+  if (profile === "variation") return vividCount * 10 - overlapCount * 8;
+  // underused: stable과 겹치는 아이템 패널티만 적용 (신선도는 scoreWearHistory에서 이미 반영됨)
+  return -overlapCount * 6;
 }
 
 function scoreLook(selected: Candidate[], parts: RecommendationPart[], context: RecommendationContext, profile: Profile, stableIds: Set<number>) {
@@ -718,10 +707,13 @@ function createLook(selected: Candidate[], missingSlots: string[], context: Reco
   };
 }
 
+const MAX_COMBINATIONS = 1500;
+
 function buildCombinations(requiredSlots: Slot[], candidatesBySlot: Map<Slot, Candidate[]>) {
   const combinations: Candidate[][] = [];
 
   function walk(index: number, current: Candidate[]) {
+    if (combinations.length >= MAX_COMBINATIONS) return;
     if (index >= requiredSlots.length) {
       combinations.push([...current]);
       return;
@@ -750,32 +742,54 @@ export function recommendOutfit(rows: RecommendationItemRow[], weather: Recommen
   const context = buildContext(weather);
   const items = rows.map(normalizeItem).filter((item) => item.id > 0 && item.category);
   const requiredSlots = SLOT_ORDER.filter((slot) => shouldIncludeSlot(slot, context));
-  const candidatesBySlot = new Map<Slot, Candidate[]>();
 
+  // 기본 후보 풀: 슬롯당 상위 8개 (프로필별 재정렬을 위해 여유 있게 확보)
+  const baseCandidatesBySlot = new Map<Slot, Candidate[]>();
   requiredSlots.forEach((slot) => {
     const slotCandidates = items
       .map((item) => scoreItemForSlot(item, slot, context))
       .filter((entry): entry is Candidate => Boolean(entry))
       .sort((a, b) => b.score - a.score || a.item.id - b.item.id)
-      .slice(0, 4);
-    candidatesBySlot.set(slot, slotCandidates);
+      .slice(0, 8);
+    baseCandidatesBySlot.set(slot, slotCandidates);
   });
 
   const stableIds = new Set<number>();
   const looks: RecommendationLook[] = [];
   const profiles: Profile[] = ["stable", "variation", "underused"];
-  const combinations = buildCombinations(requiredSlots, candidatesBySlot);
 
   profiles.forEach((profile) => {
-    const missingSlots = requiredSlots.filter((slot) => (candidatesBySlot.get(slot) || []).length === 0);
+    const missingSlots = requiredSlots.filter((slot) => (baseCandidatesBySlot.get(slot) || []).length === 0);
+
+    // 프로필에 맞게 후보를 재정렬 후 상위 5개만 조합에 사용
+    // → 기존 방식(전체 공유 후보 4개)과 달리 각 프로필 최적 아이템이 포함될 수 있음
+    const profileCandidatesBySlot = new Map<Slot, Candidate[]>();
+    requiredSlots.forEach((slot) => {
+      const adjusted = (baseCandidatesBySlot.get(slot) || [])
+        .map((c) => ({ ...c, score: c.score + profileAdjustment(c.item, profile, stableIds) }))
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+      profileCandidatesBySlot.set(slot, adjusted);
+    });
+
+    const combinations = buildCombinations(requiredSlots, profileCandidatesBySlot);
+
+    // variation/underused: stable과 2개 이상 슬롯이 다른 조합을 우선 사용
+    // 해당 조합이 없으면 fallback으로 전체 사용
+    const scoringPool =
+      profile !== "stable" && stableIds.size > 0
+        ? (() => {
+            const distinct = combinations.filter(
+              (combo) => combo.filter((c) => !stableIds.has(c.item.id)).length >= 2,
+            );
+            return distinct.length > 0 ? distinct : combinations;
+          })()
+        : combinations;
+
     const selected =
-      combinations
+      scoringPool
         .map((combination) => {
-          const adjusted = combination.map((candidate, index) => ({
-            ...candidate,
-            score: candidate.score + profileAdjustment(candidate.item, profile, stableIds) - index,
-          }));
-          const previewParts: RecommendationPart[] = adjusted.map((candidate) => ({
+          const previewParts: RecommendationPart[] = combination.map((candidate) => ({
             slot: candidate.item.category as Slot,
             item: {
               id: candidate.item.id,
@@ -792,11 +806,11 @@ export function recommendOutfit(rows: RecommendationItemRow[], weather: Recommen
           }));
           addComboBonus(previewParts, context);
           return {
-            adjusted,
-            score: scoreLook(adjusted, previewParts, context, profile, stableIds),
+            combination,
+            score: scoreLook(combination, previewParts, context, profile, stableIds),
           };
         })
-        .sort((a, b) => b.score - a.score)[0]?.adjusted || [];
+        .sort((a, b) => b.score - a.score)[0]?.combination ?? [];
 
     if (selected.length === 0) return;
     if (profile === "stable") {

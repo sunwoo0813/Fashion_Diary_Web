@@ -6,6 +6,7 @@ import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 import { ConfirmSubmitButton } from "@/components/common/confirm-submit-button";
 import { KebabVerticalIcon, PlusIcon, TrashIcon } from "@/components/common/icons";
 import { WardrobeCategoryFilter } from "@/components/wardrobe/wardrobe-category-filter";
+import { useWardrobeDelete } from "@/components/wardrobe/wardrobe-delete-context";
 import { WardrobeSearchBar } from "@/components/wardrobe/wardrobe-search-bar";
 import type { WardrobeItem } from "@/lib/queries/wardrobe";
 
@@ -33,6 +34,7 @@ type EditFormState = {
   brand: string;
   product: string;
   category: string;
+  color: string;
   size: string;
   sizeDetail: unknown;
 };
@@ -66,6 +68,14 @@ function formatRecentWearDate(value: string | null | undefined): string {
 
 const MULTI_WORD_BRANDS = [
   "surface edition",
+  "alexander wang",
+  "comme des garcons",
+  "maison margiela",
+  "isabel marant",
+  "ami paris",
+  "acne studios",
+  "studio nicholson",
+  "rag and bone",
 ];
 const MULTI_WORD_BRAND_TOKENS = MULTI_WORD_BRANDS.map((brand) =>
   brand
@@ -231,9 +241,8 @@ export function WardrobeGrid({
   recentWearDates,
   hasFilters,
 }: WardrobeGridProps) {
+  const { deleteMode, selectedIds, toggleItem, handleDeleteButton } = useWardrobeDelete();
   const [localItems, setLocalItems] = useState<WardrobeItem[]>(items);
-  const [deleteMode, setDeleteMode] = useState(false);
-  const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [activeItem, setActiveItem] = useState<WardrobeItem | null>(null);
   const [modalPosition, setModalPosition] = useState<ModalPosition | null>(null);
   const [editItem, setEditItem] = useState<WardrobeItem | null>(null);
@@ -243,6 +252,7 @@ export function WardrobeGrid({
     brand: "",
     product: "",
     category: "",
+    color: "",
     size: "",
     sizeDetail: null,
   });
@@ -293,6 +303,7 @@ export function WardrobeGrid({
       brand: getItemBrand(item) === "-" ? "" : getItemBrand(item),
       product: getItemProductName(item),
       category: item.category || "",
+      color: item.color || "",
       size: item.size || "",
       sizeDetail: item.size_detail ?? null,
     });
@@ -311,6 +322,7 @@ export function WardrobeGrid({
           brand: editForm.brand,
           product: editForm.product,
           category: editForm.category,
+          color: editForm.color,
           size: editForm.size,
           size_detail: editForm.sizeDetail,
         }),
@@ -346,6 +358,7 @@ export function WardrobeGrid({
                 product_name: editForm.product.trim() || null,
                 name: nextName || row.name,
                 category: nextCategory,
+                color: editForm.color.trim() || null,
                 size: nextSize,
                 size_detail: nextSizeDetail,
               }
@@ -362,6 +375,7 @@ export function WardrobeGrid({
                 product_name: editForm.product.trim() || null,
                 name: nextName || prev.name,
                 category: nextCategory,
+                color: editForm.color.trim() || null,
                 size: nextSize,
                 size_detail: nextSizeDetail,
               }
@@ -377,31 +391,10 @@ export function WardrobeGrid({
     }
   }
 
-  function toggleItem(id: number) {
-    if (!deleteMode) return;
-    setSelectedIds((prev) => {
-      if (prev.includes(id)) return prev.filter((itemId) => itemId !== id);
-      return [...prev, id];
-    });
-  }
-
-  function handleDeleteButton() {
-    if (!deleteMode) {
-      setDeleteMode(true);
-      return;
-    }
-
-    if (selectedIds.length === 0) {
-      setDeleteMode(false);
-      return false;
-    }
-    return true;
-  }
-
   if (localItems.length === 0) {
     return (
       <div className="wardrobe-empty">
-        {hasFilters ? "필터 조건과 일치하는 아이템이 없어요." : "옷장이 비어 있어요. 첫 아이템을 추가해보세요."}
+        {hasFilters ? "조건에 맞는 아이템이 아직 없어요." : "옷장이 아직 비어 있어요. 첫 아이템부터 차분히 채워 보세요."}
       </div>
     );
   }
@@ -419,9 +412,10 @@ export function WardrobeGrid({
           {!deleteMode || selectedIds.length === 0 ? (
             <button
               type="button"
-              className="ghost-button wardrobe-mobile-delete"
+              className={`ghost-button wardrobe-mobile-delete${deleteMode ? " is-delete-active" : ""}`}
               onClick={handleDeleteButton}
               aria-label={!deleteMode ? "삭제 모드" : "삭제 취소"}
+              aria-pressed={deleteMode}
             >
               <TrashIcon size={16} />
             </button>
@@ -440,32 +434,6 @@ export function WardrobeGrid({
         <div className="wardrobe-mobile-toolbar-filter">
           <WardrobeCategoryFilter query={query} category={category} counts={categoryCounts} mobileOnly />
         </div>
-      </div>
-
-      <div className="wardrobe-action-row">
-        <p className={`wardrobe-delete-hint${deleteMode ? " is-visible" : ""}`}>
-          삭제할 아이템을 선택하세요.
-        </p>
-        {!deleteMode || selectedIds.length === 0 ? (
-          <button
-            type="button"
-            className="ghost-button"
-            onClick={handleDeleteButton}
-            aria-label={!deleteMode ? "삭제 모드" : "삭제 취소"}
-          >
-            <TrashIcon size={16} />
-          </button>
-        ) : (
-          <ConfirmSubmitButton
-            className="ghost-button"
-            formId="wardrobeDeleteForm"
-            title={`${selectedIds.length}개 아이템을 삭제할까요?`}
-            message="삭제한 아이템은 되돌릴 수 없고, 관련 착용 기록 연결도 함께 정리됩니다."
-            confirmLabel="삭제"
-          >
-            선택 삭제 ({selectedIds.length})
-          </ConfirmSubmitButton>
-        )}
       </div>
 
       <form ref={formRef} id="wardrobeDeleteForm" action="/api/items/delete" method="post">
@@ -507,8 +475,26 @@ export function WardrobeGrid({
                 }
               }}
             >
-              <div className="wardrobe-brand-bar">
-                <span>{brandLabel}</span>
+              <div className="wardrobe-media">
+                <div className="wardrobe-media-canvas">
+                  {item.image_path ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={item.image_path} alt={item.name} loading="lazy" />
+                  ) : (
+                    <div className="wardrobe-media-placeholder">
+                      <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor" opacity="0.3"/>
+                      </svg>
+                      <span>이미지 없음</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+              <div className="wardrobe-info">
+                <div className="wardrobe-info-text">
+                  <p>{brandLabel}</p>
+                  <h3>{productLabel}</h3>
+                </div>
                 <button
                   type="button"
                   className="wardrobe-edit-icon"
@@ -518,19 +504,8 @@ export function WardrobeGrid({
                     openEditModal(item);
                   }}
                 >
-                  <KebabVerticalIcon size={16} />
+                  <KebabVerticalIcon size={15} />
                 </button>
-              </div>
-              <div className="wardrobe-media">
-                {item.image_path ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={item.image_path} alt={item.name} loading="lazy" />
-                ) : (
-                  <div className="wardrobe-media-placeholder">이미지 없음</div>
-                )}
-              </div>
-              <div className="wardrobe-info">
-                <h3>{productLabel}</h3>
               </div>
             </article>
           );
@@ -554,9 +529,6 @@ export function WardrobeGrid({
               <div className="wardrobe-inline-modal-title">
                 <strong>{getItemBrand(activeItem)}</strong>
                 <p>{getItemProductName(activeItem) || "이름 없음"}</p>
-                <small>
-                  {toCategoryLabel(activeItem.category)} / {toDetailCategoryLabel(activeItem.detail_category)}
-                </small>
               </div>
               <button
                 type="button"
@@ -572,8 +544,6 @@ export function WardrobeGrid({
             </div>
             <div className="wardrobe-inline-body">
               <p><span>사이즈</span><strong>{activeItem.size || "-"}</strong></p>
-              <p><span>시즌</span><strong>{toSeasonLabel(activeItem.season)}</strong></p>
-              <p><span>두께</span><strong>{toThicknessLabel(activeItem.thickness)}</strong></p>
               <p><span>착용 횟수</span><strong>{itemCountText(activeWearCount)}</strong></p>
               <p><span>최근 착용일</span><strong>{formatRecentWearDate(activeRecentWearDate)}</strong></p>
 
@@ -621,7 +591,24 @@ export function WardrobeGrid({
         >
           <section className="wardrobe-edit-modal" onClick={(event) => event.stopPropagation()}>
             <header className="wardrobe-edit-head">
-              <h3>아이템 수정</h3>
+              <div className="wardrobe-edit-head-left">
+                <div className="wardrobe-edit-thumb">
+                  {editItem.image_path ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={editItem.image_path} alt={editItem.name} />
+                  ) : (
+                    <div className="wardrobe-edit-thumb-fallback">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor" opacity="0.3" />
+                      </svg>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <h3>아이템 수정</h3>
+                  <p className="wardrobe-edit-item-name">{editItem.name}</p>
+                </div>
+              </div>
               <button
                 type="button"
                 className="wardrobe-inline-close"
@@ -657,15 +644,25 @@ export function WardrobeGrid({
                   ))}
                 </select>
               </label>
-              <label>
-                사이즈
-                <input
-                  value={editForm.size}
-                  onChange={(event) =>
-                    setEditForm((prev) => ({ ...prev, size: event.target.value, sizeDetail: prev.sizeDetail }))
-                  }
-                />
-              </label>
+              <div className="wardrobe-edit-row">
+                <label>
+                  색상
+                  <input
+                    value={editForm.color}
+                    placeholder="예) 블랙, 화이트"
+                    onChange={(event) => setEditForm((prev) => ({ ...prev, color: event.target.value }))}
+                  />
+                </label>
+                <label>
+                  사이즈
+                  <input
+                    value={editForm.size}
+                    onChange={(event) =>
+                      setEditForm((prev) => ({ ...prev, size: event.target.value, sizeDetail: prev.sizeDetail }))
+                    }
+                  />
+                </label>
+              </div>
             </div>
 
             {editError ? <p className="form-error">{editError}</p> : null}

@@ -424,45 +424,33 @@ export function getWeatherIconComponent(
   windSpeed = 0,
   precipitationProbability = 0,
 ) {
-  const normalizedDesc = desc.toLowerCase();
-  const normalizedPty = precipitationType.toLowerCase();
   const hour = new Date().getHours();
   const isNight = hour < 6 || hour >= 18;
   const isSunriseWindow = hour >= 5 && hour < 7;
   const hasVisibleRainAmount =
     precipitationAmount !== "-" && precipitationAmount !== "0mm";
   const isWindy = windSpeed >= 7;
-  const looksLikeBriefClearing =
-    !normalizedPty.includes("rain") &&
-    !normalizedPty.includes("snow") &&
-    hasVisibleRainAmount &&
-    !isNight;
 
-  if (normalizedPty.includes("snow")) return SnowIcon;
-  if (normalizedDesc.includes("thunder")) return ThunderIcon;
-  if (normalizedPty.includes("shower")) return HeavyRainIcon;
-  if (normalizedPty.includes("rain")) {
-    return hasVisibleRainAmount
-      ? HeavyRainIcon
-      : RainIcon;
-  }
-  if (normalizedDesc.includes("fog")) return FogIcon;
+  // 강수 유형 기준 (한국어)
+  const isSnow = desc === "눈" || precipitationType === "눈" || precipitationType === "비/눈";
+  const isShower = desc === "소나기" || precipitationType === "소나기";
+  const isRain = desc === "비" || precipitationType === "비" || precipitationType === "비/눈";
+
+  const looksLikeBriefClearing = !isRain && !isSnow && hasVisibleRainAmount && !isNight;
+
+  if (isSnow) return SnowIcon;
+  if (isShower) return HeavyRainIcon;
+  if (isRain) return hasVisibleRainAmount ? HeavyRainIcon : RainIcon;
   if (isWindy) return WindIcon;
-  if (isSunriseWindow && (normalizedDesc.includes("clear") || normalizedDesc.includes("sun"))) {
-    return SunriseIcon;
-  }
+  if (isSunriseWindow && desc === "맑음") return SunriseIcon;
   if (
     looksLikeBriefClearing ||
-    (!isNight &&
-      precipitationProbability >= 55 &&
-      (normalizedDesc.includes("clear") || normalizedDesc.includes("mostly cloudy")))
+    (!isNight && precipitationProbability >= 55 && (desc === "맑음" || desc === "구름 많음"))
   ) {
     return RainbowIcon;
   }
-  if (normalizedDesc.includes("mostly cloudy")) return PartlyCloudyIcon;
-  if (normalizedDesc.includes("cloud")) return CloudIcon;
-  if (normalizedDesc.includes("clear")) return isNight ? MoonIcon : SunIcon;
-  if (normalizedDesc.includes("sun")) return SunIcon;
-  if (normalizedDesc.includes("night")) return MoonIcon;
-  return PartlyCloudyIcon;
+  if (desc === "구름 많음") return PartlyCloudyIcon;
+  if (desc === "흐림") return CloudIcon;
+  if (desc === "맑음") return isNight ? MoonIcon : SunIcon;
+  return isNight ? MoonIcon : SunIcon;
 }

@@ -172,6 +172,7 @@ async function updateOutfit(request: Request, params: { id: string }, formData: 
 
   const dateValue = toIsoDate(toText(formData.get("date"))) ?? String(outfitRow.date);
   const note = toText(formData.get("note")) || null;
+  const city = toText(formData.get("city")) || null;
   const tMin = toNumber(toText(formData.get("t_min")), 0);
   const tMax = toNumber(toText(formData.get("t_max")), 0);
   const humidity = Math.trunc(toNumber(toText(formData.get("humidity")), 0));
@@ -182,6 +183,7 @@ async function updateOutfit(request: Request, params: { id: string }, formData: 
     .update({
       date: dateValue,
       note,
+      city,
       t_min: tMin,
       t_max: tMax,
       humidity,
@@ -268,8 +270,69 @@ async function updateOutfit(request: Request, params: { id: string }, formData: 
   return NextResponse.redirect(new URL("/diary", request.url), { status: 303 });
 }
 
-export async function PATCH() {
-  return NextResponse.json({ ok: false, error: "수정은 POST multipart 방식으로 요청해 주세요." }, { status: 405 });
+export async function PATCH(request: Request, { params }: { params: { id: string } }) {
+  const authUser = await getCurrentUser();
+  if (!authUser?.email) {
+    return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401 });
+  }
+
+  const outfitId = Number(params.id);
+  if (!Number.isInteger(outfitId) || outfitId <= 0) {
+    return NextResponse.json({ ok: false, error: "Invalid ID" }, { status: 400 });
+  }
+
+  const appUserId = await getOrCreateAppUserId(authUser.email);
+  const admin = createServiceRoleSupabaseClient();
+
+  const body = (await request.json()) as {
+    note?: string | null;
+    city?: string | null;
+    outfit_item_ids?: number[];
+    t_min?: number;
+    t_max?: number;
+    humidity?: number;
+    rain?: boolean;
+  };
+
+  const { data: outfitRow } = await admin
+    .from("outfit")
+    .select("id")
+    .eq("id", outfitId)
+    .eq("user_id", appUserId)
+    .maybeSingle();
+  if (!outfitRow) {
+    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+  }
+
+  const { error: updateError } = await admin
+    .from("outfit")
+    .update({
+      note: body.note ?? null,
+      city: body.city ?? null,
+      t_min: body.t_min ?? 0,
+      t_max: body.t_max ?? 0,
+      humidity: body.humidity ?? 0,
+      rain: body.rain ?? false,
+    })
+    .eq("id", outfitId)
+    .eq("user_id", appUserId);
+  if (updateError) {
+    return NextResponse.json({ ok: false, error: updateError.message }, { status: 500 });
+  }
+
+  if (Array.isArray(body.outfit_item_ids)) {
+    const { data: userItems } = await admin.from("item").select("id").eq("user_id", appUserId);
+    const allowedItemIds = new Set((userItems || []).map((row) => Number(row.id)));
+    const validItemIds = body.outfit_item_ids.filter((id) => allowedItemIds.has(id));
+
+    await admin.from("outfit_item").delete().eq("outfit_id", outfitId);
+    if (validItemIds.length > 0) {
+      const rows = validItemIds.map((itemId) => ({ outfit_id: outfitId, item_id: itemId }));
+      await admin.from("outfit_item").insert(rows);
+    }
+  }
+
+  return NextResponse.json({ ok: true });
 }
 
 export async function POST(request: Request, { params }: { params: { id: string } }) {

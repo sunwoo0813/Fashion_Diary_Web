@@ -10,6 +10,7 @@ export type WardrobeItem = {
   name: string;
   category: string | null;
   detail_category: string | null;
+  color: string | null;
   season: string[];
   thickness: string | null;
   size: string | null;
@@ -102,7 +103,7 @@ export async function getWardrobePageData({
 
   let itemsQuery = admin
     .from("item")
-    .select("id,user_id,brand,product_name,category,detail_category,season,thickness,size,size_detail,image_path,created_at")
+    .select("id,user_id,brand,product_name,category,detail_category,color,season,thickness,size,size_detail,image_path,created_at")
     .eq("user_id", appUserId)
     .order("created_at", { ascending: false });
   let categoryCountQuery = admin.from("item").select("category").eq("user_id", appUserId);
@@ -147,6 +148,7 @@ export async function getWardrobePageData({
     name: makeDisplayNameFromFields(row.brand, row.product_name),
     category: row.category ? String(row.category) : null,
     detail_category: row.detail_category ? String(row.detail_category) : null,
+    color: row.color ? String(row.color) : null,
     season: Array.isArray(row.season) ? row.season.map((value) => String(value)).filter(Boolean) : [],
     thickness: row.thickness ? String(row.thickness) : null,
     size: row.size ? String(row.size) : null,

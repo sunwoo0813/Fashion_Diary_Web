@@ -56,6 +56,7 @@ export function OutfitDateCalendar({ name, defaultValue }: OutfitDateCalendarPro
   const [isOpen, setIsOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement | null>(null);
   const today = useMemo(() => new Date(), []);
+  const yesterday = useMemo(() => { const d = new Date(); d.setDate(d.getDate() - 1); return d; }, []);
   const days = useMemo(() => buildCalendarDays(viewDate), [viewDate]);
 
   const monthLabel = useMemo(
@@ -118,6 +119,22 @@ export function OutfitDateCalendar({ name, defaultValue }: OutfitDateCalendarPro
 
       {isOpen ? (
         <div className="outfit-date-calendar-popover">
+          <div className="outfit-date-quick">
+            <button
+              type="button"
+              className={cn("outfit-date-quick-btn", sameDay(selectedDate, today) && "is-active")}
+              onClick={() => { setSelectedDate(today); setViewDate(startOfMonth(today)); setIsOpen(false); }}
+            >
+              오늘
+            </button>
+            <button
+              type="button"
+              className={cn("outfit-date-quick-btn", sameDay(selectedDate, yesterday) && "is-active")}
+              onClick={() => { setSelectedDate(yesterday); setViewDate(startOfMonth(yesterday)); setIsOpen(false); }}
+            >
+              어제
+            </button>
+          </div>
           <div className="outfit-date-calendar-header">
             <button
               type="button"

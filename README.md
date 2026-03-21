@@ -1,4 +1,4 @@
-﻿# Fashion Diary Web (Next.js)
+# LAYERED (Next.js)
 
 This project now runs on Next.js 14 + TypeScript + Supabase.
 Flask is no longer used for runtime or deployment.

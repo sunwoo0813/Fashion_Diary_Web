@@ -3,11 +3,14 @@ import Link from "next/link";
 import { PlusIcon } from "@/components/common/icons";
 import { DiaryFeedGrid } from "@/components/diary/diary-feed-grid";
 import { requireAppUserContext } from "@/lib/app-user";
-import { getDiaryFeedData } from "@/lib/queries/diary";
+import { getDiaryFeedData, getUserWardrobeItems } from "@/lib/queries/diary";
 
 export default async function DiaryRootPage() {
   const { appUserId } = await requireAppUserContext();
-  const posts = await getDiaryFeedData(appUserId, 120);
+  const [posts, wardrobeItems] = await Promise.all([
+    getDiaryFeedData(appUserId, 120),
+    getUserWardrobeItems(appUserId),
+  ]);
   const sortedPosts = [...posts].sort((a, b) => {
     const byDate = b.date.localeCompare(a.date);
     if (byDate !== 0) return byDate;
@@ -22,8 +25,7 @@ export default async function DiaryRootPage() {
       <header className="diary-feed-header">
         <div className="diary-feed-title-wrap">
           <div className="diary-feed-title-copy">
-            <h1>아카이브</h1>
-            <p>코디를 저장하고, 쌓인 기록을 다시 꺼내보는 공간입니다.</p>
+            <h1>OOTD</h1>
           </div>
         </div>
         <div className="diary-feed-actions">
@@ -36,12 +38,12 @@ export default async function DiaryRootPage() {
       {sortedPosts.length === 0 ? (
         <div className="diary-empty">
           <Link href={`/outfits/new?date=${todayIso}`} className="solid-button">
-            첫 게시물 만들기
+            첫 기록 남기기
           </Link>
         </div>
       ) : (
         <div className="diary-feed-scroll">
-          <DiaryFeedGrid posts={sortedPosts} />
+          <DiaryFeedGrid posts={sortedPosts} wardrobeItems={wardrobeItems} />
         </div>
       )}
     </section>

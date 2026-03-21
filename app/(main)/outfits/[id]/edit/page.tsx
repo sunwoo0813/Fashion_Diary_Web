@@ -2,7 +2,6 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { ConfirmSubmitButton } from "@/components/common/confirm-submit-button";
-import { OutfitDateCalendar } from "@/components/diary/outfit-date-calendar";
 import { OutfitItemSelector } from "@/components/diary/outfit-item-selector";
 import { NewPhotoTagPicker } from "@/components/diary/new-photo-tag-picker";
 import { WeatherFields } from "@/components/diary/weather-fields";
@@ -40,7 +39,6 @@ export default async function OutfitEditPage({ params, searchParams }: OutfitEdi
     <section className="outfit-edit-page">
       <header className="outfit-header">
         <div>
-          <p className="diary-kicker">기록 수정</p>
           <h1>코디 수정</h1>
         </div>
         <div className="outfit-header-actions">
@@ -88,28 +86,7 @@ export default async function OutfitEditPage({ params, searchParams }: OutfitEdi
         </div>
 
         <div className="outfit-create-fields-card">
-          <div className="outfit-create-section-head">
-            <p className="outfit-create-section-kicker">기록</p>
-            <h2>코디 정보 수정</h2>
-            <span>날짜, 메모, 입은 옷과 날씨를 다시 정리하세요.</span>
-          </div>
-          <label>
-            날짜
-            <OutfitDateCalendar name="date" defaultValue={outfit.date} />
-          </label>
-          <label>
-            메모
-            <textarea name="note" defaultValue={outfit.note || ""} rows={5} />
-          </label>
-
-          <OutfitItemSelector
-            items={items.map((item) => ({
-              id: item.id,
-              name: item.name,
-              category: item.category,
-            }))}
-            defaultSelectedIds={outfit.outfit_items.map((item) => item.id)}
-          />
+          <input type="hidden" name="date" value={outfit.date} />
 
           <WeatherFields
             defaultCity="서울"
@@ -117,6 +94,26 @@ export default async function OutfitEditPage({ params, searchParams }: OutfitEdi
             defaultTMax={outfit.t_max ?? 0}
             defaultHumidity={outfit.humidity ?? 0}
             defaultRain={Boolean(outfit.rain)}
+          />
+
+          <textarea
+            name="note"
+            className="outfit-caption"
+            defaultValue={outfit.note || ""}
+            placeholder="코디를 기록해 보세요..."
+            rows={3}
+          />
+
+          <OutfitItemSelector
+            items={items.map((item) => ({
+              id: item.id,
+              name: item.name,
+              brand: item.brand,
+              product_name: item.product_name,
+              category: item.category,
+              image_path: item.image_path,
+            }))}
+            defaultSelectedIds={outfit.outfit_items.map((item) => item.id)}
           />
         </div>
       </form>

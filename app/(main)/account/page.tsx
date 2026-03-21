@@ -23,8 +23,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
 
   return (
     <section className="account-page">
-      <h1>계정</h1>
-      <p className="account-subtitle">프로필과 보안 설정을 관리해요.</p>
+      <h1>설정</h1>
 
       {error ? <p className="form-error">{error}</p> : null}
       {!error && message ? <p className="account-success">{message}</p> : null}

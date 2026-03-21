@@ -1,17 +1,16 @@
 /* Account page */
 
 .account-page {
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: rgba(var(--surface-rgb), 0.86);
-  padding: 1.2rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 1.8rem;
   min-height: calc(100vh - 2.8rem);
 }
 
 .account-page h1 {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: 1.8rem;
 }
 
 .account-subtitle {
@@ -40,16 +39,6 @@
   margin-top: 0.8rem;
 }
 
-.account-theme-toggle .theme-toggle-card {
-  width: auto;
-  justify-items: start;
-}
-
-.account-theme-toggle .theme-toggle-label {
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-}
-
 .account-logout-button .rail-logout-wrap {
   margin-top: 0;
   width: auto;
@@ -62,7 +51,7 @@
 
 .account-card {
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--surface);
   padding: 1rem;
 }
@@ -105,7 +94,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: white;
+  color: var(--primary-foreground);
   background: linear-gradient(150deg, var(--primary), var(--accent-deep));
   font-size: 1rem;
   font-weight: 800;
@@ -155,7 +144,7 @@
   margin-top: 0.85rem;
   display: grid;
   gap: 0.7rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .account-region-field {
@@ -172,7 +161,7 @@
   width: 100%;
   min-width: 0;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   padding: 0.56rem 0.65rem;
   font: inherit;
@@ -196,16 +185,16 @@
 }
 
 .account-card.danger {
-  border-color: #f2d2c4;
-  background: #fff8f4;
+  border-color: var(--status-error-border);
+  background: var(--status-error-bg);
 }
 
 .account-success {
   margin: 0.7rem 0 0;
-  border: 1px solid #c8e3cf;
-  border-radius: 12px;
-  background: #effaf2;
-  color: #17693c;
+  border: 1px solid var(--status-success-border);
+  border-radius: var(--radius-md);
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
   padding: 0.62rem 0.72rem;
   font-size: 0.85rem;
 }
@@ -224,7 +213,7 @@
 
 .account-danger-form input {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   padding: 0.56rem 0.65rem;
   font: inherit;
@@ -245,10 +234,6 @@
     grid-template-columns: 1fr;
   }
 
-  .account-region-grid {
-    grid-template-columns: 1fr;
-  }
-
   .account-logout {
     justify-content: flex-start;
     flex-wrap: wrap;
@@ -264,7 +249,7 @@
 @media (max-width: 640px) {
   .account-page {
     padding: 0.9rem;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
   }
 }
 

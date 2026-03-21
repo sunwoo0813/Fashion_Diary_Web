@@ -25,8 +25,8 @@ type ItemCreateFormProps = {
 type InputMode = "search" | "url" | "manual";
 
 const CATEGORY_OPTIONS = [
-  { value: "Top", label: "상의" },
   { value: "Outer", label: "아우터" },
+  { value: "Top", label: "상의" },
   { value: "Bottom", label: "하의" },
   { value: "Shoes", label: "신발" },
   { value: "ACC", label: "악세서리" },
@@ -67,10 +67,10 @@ const DETAIL_CATEGORY_OPTIONS = {
   ],
 } as const;
 const SEASON_OPTIONS = [
-  { value: "spring", label: "Spring" },
-  { value: "summer", label: "Summer" },
-  { value: "fall", label: "Fall" },
-  { value: "winter", label: "Winter" },
+  { value: "spring", label: "봄" },
+  { value: "summer", label: "여름" },
+  { value: "fall", label: "가을" },
+  { value: "winter", label: "겨울" },
 ] as const;
 const COLOR_OPTIONS = [
   { value: "black", label: "블랙" },
@@ -106,6 +106,33 @@ const THICKNESS_OPTIONS = [
   { value: "medium", label: "보통" },
   { value: "heavy", label: "두꺼움" },
 ] as const;
+const COLOR_HEX: Record<string, string> = {
+  black: "#111111",
+  charcoal: "#3D3D3D",
+  white: "#F2F2F2",
+  gray: "#9E9E9E",
+  navy: "#1A2744",
+  blue: "#2F6CB5",
+  beige: "#D2BB9A",
+  brown: "#7B4F2E",
+  burgundy: "#7C1328",
+  khaki: "#8B7355",
+  green: "#4A7C59",
+  red: "#CC2222",
+  pink: "#F090A8",
+  yellow: "#F5C518",
+  purple: "#6A3D9A",
+  orange: "#E06820",
+  ivory: "#F5F0E0",
+  black_denim: "#1A1A1A",
+  light_blue_denim: "#B8D4E8",
+  medium_blue_denim: "#5E8BAA",
+  dark_blue_denim: "#2B4C6F",
+  raw_denim: "#3A5F82",
+  gray_denim: "#808080",
+  white_denim: "#EFEFEF",
+};
+const LIGHT_COLOR_VALUES = new Set(["white", "ivory", "white_denim", "light_blue_denim", "yellow", "pink"]);
 const SEARCH_RESULTS_INITIAL_LIMIT = 7;
 
 function ImagePlusIcon() {
@@ -871,15 +898,14 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
     <section className="item-new-page">
       <header className="item-new-header">
         <div>
-          <p className="item-new-kicker">컬렉션 관리</p>
           <h1>새 아이템 추가</h1>
         </div>
         <div className="item-new-actions">
           <Link href="/wardrobe" className="ghost-button">
             취소
           </Link>
-          <button type="submit" form="itemCreateForm" className="solid-button">
-            아이템 저장
+          <button type="submit" className="solid-button">
+            저장
           </button>
         </div>
       </header>
@@ -980,15 +1006,13 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               }}
               placeholder="상품 주소를 붙여 넣어 주세요"
             />
-          </div>
-          <div className="item-search-row">
             <button
               type="button"
               className="ghost-button"
               onClick={onFetchFromProductUrl}
               disabled={urlFetchLoading}
             >
-              {urlFetchLoading ? "불러오는 중..." : "상품 정보 가져오기"}
+              {urlFetchLoading ? "불러오는 중..." : "가져오기"}
             </button>
           </div>
           {urlFetchError ? <p className="item-url-error">{urlFetchError}</p> : null}
@@ -1029,8 +1053,8 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                 <strong className="item-image-empty-icon">
                   <ImagePlusIcon />
                 </strong>
-                <em>클릭해서 이미지를 첨부하세요.</em>
-                <small>또는 파일을 여기로 드래그하세요.</small>
+                <em>사진 추가</em>
+                <small>클릭하거나 파일을 드래그해서<br />상품 이미지를 업로드하세요.</small>
               </span>
             </div>
           ) : (
@@ -1091,6 +1115,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
         </div>
 
         <div className="item-fields-card">
+          <div className="item-fields-section">
           <label>
             브랜드
             <input
@@ -1119,6 +1144,8 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               required
             />
           </label>
+          </div>
+          <div className="item-fields-section">
           <label>
             카테고리
             <select
@@ -1159,26 +1186,30 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
               </select>
             </label>
           ) : null}
-          <label>
+          </div>
+          <div className="item-fields-section">
+          <div className="item-field-group">
             색상
-            <select
-              name="color"
-              value={color}
-              onChange={(event) => {
-                setColor(event.target.value);
-                setFormError("");
-              }}
-              required={colorRequired}
-            >
-              <option value="">색상을 선택해 주세요</option>
+            <input type="hidden" name="color" value={color} />
+            <div className="item-color-swatches" role="group" aria-label="색상 선택">
               {colorOptions.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
+                <button
+                  key={option.value}
+                  type="button"
+                  className={`item-color-swatch${color === option.value ? " is-selected" : ""}${LIGHT_COLOR_VALUES.has(option.value) ? " is-light" : ""}`}
+                  style={{ backgroundColor: COLOR_HEX[option.value] ?? "#ccc" }}
+                  title={option.label}
+                  aria-label={option.label}
+                  aria-pressed={color === option.value}
+                  onClick={() => { setColor(option.value); setFormError(""); }}
+                />
               ))}
-            </select>
-          </label>
-          <label>
+            </div>
+            {color ? (
+              <span className="item-color-chosen">{colorOptions.find((o) => o.value === color)?.label}</span>
+            ) : null}
+          </div>
+          <div className="item-field-group">
             시즌
             <div className="item-checkbox-group" role="group" aria-label="시즌 선택">
               {SEASON_OPTIONS.map((option) => (
@@ -1194,28 +1225,27 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                 </label>
               ))}
             </div>
-          </label>
+          </div>
           {showThickness ? (
-            <label>
+            <div className="item-field-group">
               두께
-              <select
-                name="thickness"
-                value={thickness}
-                onChange={(event) => {
-                  setThickness(event.target.value);
-                  setFormError("");
-                }}
-                required
-              >
-                <option value="">두께를 선택해 주세요</option>
+              <input type="hidden" name="thickness" value={thickness} />
+              <div className="item-pill-group">
                 {THICKNESS_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
+                  <button
+                    key={option.value}
+                    type="button"
+                    className={`item-pill-button${thickness === option.value ? " is-selected" : ""}`}
+                    onClick={() => { setThickness(option.value); setFormError(""); }}
+                  >
                     {option.label}
-                  </option>
+                  </button>
                 ))}
-              </select>
-            </label>
+              </div>
+            </div>
           ) : null}
+          </div>
+          <div className="item-fields-section">
           <label>
             사이즈
             <input
@@ -1251,7 +1281,10 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
                   void handleSizeTableDrop(event);
                 }}
               >
-                <strong>사이즈표 이미지</strong>
+                <strong>
+                  사이즈표 이미지
+                  <span className="item-ai-badge">AI</span>
+                </strong>
                 <span>
                   {sizeTableLoading
                     ? "사이즈표 분석 중..."
@@ -1264,6 +1297,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           <input type="hidden" name="size_detail_json" value={sizeDetailJson} />
 
           {sizeGuide ? (
+
             <div className="size-guide">
               <p>사이즈표</p>
               <div className="size-guide-table-wrap">
@@ -1303,6 +1337,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
             </div>
           ) : null}
 
+          </div>
         </div>
       </form>
     </section>
