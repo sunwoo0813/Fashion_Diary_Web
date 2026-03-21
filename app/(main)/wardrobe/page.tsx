@@ -48,11 +48,11 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
 
         {error ? <p className="form-error">{error}</p> : null}
 
-<<<<<<< HEAD
         <WardrobeGrid
           query={q}
           category={category}
           categoryCounts={data.categoryCounts}
+          totalItemCount={data.totalItemCount}
           items={data.items}
           wearCounts={data.wearCounts}
           recentWearDates={data.recentWearDates}
@@ -60,18 +60,5 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
         />
       </section>
     </WardrobeDeleteProvider>
-=======
-      <WardrobeGrid
-        query={q}
-        category={category}
-        categoryCounts={data.categoryCounts}
-        totalItemCount={data.totalItemCount}
-        items={data.items}
-        wearCounts={data.wearCounts}
-        recentWearDates={data.recentWearDates}
-        hasFilters={data.hasFilters}
-      />
-    </section>
->>>>>>> e52e4973fc9fa70dfcec1a27426c69ef75f03bbc
   );
 }

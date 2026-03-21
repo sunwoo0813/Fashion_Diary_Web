@@ -287,52 +287,8 @@
   font-weight: 700;
 }
 
-<<<<<<< HEAD
-=======
 .wardrobe-filter-form :is(button, .filter-chip).is-active .wardrobe-filter-chip-count {
   color: #9ca3af;
-}
-
-.wardrobe-action-row {
-  margin-top: -2.95rem;
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 0.7rem;
-}
-
-.wardrobe-delete-hint {
-  margin: 0;
-  order: 2;
-  width: 100%;
-  text-align: right;
-  color: var(--muted-foreground);
-  font-size: 0.82rem;
-  opacity: 0;
-  transition: opacity 0.2s;
-}
-
-.wardrobe-delete-hint.is-visible {
-  opacity: 1;
-}
->>>>>>> e52e4973fc9fa70dfcec1a27426c69ef75f03bbc
-
-.wardrobe-total-count {
-  min-width: 2.2rem;
-  height: 2.2rem;
-  padding: 0 0.55rem;
-  border: 1px solid #F97316;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  font-size: 0.95rem;
-  font-weight: 700;
-  line-height: 1;
-  text-align: center;
-  color: #4b5563;
 }
 
 .wardrobe-grid {
@@ -1263,6 +1219,14 @@
   .wardrobe-mobile-delete {
     min-width: fit-content;
     white-space: nowrap;
+  }
+
+  .wardrobe-mobile-delete-status {
+    margin: 0.15rem 0 0;
+    text-align: right;
+    color: var(--muted-foreground);
+    font-size: 0.82rem;
+    line-height: 1.4;
   }
 
   .wardrobe-mobile-toolbar-filter {
