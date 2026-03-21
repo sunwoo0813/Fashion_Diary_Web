@@ -52,7 +52,6 @@ export default async function WardrobePage({ searchParams }: WardrobePageProps) 
           query={q}
           category={category}
           categoryCounts={data.categoryCounts}
-          totalItemCount={data.totalItemCount}
           items={data.items}
           wearCounts={data.wearCounts}
           recentWearDates={data.recentWearDates}

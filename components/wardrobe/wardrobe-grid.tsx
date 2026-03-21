@@ -13,7 +13,6 @@ type WardrobeGridProps = {
   query: string;
   category: string;
   categoryCounts: Record<string, number>;
-  totalItemCount: number;
   items: WardrobeItem[];
   wearCounts: Record<number, number>;
   recentWearDates: Record<number, string>;
@@ -95,78 +94,6 @@ function detectBrandWordCount(parts: string[]): number {
   return 1;
 }
 
-function toCategoryLabel(category: string | null): string {
-  const value = String(category || "").trim().toLowerCase();
-  if (!value) return "아이템";
-
-  if (["outer", "outerwear", "아우터"].includes(value)) return "아우터";
-  if (["top", "tops", "상의"].includes(value)) return "상의";
-  if (["bottom", "bottoms", "하의"].includes(value)) return "하의";
-  if (["footwear", "신발"].includes(value)) return "신발";
-  if (["acc", "accessories", "accessory", "액세서리", "악세서리"].includes(value)) return "액세서리";
-
-  return category || "아이템";
-}
-
-function toDetailCategoryLabel(detailCategory: string | null): string {
-  const value = String(detailCategory || "").trim().toLowerCase();
-  if (!value) return "-";
-
-  const labels: Record<string, string> = {
-    short_sleeve_tshirt: "반팔",
-    long_sleeve_tshirt: "긴팔",
-    shirt: "셔츠",
-    polo_shirt: "카라티",
-    sweatshirt: "맨투맨",
-    hoodie: "후드티",
-    knit: "니트",
-    sleeveless: "슬리브리스",
-    vest: "조끼",
-    blouse: "블라우스",
-    cardigan: "가디건",
-    hood_zipup: "후드집업",
-    jacket: "자켓",
-    blazer: "블레이저",
-    leather_jacket: "가죽자켓",
-    windbreaker: "바람막이",
-    coat: "코트",
-    padding: "패딩",
-    fleece: "플리스",
-    shorts: "반바지",
-    jeans: "청바지",
-    slacks: "슬랙스",
-    cotton_pants: "면바지/치노",
-    cargo_pants: "카고팬츠",
-    jogger_pants: "조거팬츠",
-    leggings: "레깅스",
-    skirt: "스커트",
-  };
-
-  return labels[value] || detailCategory || "-";
-}
-
-function toSeasonLabel(seasons: string[]): string {
-  if (!Array.isArray(seasons) || seasons.length === 0) return "-";
-
-  const labels: Record<string, string> = {
-    spring: "봄",
-    summer: "여름",
-    fall: "가을",
-    winter: "겨울",
-  };
-
-  return seasons.map((season) => labels[String(season).toLowerCase()] || season).join(", ");
-}
-
-function toThicknessLabel(thickness: string | null): string {
-  const value = String(thickness || "").trim().toLowerCase();
-  if (!value) return "-";
-  if (value === "light") return "얇음";
-  if (value === "medium") return "보통";
-  if (value === "heavy") return "두꺼움";
-  return thickness || "-";
-}
-
 function splitName(name: string): { brand: string; product: string } {
   const text = name.trim();
   if (!text) return { brand: "-", product: "이름 없음" };
@@ -236,7 +163,6 @@ export function WardrobeGrid({
   query,
   category,
   categoryCounts,
-  totalItemCount,
   items,
   wearCounts,
   recentWearDates,

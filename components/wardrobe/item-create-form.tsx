@@ -473,7 +473,6 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
   const previewSrc = localImageUrl || imagePrefill;
   const showDetailCategory = category === "Outer" || category === "Top" || category === "Bottom";
   const showThickness = requiresThickness(category);
-  const colorRequired = requiresColor(category);
   const sizeRequired = requiresSize(category);
   const detailCategoryOptions =
     category === "Top" || category === "Outer" || category === "Bottom"
