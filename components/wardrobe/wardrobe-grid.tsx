@@ -14,6 +14,7 @@ type WardrobeGridProps = {
   query: string;
   category: string;
   categoryCounts: Record<string, number>;
+  totalItemCount: number;
   items: WardrobeItem[];
   wearCounts: Record<number, number>;
   recentWearDates: Record<number, string>;
@@ -236,6 +237,7 @@ export function WardrobeGrid({
   query,
   category,
   categoryCounts,
+  totalItemCount,
   items,
   wearCounts,
   recentWearDates,
@@ -436,6 +438,38 @@ export function WardrobeGrid({
         </div>
       </div>
 
+<<<<<<< HEAD
+=======
+      <div className="wardrobe-action-row">
+        <p className={`wardrobe-delete-hint${deleteMode ? " is-visible" : ""}`}>
+          삭제할 아이템을 선택하세요.
+        </p>
+        <span className="wardrobe-total-count" aria-label="총 등록 수">
+          {totalItemCount}
+        </span>
+        {!deleteMode || selectedIds.length === 0 ? (
+          <button
+            type="button"
+            className="ghost-button"
+            onClick={handleDeleteButton}
+            aria-label={!deleteMode ? "삭제 모드" : "삭제 취소"}
+          >
+            <TrashIcon size={16} />
+          </button>
+        ) : (
+          <ConfirmSubmitButton
+            className="ghost-button"
+            formId="wardrobeDeleteForm"
+            title={`${selectedIds.length}개 아이템을 삭제할까요?`}
+            message="삭제한 아이템은 되돌릴 수 없고, 관련 착용 기록 연결도 함께 정리됩니다."
+            confirmLabel="삭제"
+          >
+            선택 삭제 ({selectedIds.length})
+          </ConfirmSubmitButton>
+        )}
+      </div>
+
+>>>>>>> e52e4973fc9fa70dfcec1a27426c69ef75f03bbc
       <form ref={formRef} id="wardrobeDeleteForm" action="/api/items/delete" method="post">
         {selectedIds.map((id) => (
           <input key={id} type="hidden" name="item_ids" value={id} />

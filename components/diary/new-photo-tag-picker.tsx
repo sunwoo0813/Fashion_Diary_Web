@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type PointerEvent as ReactPointerEvent } from "react";
 
 type ExistingPhoto = {
   id: number;
@@ -33,6 +33,16 @@ type ExistingPhotoEntry = {
 
 type PhotoEntry = NewPhotoEntry | ExistingPhotoEntry;
 
+type CropDraft = {
+  file: File;
+  objectUrl: string;
+  imageWidth: number;
+  imageHeight: number;
+  zoom: number;
+  offsetX: number;
+  offsetY: number;
+};
+
 type UploadTicketResponse = {
   ok?: boolean;
   error?: string;
@@ -49,6 +59,8 @@ type UploadTicketResponse = {
 const MAX_SINGLE_FILE_BYTES = 20 * 1024 * 1024;
 const MAX_TOTAL_FILE_BYTES = 80 * 1024 * 1024;
 const UPLOAD_CONCURRENCY = 3;
+const CROP_OUTPUT_WIDTH = 1200;
+const CROP_OUTPUT_HEIGHT = 1500;
 
 function ImagePlusIcon() {
   return (
@@ -109,6 +121,81 @@ function formatSize(bytes: number): string {
   return `${(bytes / (1024 * 1024)).toFixed(1)}MB`;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
+function loadImageDimensions(objectUrl: string): Promise<{ width: number; height: number }> {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve({ width: image.naturalWidth || image.width, height: image.naturalHeight || image.height });
+    image.onerror = () => reject(new Error("이미지를 불러오지 못했습니다."));
+    image.src = objectUrl;
+  });
+}
+
+async function cropImageFile(
+  draft: CropDraft,
+  viewportWidth: number,
+  viewportHeight: number,
+): Promise<File> {
+  const canvas = document.createElement("canvas");
+  canvas.width = CROP_OUTPUT_WIDTH;
+  canvas.height = CROP_OUTPUT_HEIGHT;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("이미지 편집을 시작할 수 없습니다.");
+  }
+
+  const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+    const nextImage = new Image();
+    nextImage.onload = () => resolve(nextImage);
+    nextImage.onerror = () => reject(new Error("이미지를 불러오지 못했습니다."));
+    nextImage.src = draft.objectUrl;
+  });
+
+  const baseScale = Math.max(viewportWidth / draft.imageWidth, viewportHeight / draft.imageHeight);
+  const displayWidth = draft.imageWidth * baseScale * draft.zoom;
+  const displayHeight = draft.imageHeight * baseScale * draft.zoom;
+  const imageLeft = (viewportWidth - displayWidth) / 2 + draft.offsetX;
+  const imageTop = (viewportHeight - displayHeight) / 2 + draft.offsetY;
+
+  const sourceX = ((0 - imageLeft) / displayWidth) * draft.imageWidth;
+  const sourceY = ((0 - imageTop) / displayHeight) * draft.imageHeight;
+  const sourceWidth = (viewportWidth / displayWidth) * draft.imageWidth;
+  const sourceHeight = (viewportHeight / displayHeight) * draft.imageHeight;
+
+  context.drawImage(
+    image,
+    clamp(sourceX, 0, draft.imageWidth),
+    clamp(sourceY, 0, draft.imageHeight),
+    clamp(sourceWidth, 1, draft.imageWidth),
+    clamp(sourceHeight, 1, draft.imageHeight),
+    0,
+    0,
+    CROP_OUTPUT_WIDTH,
+    CROP_OUTPUT_HEIGHT,
+  );
+
+  const blob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((nextBlob) => {
+      if (!nextBlob) {
+        reject(new Error("이미지를 자르지 못했습니다."));
+        return;
+      }
+      resolve(nextBlob);
+    }, draft.file.type || "image/jpeg", 0.92);
+  });
+
+  const extension = draft.file.name.includes(".") ? draft.file.name.slice(draft.file.name.lastIndexOf(".")) : ".jpg";
+  const croppedName = draft.file.name.replace(/\.[^.]+$/, "") || "cropped-photo";
+  return new File([blob], `${croppedName}-cropped${extension}`, {
+    type: blob.type || draft.file.type || "image/jpeg",
+    lastModified: Date.now(),
+  });
+}
+
 async function runWithConcurrency<T>(
   items: T[],
   concurrency: number,
@@ -154,9 +241,16 @@ export function NewPhotoTagPicker({
   const [uploadProgress, setUploadProgress] = useState({ done: 0, total: 0 });
   const [uploadError, setUploadError] = useState("");
   const [isDragging, setIsDragging] = useState(false);
+  const [pendingCropFiles, setPendingCropFiles] = useState<File[]>([]);
+  const [cropDraft, setCropDraft] = useState<CropDraft | null>(null);
+  const [cropError, setCropError] = useState("");
+  const [isCropSaving, setIsCropSaving] = useState(false);
+  const [cropViewport, setCropViewport] = useState({ width: 0, height: 0 });
   const inputRef = useRef<HTMLInputElement | null>(null);
   const uploadedUrlsRef = useRef<HTMLInputElement | null>(null);
   const previousEntriesRef = useRef<PhotoEntry[]>([]);
+  const cropViewportRef = useRef<HTMLDivElement | null>(null);
+  const dragStateRef = useRef<{ pointerId: number; startX: number; startY: number; originX: number; originY: number } | null>(null);
 
   const newEntries = useMemo(
     () => entries.filter((entry): entry is NewPhotoEntry => entry.kind === "new"),
@@ -191,6 +285,23 @@ export function NewPhotoTagPicker({
     setUploadError("");
     setUploadProgress({ done: 0, total: 0 });
   }, [newEntries]);
+
+  useEffect(() => {
+    if (!cropDraft) return;
+
+    function updateViewport() {
+      const element = cropViewportRef.current;
+      if (!element) return;
+      setCropViewport({
+        width: element.clientWidth,
+        height: element.clientHeight,
+      });
+    }
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+    return () => window.removeEventListener("resize", updateViewport);
+  }, [cropDraft]);
 
   useEffect(() => {
     if (entries.length === 0) {
@@ -297,7 +408,7 @@ export function NewPhotoTagPicker({
     };
   }, [formId, isUploading, newEntries, uploadedUrls]);
 
-  const appendFiles = useCallback(
+  const appendEntries = useCallback(
     (selected: File[]) => {
       const existingBytes = newEntries.reduce((sum, entry) => sum + entry.file.size, 0);
       const additionalBytes = selected.reduce((sum, file) => sum + file.size, 0);
@@ -330,10 +441,76 @@ export function NewPhotoTagPicker({
     [entries.length, newEntries],
   );
 
+  const openNextCropDraft = useCallback(async (queue: File[]) => {
+    const nextFile = queue[0];
+    if (!nextFile) {
+      setCropDraft(null);
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(nextFile);
+    try {
+      const dimensions = await loadImageDimensions(objectUrl);
+      setCropDraft({
+        file: nextFile,
+        objectUrl,
+        imageWidth: dimensions.width,
+        imageHeight: dimensions.height,
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0,
+      });
+      setCropError("");
+    } catch (error) {
+      URL.revokeObjectURL(objectUrl);
+      setCropError(error instanceof Error ? error.message : "이미지를 불러오지 못했습니다.");
+      setPendingCropFiles((current) => current.slice(1));
+    }
+  }, []);
+
+  useEffect(() => {
+    if (cropDraft || pendingCropFiles.length === 0) return;
+    void openNextCropDraft(pendingCropFiles);
+  }, [cropDraft, openNextCropDraft, pendingCropFiles]);
+
+  const queueFilesForCrop = useCallback(
+    (selected: File[]) => {
+      const existingBytes = newEntries.reduce((sum, entry) => sum + entry.file.size, 0);
+      const additionalBytes = selected.reduce((sum, file) => sum + file.size, 0);
+      const totalBytes = existingBytes + additionalBytes;
+      const tooLargeFile = selected.find((file) => file.size > MAX_SINGLE_FILE_BYTES);
+
+      if (tooLargeFile) {
+        setUploadError(
+          `${tooLargeFile.name} 파일 크기는 ${formatSize(tooLargeFile.size)}입니다. 각 파일은 ${formatSize(MAX_SINGLE_FILE_BYTES)} 이하여야 업로드할 수 있습니다.`,
+        );
+        return;
+      }
+
+      if (totalBytes > MAX_TOTAL_FILE_BYTES) {
+        setUploadError(`선택한 사진 전체 용량은 ${formatSize(totalBytes)}입니다. 최대 ${formatSize(MAX_TOTAL_FILE_BYTES)}까지 가능합니다.`);
+        return;
+      }
+
+      setUploadError("");
+      setCropError("");
+      setPendingCropFiles((current) => [...current, ...selected]);
+    },
+    [newEntries],
+  );
+
+  useEffect(() => {
+    if (pendingCropFiles.length === 0) return;
+    if (cropDraft) return;
+    if (cropError) {
+      setCropError("");
+    }
+  }, [cropDraft, cropError, pendingCropFiles.length]);
+
   function handleFileChange(event: ChangeEvent<HTMLInputElement>) {
     const selected = Array.from(event.target.files || []);
     if (selected.length > 0) {
-      appendFiles(selected);
+      queueFilesForCrop(selected.filter((file) => file.type.startsWith("image/")));
     }
     event.target.value = "";
   }
@@ -384,10 +561,115 @@ export function NewPhotoTagPicker({
 
       const selected = Array.from(event.dataTransfer.files || []).filter((file) => file.type.startsWith("image/"));
       if (selected.length === 0) return;
-      appendFiles(selected);
+      queueFilesForCrop(selected);
     },
-    [appendFiles],
+    [queueFilesForCrop],
   );
+
+  const getCropBounds = useCallback(() => {
+    if (!cropDraft || cropViewport.width === 0 || cropViewport.height === 0) {
+      return null;
+    }
+
+    const baseScale = Math.max(cropViewport.width / cropDraft.imageWidth, cropViewport.height / cropDraft.imageHeight);
+    const displayWidth = cropDraft.imageWidth * baseScale * cropDraft.zoom;
+    const displayHeight = cropDraft.imageHeight * baseScale * cropDraft.zoom;
+
+    return {
+      maxOffsetX: Math.max(0, (displayWidth - cropViewport.width) / 2),
+      maxOffsetY: Math.max(0, (displayHeight - cropViewport.height) / 2),
+    };
+  }, [cropDraft, cropViewport.height, cropViewport.width]);
+
+  const handleCropZoomChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const nextZoom = Number(event.target.value);
+      setCropDraft((current) => {
+        if (!current) return current;
+        const nextDraft = { ...current, zoom: nextZoom };
+        if (cropViewport.width === 0 || cropViewport.height === 0) return nextDraft;
+
+        const baseScale = Math.max(cropViewport.width / current.imageWidth, cropViewport.height / current.imageHeight);
+        const displayWidth = current.imageWidth * baseScale * nextZoom;
+        const displayHeight = current.imageHeight * baseScale * nextZoom;
+        const maxOffsetX = Math.max(0, (displayWidth - cropViewport.width) / 2);
+        const maxOffsetY = Math.max(0, (displayHeight - cropViewport.height) / 2);
+        nextDraft.offsetX = clamp(current.offsetX, -maxOffsetX, maxOffsetX);
+        nextDraft.offsetY = clamp(current.offsetY, -maxOffsetY, maxOffsetY);
+        return nextDraft;
+      });
+    },
+    [cropViewport.height, cropViewport.width],
+  );
+
+  const handleCropPointerDown = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!cropDraft) return;
+    const target = event.currentTarget;
+    dragStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      originX: cropDraft.offsetX,
+      originY: cropDraft.offsetY,
+    };
+    target.setPointerCapture(event.pointerId);
+  }, [cropDraft]);
+
+  const handleCropPointerMove = useCallback(
+    (event: ReactPointerEvent<HTMLDivElement>) => {
+      const dragState = dragStateRef.current;
+      const bounds = getCropBounds();
+      if (!dragState || !bounds) return;
+
+      const deltaX = event.clientX - dragState.startX;
+      const deltaY = event.clientY - dragState.startY;
+
+      setCropDraft((current) => {
+        if (!current) return current;
+        return {
+          ...current,
+          offsetX: clamp(dragState.originX + deltaX, -bounds.maxOffsetX, bounds.maxOffsetX),
+          offsetY: clamp(dragState.originY + deltaY, -bounds.maxOffsetY, bounds.maxOffsetY),
+        };
+      });
+    },
+    [getCropBounds],
+  );
+
+  const handleCropPointerUp = useCallback((event: ReactPointerEvent<HTMLDivElement>) => {
+    if (dragStateRef.current?.pointerId === event.pointerId) {
+      dragStateRef.current = null;
+      event.currentTarget.releasePointerCapture(event.pointerId);
+    }
+  }, []);
+
+  const handleCropCancel = useCallback(() => {
+    if (cropDraft) {
+      URL.revokeObjectURL(cropDraft.objectUrl);
+    }
+    setCropDraft(null);
+    setPendingCropFiles([]);
+    setCropError("");
+    setIsCropSaving(false);
+  }, [cropDraft]);
+
+  const handleCropConfirm = useCallback(async () => {
+    if (!cropDraft || cropViewport.width === 0 || cropViewport.height === 0) return;
+
+    setIsCropSaving(true);
+    setCropError("");
+    try {
+      const croppedFile = await cropImageFile(cropDraft, cropViewport.width, cropViewport.height);
+      appendEntries([croppedFile]);
+      URL.revokeObjectURL(cropDraft.objectUrl);
+      setCropDraft(null);
+      setPendingCropFiles((current) => current.slice(1));
+    } catch (error) {
+      setCropError(error instanceof Error ? error.message : "이미지를 자르지 못했습니다.");
+    } finally {
+      setIsCropSaving(false);
+    }
+  }, [appendEntries, cropDraft, cropViewport.height, cropViewport.width]);
 
   const hiddenValue = useMemo(() => JSON.stringify(newEntries.map(() => [])), [newEntries]);
   const uploadedUrlsValue = useMemo(() => JSON.stringify(uploadedUrls), [uploadedUrls]);
@@ -486,6 +768,61 @@ export function NewPhotoTagPicker({
         <p className="new-photo-status">사진 업로드가 완료됐어요. 바로 저장할 수 있어요.</p>
       ) : null}
       {uploadError ? <p className="form-error">{uploadError}</p> : null}
+
+      {cropDraft ? (
+        <div className="photo-crop-modal-backdrop" role="dialog" aria-modal="true" aria-label="코디 사진 자르기">
+          <div className="photo-crop-modal">
+            <div className="photo-crop-modal-head">
+              <div>
+                <p className="photo-crop-modal-kicker">Crop</p>
+                <h2>코디 사진 영역 선택</h2>
+                <p>4:5 프레임 안에 보일 영역만 저장됩니다. 사진을 드래그해서 위치를 맞추세요.</p>
+              </div>
+              <span className="photo-crop-modal-step">
+                1 / {pendingCropFiles.length}
+              </span>
+            </div>
+
+            <div className="photo-crop-stage-shell">
+              <div
+                ref={cropViewportRef}
+                className="photo-crop-stage"
+                onPointerDown={handleCropPointerDown}
+                onPointerMove={handleCropPointerMove}
+                onPointerUp={handleCropPointerUp}
+                onPointerCancel={handleCropPointerUp}
+              >
+                <img
+                  src={cropDraft.objectUrl}
+                  alt="크롭할 코디 사진"
+                  className="photo-crop-stage-image"
+                  style={{
+                    transform: `translate(${cropDraft.offsetX}px, ${cropDraft.offsetY}px) scale(${cropDraft.zoom})`,
+                  }}
+                  draggable={false}
+                />
+              </div>
+            </div>
+
+            <div className="photo-crop-controls">
+              <label className="photo-crop-zoom">
+                <span>확대</span>
+                <input type="range" min="1" max="3" step="0.01" value={cropDraft.zoom} onChange={handleCropZoomChange} />
+              </label>
+              <div className="photo-crop-actions">
+                <button type="button" className="ghost-button" onClick={handleCropCancel} disabled={isCropSaving}>
+                  취소
+                </button>
+                <button type="button" className="solid-button" onClick={handleCropConfirm} disabled={isCropSaving}>
+                  {isCropSaving ? "저장 중..." : "이 영역으로 사용"}
+                </button>
+              </div>
+            </div>
+
+            {cropError ? <p className="form-error">{cropError}</p> : null}
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

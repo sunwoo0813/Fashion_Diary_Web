@@ -29,6 +29,7 @@ type GetWardrobePageDataInput = {
 type WardrobePageData = {
   items: WardrobeItem[];
   categoryCounts: Record<string, number>;
+  totalItemCount: number;
   wearCounts: Record<number, number>;
   recentWearDates: Record<number, string>;
   favoriteIds: number[];
@@ -75,6 +76,7 @@ function cloneWardrobePageData(data: WardrobePageData): WardrobePageData {
   return {
     items: data.items.map((item) => ({ ...item })),
     categoryCounts: { ...data.categoryCounts },
+    totalItemCount: data.totalItemCount,
     wearCounts: { ...data.wearCounts },
     recentWearDates: { ...data.recentWearDates },
     favoriteIds: [...data.favoriteIds],
@@ -107,6 +109,7 @@ export async function getWardrobePageData({
     .eq("user_id", appUserId)
     .order("created_at", { ascending: false });
   let categoryCountQuery = admin.from("item").select("category").eq("user_id", appUserId);
+  const totalCountQuery = admin.from("item").select("id", { count: "exact", head: true }).eq("user_id", appUserId);
 
   if (normalizedItemId) {
     itemsQuery = itemsQuery.eq("id", normalizedItemId);
@@ -130,14 +133,19 @@ export async function getWardrobePageData({
     }
   }
 
-  const { data: rawItems, error: itemsError } = await itemsQuery;
+  const [
+    { data: rawItems, error: itemsError },
+    { data: categoryCountRows, error: categoryCountError },
+    { count: totalItemCountRaw, error: totalCountError },
+  ] = await Promise.all([itemsQuery, categoryCountQuery, totalCountQuery]);
   if (itemsError) {
     throw new Error(`Wardrobe item query failed: ${itemsError.message}`);
   }
-
-  const { data: categoryCountRows, error: categoryCountError } = await categoryCountQuery;
   if (categoryCountError) {
     throw new Error(`Wardrobe category count query failed: ${categoryCountError.message}`);
+  }
+  if (totalCountError) {
+    throw new Error(`Wardrobe total count query failed: ${totalCountError.message}`);
   }
 
   const items = (rawItems || []).map((row) => ({
@@ -249,6 +257,7 @@ export async function getWardrobePageData({
   const result: WardrobePageData = {
     items,
     categoryCounts,
+    totalItemCount: totalItemCountRaw ?? 0,
     wearCounts,
     recentWearDates,
     favoriteIds,

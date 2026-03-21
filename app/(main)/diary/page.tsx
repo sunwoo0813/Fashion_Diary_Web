@@ -7,10 +7,14 @@ import { getDiaryFeedData, getUserWardrobeItems } from "@/lib/queries/diary";
 
 export default async function DiaryRootPage() {
   const { appUserId } = await requireAppUserContext();
+<<<<<<< HEAD
   const [posts, wardrobeItems] = await Promise.all([
     getDiaryFeedData(appUserId, 120),
     getUserWardrobeItems(appUserId),
   ]);
+=======
+  const [posts, wardrobeItems] = await Promise.all([getDiaryFeedData(appUserId, 120), getUserWardrobeItems(appUserId)]);
+>>>>>>> e52e4973fc9fa70dfcec1a27426c69ef75f03bbc
   const sortedPosts = [...posts].sort((a, b) => {
     const byDate = b.date.localeCompare(a.date);
     if (byDate !== 0) return byDate;
@@ -43,7 +47,18 @@ export default async function DiaryRootPage() {
         </div>
       ) : (
         <div className="diary-feed-scroll">
+<<<<<<< HEAD
           <DiaryFeedGrid posts={sortedPosts} wardrobeItems={wardrobeItems} />
+=======
+          <DiaryFeedGrid
+            posts={sortedPosts}
+            wardrobeItems={wardrobeItems.map((item) => ({
+              id: item.id,
+              name: item.name,
+              category: item.category,
+            }))}
+          />
+>>>>>>> e52e4973fc9fa70dfcec1a27426c69ef75f03bbc
         </div>
       )}
     </section>
