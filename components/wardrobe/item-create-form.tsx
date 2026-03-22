@@ -765,7 +765,7 @@ export function ItemCreateForm({ initialError }: ItemCreateFormProps) {
           <Link href="/wardrobe" className="ghost-button">
             취소
           </Link>
-          <button type="submit" className="solid-button">
+          <button type="submit" form="itemCreateForm" className="solid-button">
             저장
           </button>
         </div>

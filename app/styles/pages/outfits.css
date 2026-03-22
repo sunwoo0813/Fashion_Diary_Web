@@ -616,10 +616,16 @@
 /* ── Outfit item combobox — Onthelook/Kream 스타일 ── */
 
 .outfit-item-combobox .smart-combobox-control {
-  border: none;
-  border-radius: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  padding: 0.38rem 0.55rem;
+}
+
+.outfit-item-combobox .smart-combobox-input {
+  border: 0;
   background: transparent;
-  padding-left: 0;
+  padding: 0;
 }
 
 .outfit-item-combobox .smart-combobox-clear {
@@ -1513,7 +1519,8 @@
 }
 
 :root:is([data-theme="dark"], .dark) .outfit-item-combobox .smart-combobox-control {
-  background-image: none;
+  background: var(--surface);
+  border-color: var(--line);
 }
 
 :root:is([data-theme="dark"], .dark) .outfit-item-combobox .smart-combobox-option {

@@ -9,7 +9,6 @@ import {
   toIsoDate,
   toNumber,
   parseIdList,
-  parseTagsJson,
   parsePhotoUrlsJson,
   uploadOutfitPhoto,
   removePublicUrl,
@@ -146,7 +145,6 @@ async function updateOutfit(request: Request, params: { id: string }, formData: 
     await admin.from("outfit_item").insert(rows);
   }
 
-  const newTagsList = parseTagsJson(toText(formData.get("photo_tags_new_json")));
   const bucket = getSupabaseBucket();
   const uploadedPhotoUrls = parsePhotoUrlsJson(toText(formData.get("photo_urls_new_json")), bucket);
   const newFiles = formData

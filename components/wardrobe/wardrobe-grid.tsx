@@ -107,6 +107,8 @@ export function WardrobeGrid({
     sizeDetail: null,
   });
 
+  const [failedImageIds, setFailedImageIds] = useState<Set<number>>(new Set());
+
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
@@ -330,9 +332,14 @@ export function WardrobeGrid({
             >
               <div className="wardrobe-media">
                 <div className="wardrobe-media-canvas">
-                  {item.image_path ? (
+                  {item.image_path && !failedImageIds.has(item.id) ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={item.image_path} alt={item.name} loading="lazy" />
+                    <img
+                      src={item.image_path}
+                      alt={item.name}
+                      loading="lazy"
+                      onError={() => setFailedImageIds((prev) => new Set(prev).add(item.id))}
+                    />
                   ) : (
                     <div className="wardrobe-media-placeholder">
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
@@ -345,8 +352,8 @@ export function WardrobeGrid({
               </div>
               <div className="wardrobe-info">
                 <div className="wardrobe-info-text">
-                  <p>{brandLabel}</p>
-                  <h3>{productLabel}</h3>
+                  <p title={brandLabel}>{brandLabel}</p>
+                  <h3 title={productLabel}>{productLabel}</h3>
                 </div>
                 <button
                   type="button"

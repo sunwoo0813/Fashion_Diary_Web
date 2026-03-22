@@ -258,19 +258,16 @@
   height: min(620px, calc(100vh - 2rem));
   overflow: hidden;
   border-radius: var(--radius-xl);
-  background:
-    radial-gradient(circle at 12% 10%, rgba(var(--accent-rgb), 0.1) 0%, transparent 28%),
-    linear-gradient(180deg, rgba(var(--surface-rgb), 0.98) 0%, rgba(var(--background-rgb), 0.96) 100%);
+  background: var(--surface);
   border: 1px solid var(--line);
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   box-shadow: var(--shadow-xl);
-  backdrop-filter: blur(16px);
 }
 
 .diary-modal-media {
   position: relative;
-  background: rgba(var(--background-rgb), 0.72);
+  background: var(--secondary);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -278,7 +275,7 @@
   min-width: 0;
   min-height: 0;
   padding: 0;
-  border-right: 1px solid rgba(var(--foreground-rgb), 0.06);
+  border-right: 1px solid var(--line);
 }
 
 .diary-modal-photo-frame {
@@ -287,15 +284,11 @@
   width: 100%;
   height: 100%;
   margin: 0;
-  background: #fffdf9;
-  border: 1px solid rgba(84, 61, 47, 0.12);
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.9) inset,
-    0 18px 36px rgba(67, 44, 31, 0.14);
+  background: transparent;
   box-sizing: border-box;
   display: block;
   overflow: hidden;
-  padding: 3rem var(--diary-modal-photo-side-padding) 1rem;
+  padding: var(--diary-modal-photo-side-padding);
   touch-action: pan-y;
 }
 
@@ -888,9 +881,7 @@
 :root:is([data-theme="dark"], .dark) .diary-modal {
   border-color: var(--line);
   color: var(--text);
-  background:
-    linear-gradient(180deg, rgba(var(--surface-rgb), 0.82) 0%, rgba(var(--background-rgb), 0.9) 100%);
-  backdrop-filter: blur(24px);
+  background: var(--surface);
   box-shadow:
     0 24px 60px rgba(0, 0, 0, 0.38),
     inset 0 1px 0 rgba(255, 255, 255, 0.05);
