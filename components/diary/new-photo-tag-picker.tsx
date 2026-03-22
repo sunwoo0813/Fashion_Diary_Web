@@ -576,6 +576,11 @@ export function NewPhotoTagPicker({
     }
   }, [appendEntries, cropDraft, cropViewport.height, cropViewport.width]);
 
+  const stageBaseScale =
+    cropDraft && cropViewport.width > 0 && cropViewport.height > 0
+      ? Math.max(cropViewport.width / cropDraft.imageWidth, cropViewport.height / cropDraft.imageHeight)
+      : 1;
+
   const hiddenValue = useMemo(() => JSON.stringify(newEntries.map(() => [])), [newEntries]);
   const uploadedUrlsValue = useMemo(() => JSON.stringify(uploadedUrls), [uploadedUrls]);
   const previewSrc = entries.length > 0 ? entries[currentIndex]?.previewUrl : "";
@@ -703,7 +708,7 @@ export function NewPhotoTagPicker({
                   alt="크롭할 코디 사진"
                   className="photo-crop-stage-image"
                   style={{
-                    transform: `translate(${cropDraft.offsetX}px, ${cropDraft.offsetY}px) scale(${cropDraft.zoom})`,
+                    transform: `translate(calc(-50% + ${cropDraft.offsetX}px), calc(-50% + ${cropDraft.offsetY}px)) scale(${stageBaseScale * cropDraft.zoom})`,
                   }}
                   draggable={false}
                 />
