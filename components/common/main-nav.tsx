@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
-import { DarkModeToggle } from "@/components/common/dark-mode-toggle";
+import { SettingsIcon } from "@/components/common/icons";
 import { APP_NAV_LINKS, type AppNavLink } from "@/components/common/nav-links";
 
 function isActive(pathname: string, link: AppNavLink): boolean {
@@ -44,9 +44,20 @@ export function MainNav({ compact = false, onLinkClick }: { compact?: boolean; o
           </Link>
         );
       })}
-      <div className="app-nav-theme-toggle">
-        <DarkModeToggle />
-      </div>
+      <Link
+        href="/account"
+        className={`app-link${compact ? " is-compact" : ""}${pathname === "/account" ? " is-active" : ""}`}
+        aria-current={pathname === "/account" ? "page" : undefined}
+        aria-label={compact ? "설정" : undefined}
+        onClick={onLinkClick}
+      >
+        <span className="app-link-icon" aria-hidden>
+          <SettingsIcon size={16} />
+        </span>
+        <span className="app-link-text" aria-hidden={compact}>
+          설정
+        </span>
+      </Link>
     </nav>
   );
 }

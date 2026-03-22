@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useMemo, useState } from "react";
 
@@ -432,13 +432,19 @@ export function BlurFadeTextDemo() {
       sigunguId: draftSigunguId,
     };
 
+    const isSameRegion = draftSidoId === appliedSidoId && draftSigunguId === appliedSigunguId;
+
     setAppliedSidoId(draftSidoId);
     setAppliedSigunguId(draftSigunguId);
     setPreferredRegion(nextPreferredRegion);
-    setWeather(null);
-    setWeatherError("");
-    setRecommendation(null);
-    setRecommendError("");
+
+    if (!isSameRegion) {
+      setWeather(null);
+      setWeatherError("");
+      setRecommendation(null);
+      setRecommendError("");
+    }
+
     setIsOpen(false);
     void persistPreferredRegion(nextPreferredRegion);
   }
@@ -579,17 +585,31 @@ export function BlurFadeTextDemo() {
               {regionsLoading ? "지역 불러오는 중..." : selectedRegionLabel}
             </button>
             {isOpen ? (
-              <div
-                id="dashboard-region-panel"
-                className="outfit-weather-panel"
-                style={{
-                  width: "min(100%, 32rem)",
-                  textAlign: "center",
-                }}
-              >
-                <div className="dashboard-region-grid" style={{ width: "100%" }}>
-                  <label className="dashboard-region-field">
-                    <span className="dashboard-region-label">시/도</span>
+              <div id="dashboard-region-panel" className="dash-region-panel">
+                {/* 헤더 */}
+                <div className="dash-region-hero">
+                  <div className="dash-region-hero-left">
+                    <p className="dash-weather-city">
+                      <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                        <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                      </svg>
+                      지역 선택
+                    </p>
+                    <strong className="dash-region-selected-label">
+                      {draftRegionLabel}
+                    </strong>
+                  </div>
+                  <div className="dash-region-hero-icon" aria-hidden="true">
+                    <svg width="52" height="52" viewBox="0 0 24 24" fill="none">
+                      <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" fill="currentColor" opacity="0.18"/>
+                    </svg>
+                  </div>
+                </div>
+
+                {/* 셀렉트 행 */}
+                <div className="dash-region-selects">
+                  <label className="dash-region-field">
+                    <span className="dash-weather-stat-label">시 / 도</span>
                     <span className="dashboard-region-select-wrap">
                       <select
                         className="dashboard-region-select"
@@ -597,7 +617,7 @@ export function BlurFadeTextDemo() {
                         onChange={(event) => handleSidoChange(event.target.value)}
                         disabled={regionsLoading || regions.length === 0}
                       >
-                        <option value="">시/도를 선택해 주세요</option>
+                        <option value="">시/도 선택</option>
                         {regions.map((option) => (
                           <option key={option.id} value={option.id}>
                             {option.name}
@@ -609,8 +629,8 @@ export function BlurFadeTextDemo() {
                       </span>
                     </span>
                   </label>
-                  <label className="dashboard-region-field">
-                    <span className="dashboard-region-label">시/군/구</span>
+                  <label className="dash-region-field">
+                    <span className="dash-weather-stat-label">시 / 군 / 구</span>
                     <span className="dashboard-region-select-wrap">
                       <select
                         className="dashboard-region-select"
@@ -618,7 +638,7 @@ export function BlurFadeTextDemo() {
                         onChange={(event) => setDraftSigunguId(event.target.value)}
                         disabled={regionsLoading || !draftSidoId || draftSigunguOptions.length === 0}
                       >
-                        <option value="">시/군/구를 선택해 주세요</option>
+                        <option value="">시/군/구 선택</option>
                         {draftSigunguOptions.map((option) => (
                           <option key={option.id} value={option.id}>
                             {option.name}
@@ -631,23 +651,17 @@ export function BlurFadeTextDemo() {
                     </span>
                   </label>
                 </div>
-                <p className="outfit-weather-message" style={{ margin: 0, textAlign: "center" }}>
-                  {draftRegionLabel}
-                </p>
-                {regionsError ? <p className="form-error">{regionsError}</p> : null}
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "center",
-                  }}
-                >
+
+                {/* 확인 버튼 행 */}
+                <div className="dash-region-footer">
+                  {regionsError ? <p className="form-error" style={{ margin: 0 }}>{regionsError}</p> : null}
                   <button
                     type="button"
-                    className="ghost-button"
+                    className="solid-button"
                     onClick={handleConfirmSelection}
                     disabled={!draftSidoId || !draftSigunguId}
                   >
-                    선택 완료
+                    이 지역으로 날씨 보기
                   </button>
                 </div>
               </div>
@@ -656,9 +670,9 @@ export function BlurFadeTextDemo() {
               <div
                 className="dashboard-weather-section"
                 style={{
-                  width: "min(100%, 72rem)",
                   textAlign: "left",
-                  display: "grid",
+                  display: "flex",
+                  flexDirection: "column",
                   gap: "1.6rem",
                 }}
               >
@@ -668,117 +682,43 @@ export function BlurFadeTextDemo() {
                   </p>
                 ) : null}
                 {weather ? (
-                  <div
-                    className="dashboard-weather-grid"
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns: "repeat(5, minmax(0, 1fr))",
-                      gap: "1.3rem",
-                    }}
-                  >
-                    <div
-                      className="dashboard-weather-card"
-                      style={{
-                        border: "1px solid var(--line)",
-                        borderRadius: "12px",
-                        padding: "1.6rem",
-                        background: "rgba(var(--surface-rgb), 0.55)",
-                        textAlign: "center",
-                      }}
-                    >
-                      <strong style={{ display: "block", marginBottom: "0.5rem", textAlign: "center" }}>
-                        현재 날씨 상태
-                      </strong>
-                      <div
-                        className="dashboard-weather-current"
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "1.4rem",
-                        }}
-                      >
-                        {WeatherIcon ? <WeatherIcon size={42} /> : null}
+                  <div className={`dash-weather-widget${weather.rain ? " is-rainy" : ""}`}>
+                    <div className="dash-weather-hero">
+                      <div className="dash-weather-hero-left">
+                        <p className="dash-weather-city">
+                          <svg width="11" height="11" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                            <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z"/>
+                          </svg>
+                          {weather.city}
+                        </p>
+                        <strong className="dash-weather-temp">{formatTemperature(weather.current_temp)}</strong>
+                        <p className="dash-weather-desc">{weather.desc}</p>
+                        <p className="dash-weather-feels">체감 {formatTemperature(weather.feels_like)}</p>
+                      </div>
+                      <div className="dash-weather-hero-icon" aria-hidden="true">
+                        {WeatherIcon ? <WeatherIcon size={72} /> : null}
                       </div>
                     </div>
-                    <div
-                      className="dashboard-weather-card"
-                      style={{
-                        border: "1px solid var(--line)",
-                        borderRadius: "12px",
-                        padding: "1.6rem",
-                        background: "rgba(var(--surface-rgb), 0.55)",
-                        textAlign: "center",
-                      }}
-                    >
-                      <strong style={{ display: "block", marginBottom: "0.3rem", textAlign: "center" }}>
-                        현재 기온
-                      </strong>
-                      <span className="outfit-weather-message" style={{ margin: 0 }}>
-                        {formatTemperature(weather.current_temp)}
-                      </span>
-                    </div>
-                    <div
-                      className="dashboard-weather-card"
-                      style={{
-                        border: "1px solid var(--line)",
-                        borderRadius: "12px",
-                        padding: "1.6rem",
-                        background: "rgba(var(--surface-rgb), 0.55)",
-                        textAlign: "center",
-                      }}
-                    >
-                      <strong style={{ display: "block", marginBottom: "0.3rem", textAlign: "center" }}>
-                        체감 온도
-                      </strong>
-                      <span className="outfit-weather-message" style={{ margin: 0 }}>
-                        {formatTemperature(weather.feels_like)}
-                      </span>
-                    </div>
-                    <div
-                      className="dashboard-weather-card"
-                      style={{
-                        border: "1px solid var(--line)",
-                        borderRadius: "12px",
-                        padding: "1.6rem",
-                        background: "rgba(var(--surface-rgb), 0.55)",
-                        textAlign: "center",
-                      }}
-                    >
-                      <strong style={{ display: "block", marginBottom: "0.3rem", textAlign: "center" }}>
-                        최저 / 최고 기온
-                      </strong>
-                      <span className="outfit-weather-message" style={{ margin: 0 }}>
-                        {formatTemperature(weather.t_min)} / {formatTemperature(weather.t_max)}
-                      </span>
-                    </div>
-                    <div
-                      className="dashboard-weather-card"
-                      style={{
-                        border: "1px solid var(--line)",
-                        borderRadius: "12px",
-                        padding: "1.6rem",
-                        background: "rgba(var(--surface-rgb), 0.55)",
-                        textAlign: "center",
-                      }}
-                    >
-                      <strong style={{ display: "block", marginBottom: "0.3rem", textAlign: "center" }}>
-                        강수 정보
-                      </strong>
-                      <span className="outfit-weather-message" style={{ margin: 0 }}>
-                        {weather.precipitation_type} / {weather.precipitation_probability}% / {weather.precipitation_amount}
-                      </span>
+                    <div className="dash-weather-stats">
+                      <div className="dash-weather-stat">
+                        <span className="dash-weather-stat-label">최저 / 최고</span>
+                        <strong className="dash-weather-stat-value">
+                          {weather.t_min.toFixed(0)}° / {weather.t_max.toFixed(0)}°
+                        </strong>
+                      </div>
+                      <div className="dash-weather-stat">
+                        <span className="dash-weather-stat-label">강수 확률</span>
+                        <strong className="dash-weather-stat-value">{weather.precipitation_probability}%</strong>
+                      </div>
+                      <div className="dash-weather-stat">
+                        <span className="dash-weather-stat-label">습도</span>
+                        <strong className="dash-weather-stat-value">{weather.humidity}%</strong>
+                      </div>
                     </div>
                   </div>
                 ) : null}
                 {weather && aiComposerOpen ? (
-                  <div
-                    style={{
-                      display: "grid",
-                      gap: "0.6rem",
-                      justifyItems: "center",
-                    }}
-                  >
+                  <div style={{ display: "grid", gap: "0.6rem", justifyItems: "center" }}>
                     <label>
                       <textarea
                         value={aiComment}
@@ -789,7 +729,7 @@ export function BlurFadeTextDemo() {
                           width: "min(100%, 38rem)",
                           minHeight: "5.8rem",
                           resize: "vertical",
-                          borderRadius: "14px",
+                          borderRadius: "var(--radius-lg)",
                           border: "1px solid var(--line)",
                           background: "rgba(var(--surface-rgb), 0.55)",
                           color: "var(--foreground)",
@@ -817,12 +757,7 @@ export function BlurFadeTextDemo() {
                         className="solid-button"
                         onClick={handleRecommendOutfit}
                         disabled={recommendLoading || aiRecommendLoading}
-                        style={{
-                          display: "inline-flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          gap: "0.9rem",
-                        }}
+                        style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.9rem" }}
                       >
                         {recommendLoading ? <RecommendLoader /> : null}
                         <span>{recommendLoading ? "무료 추천 중..." : "무료 추천"}</span>
@@ -833,12 +768,7 @@ export function BlurFadeTextDemo() {
                       className="ghost-button"
                       onClick={handleAiRecommendOutfit}
                       disabled={recommendLoading || aiRecommendLoading}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        gap: "0.9rem",
-                      }}
+                      style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "0.9rem" }}
                     >
                       {aiRecommendLoading ? <RecommendLoader /> : null}
                       <span>
@@ -847,124 +777,88 @@ export function BlurFadeTextDemo() {
                     </button>
                   </div>
                 ) : null}
+                {weatherError ? <p className="form-error">{weatherError}</p> : null}
+              </div>
+            ) : null}
+            {appliedSido && appliedSigungu && !isOpen && (recommendError || recommendation) ? (
+              <div
+                style={{
+                  width: "min(calc(100vw - 2rem), 56rem)",
+                  display: "grid",
+                  gap: "1.6rem",
+                  textAlign: "left",
+                }}
+              >
                 {recommendError ? <p className="form-error">{recommendError}</p> : null}
                 {recommendation ? (
-                  <div
-                    style={{
-                      display: "grid",
-                      gap: "1.6rem",
-                    }}
-                  >
+                  <div style={{ display: "grid", gap: "1.2rem" }}>
                     {recommendation.looks[0]?.title !== "single" ? (
-                      <div
-                        style={{
-                          border: "1px solid var(--line)",
-                          borderRadius: "16px",
-                          padding: "2rem",
-                          background: "rgba(var(--surface-rgb), 0.68)",
-                        }}
-                      >
-                        <strong style={{ display: "block", marginBottom: "0.45rem" }}>추천 코디</strong>
-                        <p className="outfit-weather-message" style={{ margin: 0 }}>
-                          {todayLookSummary(recommendation)}
-                        </p>
+                      <div className="rec-summary-card">
+                        <strong style={{ fontSize: "0.88rem" }}>오늘의 추천 코디</strong>
+                        <p>{todayLookSummary(recommendation)}</p>
                       </div>
                     ) : null}
-                    <div
-                      style={{
-                        display: "grid",
-                        gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
-                        gap: "1.2rem",
-                      }}
-                    >
-                      {recommendation.looks.map((look, lookIndex) => (
-                        <div
-                          key={`${look.title}-${lookIndex}`}
-                          style={{
-                            border: "1px solid var(--line)",
-                            borderRadius: "16px",
-                            padding: "1.4rem",
-                            background: "rgba(var(--surface-rgb), 0.6)",
-                            display: "grid",
-                            gap: "1rem",
-                            alignContent: "start",
-                          }}
-                        >
-                          <div style={{ display: "grid", gap: "0.35rem" }}>
-                            <strong>{lookLabel(look.title)}</strong>
-                            {look.title === "single" && look.reasons[0] ? (
-                              <p className="outfit-weather-message" style={{ margin: 0 }}>
-                                {look.reasons[0]}
-                              </p>
+                    {recommendation.looks.map((look, lookIndex) => (
+                      <div key={`${look.title}-${lookIndex}`}>
+                        {recommendation.looks.length > 1 ? (
+                          <p className="rec-section-label">{lookLabel(look.title)}</p>
+                        ) : null}
+                        {(look.summary || look.reasons.length > 0) ? (
+                          <div className="rec-look-header">
+                            {look.summary ? (
+                              <p className="rec-look-summary">{look.summary}</p>
                             ) : null}
-                            {look.missingSlots.length > 0 ? (
-                              <p className="outfit-weather-message" style={{ margin: 0 }}>
-                                부족한 카테고리: {look.missingSlots.map((slot) => slotLabel(slot as RecommendationPart["slot"])).join(", ")}
-                              </p>
+                            {look.reasons.length > 0 ? (
+                              <div className="rec-look-reasons">
+                                {look.reasons.map((r, i) => (
+                                  <span key={i} className="rec-look-reason-chip">{r}</span>
+                                ))}
+                              </div>
                             ) : null}
                           </div>
-                          <div
-                            style={{
-                              display: "grid",
-                              gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-                              gap: "0.9rem",
-                            }}
-                          >
-                            {look.parts.map((part) => {
-                              const { brand, productName } = splitItemName(part.item.name);
-
-                              return (
-                                <div
-                                  key={`${look.title}-${part.slot}-${part.item.id}`}
-                                  style={{
-                                    border: "1px solid var(--line)",
-                                    borderRadius: "14px",
-                                    padding: "1rem",
-                                    background: "rgba(var(--surface-rgb), 0.55)",
-                                    display: "grid",
-                                    gap: "0.8rem",
-                                  }}
-                                >
-                                  <span
-                                    style={{
-                                      fontSize: "0.78rem",
-                                      color: "var(--muted-foreground)",
-                                    }}
-                                  >
-                                    {slotLabel(part.slot)}
-                                  </span>
+                        ) : null}
+                        {look.missingSlots.length > 0 ? (
+                          <p style={{ margin: "0 0 0.8rem", fontSize: "0.8rem", color: "var(--muted-foreground)" }}>
+                            부족한 카테고리: {look.missingSlots.map((s) => slotLabel(s as RecommendationPart["slot"])).join(", ")}
+                          </p>
+                        ) : null}
+                        <div className="rec-pin-grid">
+                          {[...look.parts]
+                            .sort((a, b) => {
+                              const order: RecommendationPart["slot"][] = ["Outer", "Top", "Bottom", "Shoes", "ACC"];
+                              return order.indexOf(a.slot) - order.indexOf(b.slot);
+                            })
+                            .map((part) => {
+                            const { brand, productName } = splitItemName(part.item.name);
+                            return (
+                              <div key={`${look.title}-${part.slot}-${part.item.id}`} className="rec-pin-card">
+                                <div className="rec-pin-image">
                                   {part.item.image_path ? (
                                     // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                      src={part.item.image_path}
-                                      alt={part.item.name}
-                                      style={{
-                                        width: "100%",
-                                        aspectRatio: "4 / 5",
-                                        objectFit: "cover",
-                                        borderRadius: "12px",
-                                        border: "1px solid var(--line)",
-                                      }}
-                                    />
-                                  ) : null}
-                                  <div style={{ display: "grid", gap: "0.35rem" }}>
-                                    {brand ? (
-                                      <span className="outfit-weather-message" style={{ margin: 0 }}>
-                                        {brand}
-                                      </span>
-                                    ) : null}
-                                    <strong>{productName || part.item.name}</strong>
-                                  </div>
+                                    <img src={part.item.image_path} alt={part.item.name} />
+                                  ) : (
+                                    <div className="rec-pin-placeholder">
+                                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                                        <path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z" stroke="currentColor" strokeWidth="1.5"/>
+                                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.5"/>
+                                        <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+                                      </svg>
+                                      <span>이미지 없음</span>
+                                    </div>
+                                  )}
                                 </div>
-                              );
-                            })}
-                          </div>
+                                <div className="rec-pin-info">
+                                  {brand ? <span className="rec-pin-brand">{brand}</span> : null}
+                                  <p className="rec-pin-name">{productName || part.item.name}</p>
+                                </div>
+                              </div>
+                            );
+                          })}
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    ))}
                   </div>
                 ) : null}
-                {weatherError ? <p className="form-error">{weatherError}</p> : null}
               </div>
             ) : null}
           </div>

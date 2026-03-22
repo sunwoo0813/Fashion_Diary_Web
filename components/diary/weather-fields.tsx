@@ -31,6 +31,14 @@ type WeatherState = {
   rain: boolean;
 };
 
+function todayLabel(): string {
+  const now = new Date();
+  const month = now.getMonth() + 1;
+  const day = now.getDate();
+  const weekdays = ["일요일", "월요일", "화요일", "수요일", "목요일", "금요일", "토요일"];
+  return `${month}월 ${day}일 ${weekdays[now.getDay()]}`;
+}
+
 function SelectArrow() {
   return (
     <svg aria-hidden="true" height="16" viewBox="0 0 16 16" width="16">
@@ -68,6 +76,7 @@ export function WeatherFields({
   const [sigunguId, setSigunguId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [isRegionOpen, setIsRegionOpen] = useState(false);
   const [weather, setWeather] = useState<WeatherState>({
     city: defaultCity,
     tMin: defaultTMin,
@@ -94,6 +103,8 @@ export function WeatherFields({
       if (preferredRegion) {
         setSidoId(preferredRegion.sidoId);
         setSigunguId(preferredRegion.sigunguId);
+        const region = findRegionCoordinateByIds(preferredRegion.sidoId, preferredRegion.sigunguId);
+        if (region) setWeather((prev) => ({ ...prev, city: region.displayName }));
         return;
       }
 
@@ -102,6 +113,10 @@ export function WeatherFields({
         const fallbackSigungu = fallbackSido.children[0];
         setSidoId(fallbackSido?.id || "");
         setSigunguId(fallbackSigungu?.id || "");
+        if (fallbackSido && fallbackSigungu) {
+          const region = findRegionCoordinateByIds(fallbackSido.id, fallbackSigungu.id);
+          if (region) setWeather((prev) => ({ ...prev, city: region.displayName }));
+        }
       }
     }
 
@@ -114,6 +129,11 @@ export function WeatherFields({
   useEffect(() => {
     if (!sidoId || !sigunguId) return;
 
+    const region = findRegionCoordinateByIds(sidoId, sigunguId);
+    if (region) {
+      setWeather((prev) => ({ ...prev, city: region.displayName }));
+    }
+
     let active = true;
 
     async function fillWeather() {
@@ -121,7 +141,6 @@ export function WeatherFields({
       setError("");
 
       try {
-        const region = findRegionCoordinateByIds(sidoId, sigunguId);
         const query = region
           ? `/api/weather?lat=${encodeURIComponent(String(region.lat))}&lon=${encodeURIComponent(String(region.lon))}&displayName=${encodeURIComponent(region.displayName)}`
           : `/api/weather?city=${encodeURIComponent(defaultCity)}`;
@@ -162,23 +181,43 @@ export function WeatherFields({
   }, [defaultCity, sidoId, sigunguId]);
 
   return (
-    <section className="outfit-weather-panel">
+    <section className={`outfit-weather-panel${weather.rain ? " is-rainy" : ""}`}>
+      <input type="hidden" name="city" value={weather.city} />
       <input type="hidden" name="t_min" value={String(weather.tMin)} />
       <input type="hidden" name="t_max" value={String(weather.tMax)} />
       <input type="hidden" name="humidity" value={String(weather.humidity)} />
       <input type="hidden" name="rain" value={weather.rain ? "1" : "0"} />
 
-      <div className="outfit-weather-head">
-        <div className="outfit-city-field">
-          <span>지역</span>
-          <strong>{weather.city}</strong>
-        </div>
-        {isLoading ? <span className="outfit-weather-loading">날씨 불러오는 중...</span> : null}
+      <div className="outfit-weather-date-row">
+        <p className="outfit-weather-date">{todayLabel()}</p>
+        <span className="outfit-weather-city">{weather.city}</span>
+        <button
+          type="button"
+          className="outfit-weather-region-toggle"
+          onClick={() => setIsRegionOpen((v) => !v)}
+        >
+          {isRegionOpen ? "닫기" : "지역 변경"}
+        </button>
       </div>
 
-      <div className="dashboard-region-grid">
-        <label className="dashboard-region-field">
-          <span className="dashboard-region-label">시/도</span>
+      <div className="outfit-weather-row">
+        {isLoading ? (
+          <span className="outfit-weather-loading">
+            <span className="outfit-weather-loading-dot" />
+            불러오는 중
+          </span>
+        ) : (
+          <>
+            <span className="outfit-weather-stat">최저 <strong>{weather.tMin}°</strong></span>
+            <span className="outfit-weather-stat">최고 <strong>{weather.tMax}°</strong></span>
+          </>
+        )}
+      </div>
+
+      {/* 지역 선택 */}
+      {isRegionOpen ? <div className="outfit-weather-region-row">
+        <label className="outfit-weather-region-field">
+          <span>시/도</span>
           <span className="dashboard-region-select-wrap">
             <select
               className="dashboard-region-select"
@@ -191,7 +230,7 @@ export function WeatherFields({
               }}
               disabled={regions.length === 0}
             >
-              <option value="">시/도를 선택해 주세요</option>
+              <option value="">시/도 선택</option>
               {regions.map((region) => (
                 <option key={region.id} value={region.id}>
                   {region.name}
@@ -203,8 +242,8 @@ export function WeatherFields({
             </span>
           </span>
         </label>
-        <label className="dashboard-region-field">
-          <span className="dashboard-region-label">시/군/구</span>
+        <label className="outfit-weather-region-field">
+          <span>시/군/구</span>
           <span className="dashboard-region-select-wrap">
             <select
               className="dashboard-region-select"
@@ -212,7 +251,7 @@ export function WeatherFields({
               onChange={(event) => setSigunguId(event.target.value)}
               disabled={!sidoId || sigunguOptions.length === 0}
             >
-              <option value="">시/군/구를 선택해 주세요</option>
+              <option value="">시/군/구 선택</option>
               {sigunguOptions.map((region) => (
                 <option key={region.id} value={region.id}>
                   {region.name}
@@ -224,28 +263,9 @@ export function WeatherFields({
             </span>
           </span>
         </label>
-      </div>
+      </div> : null}
 
       {error ? <p className="form-error">{error}</p> : null}
-
-      <div className="outfit-weather-grid">
-        <div className="outfit-weather-stat">
-          <span>최저 기온</span>
-          <strong>{weather.tMin}°C</strong>
-        </div>
-        <div className="outfit-weather-stat">
-          <span>최고 기온</span>
-          <strong>{weather.tMax}°C</strong>
-        </div>
-        <div className="outfit-weather-stat">
-          <span>습도</span>
-          <strong>{weather.humidity}%</strong>
-        </div>
-        <div className="outfit-weather-stat">
-          <span>강수</span>
-          <strong>{weather.rain ? "비" : "비 없음"}</strong>
-        </div>
-      </div>
     </section>
   );
 }

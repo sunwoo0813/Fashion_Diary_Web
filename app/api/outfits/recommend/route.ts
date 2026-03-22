@@ -48,8 +48,15 @@ export async function POST(request: Request) {
       );
     }
 
+    // 날씨 기본 검증
+    const tempValue = Number(weather.current_temp ?? weather.feels_like);
+    if (!Number.isFinite(tempValue) || tempValue < -60 || tempValue > 60) {
+      return NextResponse.json({ ok: false, error: "날씨 정보가 올바르지 않습니다." }, { status: 400 });
+    }
+
     const itemIds = items.map((item) => Number(item.id)).filter((id) => Number.isFinite(id));
-    const wearCounts: Record<number, number> = {};
+    // 아이템별 고유 outfit ID 집합 (중복 착용 횟수 방지)
+    const wearOutfitIds: Record<number, Set<number>> = {};
     const recentWearDates: Record<number, string> = {};
 
     if (itemIds.length > 0) {
@@ -95,11 +102,13 @@ export async function POST(request: Request) {
         }
       };
 
+      // outfit_item과 outfit_photo_item 모두 동일 outfit을 가리킬 수 있으므로
+      // 고유 outfit ID 기준으로 착용 횟수를 집계
       (outfitItems || []).forEach((row) => {
         const itemId = Number(row.item_id);
         const outfitId = Number(row.outfit_id);
         if (!Number.isFinite(itemId) || !Number.isFinite(outfitId)) return;
-        wearCounts[itemId] = (wearCounts[itemId] ?? 0) + 1;
+        (wearOutfitIds[itemId] ??= new Set()).add(outfitId);
         assignRecentWearDate(itemId, outfitDateById.get(outfitId) || "");
       });
 
@@ -107,12 +116,18 @@ export async function POST(request: Request) {
         const itemId = Number(row.item_id);
         const photoId = Number(row.photo_id);
         if (!Number.isFinite(itemId) || !Number.isFinite(photoId)) return;
-        wearCounts[itemId] = (wearCounts[itemId] ?? 0) + 1;
         const outfitId = outfitIdByPhotoId.get(photoId);
         if (!outfitId) return;
+        (wearOutfitIds[itemId] ??= new Set()).add(outfitId);
         assignRecentWearDate(itemId, outfitDateById.get(outfitId) || "");
       });
     }
+
+    // Set 크기를 실제 착용 횟수로 변환
+    const wearCounts: Record<number, number> = {};
+    Object.entries(wearOutfitIds).forEach(([id, outfitIds]) => {
+      wearCounts[Number(id)] = outfitIds.size;
+    });
 
     const recommendationItems = items.map((item) => ({
       ...item,

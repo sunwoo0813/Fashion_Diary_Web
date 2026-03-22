@@ -1,19 +1,14 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
+import { DarkModeToggle } from "@/components/common/dark-mode-toggle";
 import { MainNav } from "@/components/common/main-nav";
 
-type AppRailProps = {
-  displayName: string;
-  email: string;
-  initials: string;
-};
-
-type RailPanelContentProps = AppRailProps & {
+type RailPanelContentProps = {
   expanded: boolean;
+  compact?: boolean;
   onNavigate?: () => void;
 };
 
@@ -33,7 +28,7 @@ function CloseIcon() {
   );
 }
 
-function RailPanelContent({ expanded, onNavigate, displayName, email, initials }: RailPanelContentProps) {
+function RailPanelContent({ expanded, compact = false, onNavigate }: RailPanelContentProps) {
   return (
     <div className="app-rail-panel">
       <div className="brand-lockup" aria-label="LAYERED logo">
@@ -44,31 +39,16 @@ function RailPanelContent({ expanded, onNavigate, displayName, email, initials }
           <h2 className="brand-title">LAYERED</h2>
         </div>
       </div>
-      <MainNav onLinkClick={onNavigate} />
+      <MainNav compact={compact} onLinkClick={onNavigate} />
 
       <div className="topbar-right">
-        <Link
-          href="/account"
-          className="topbar-profile-link"
-          aria-label="Open profile"
-          onClick={onNavigate}
-        >
-          <div className="rail-user">
-            <div className="rail-avatar" aria-hidden>
-              {initials}
-            </div>
-            <div className="rail-user-meta" aria-hidden={!expanded}>
-              <p className="rail-user-name">{displayName}</p>
-              <p className="rail-user-email">{email}</p>
-            </div>
-          </div>
-        </Link>
+        <DarkModeToggle />
       </div>
     </div>
   );
 }
 
-export function AppRail({ displayName, email, initials }: AppRailProps) {
+export function AppRail() {
   const pathname = usePathname();
   const [isExpanded, setIsExpanded] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
@@ -107,7 +87,7 @@ export function AppRail({ displayName, email, initials }: AppRailProps) {
       }}
     >
       <div className="app-rail-desktop">
-        <RailPanelContent expanded={isExpanded} displayName={displayName} email={email} initials={initials} />
+        <RailPanelContent compact expanded={isExpanded} />
       </div>
 
       <div className="app-rail-mobile-bar">
@@ -130,7 +110,7 @@ export function AppRail({ displayName, email, initials }: AppRailProps) {
           <button type="button" className="app-rail-mobile-close" aria-label="메뉴 닫기" onClick={closeMobileRail}>
             <CloseIcon />
           </button>
-          <RailPanelContent expanded displayName={displayName} email={email} initials={initials} onNavigate={closeMobileRail} />
+          <RailPanelContent expanded onNavigate={closeMobileRail} />
         </div>
       ) : null}
     </aside>

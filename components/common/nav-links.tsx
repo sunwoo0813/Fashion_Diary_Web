@@ -1,6 +1,6 @@
 import {
-  ArchiveIcon,
   DashboardIcon,
+  OOTDIcon,
   StatsIcon,
   WardrobeIcon,
 } from "@/components/common/icons";
@@ -15,7 +15,7 @@ export type AppNavLink = {
 export const APP_NAV_LINKS: AppNavLink[] = [
   {
     href: "/dashboard",
-    label: "대시보드",
+    label: "오뭐입?",
     icon: <DashboardIcon size={16} />,
     matchPrefix: "/dashboard",
   },
@@ -27,8 +27,8 @@ export const APP_NAV_LINKS: AppNavLink[] = [
   },
   {
     href: "/diary",
-    label: "아카이브",
-    icon: <ArchiveIcon size={16} />,
+    label: "OOTD",
+    icon: <OOTDIcon size={16} />,
     matchPrefix: "/diary",
   },
   {

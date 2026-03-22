@@ -167,22 +167,22 @@ function weatherDesc(pty: number, sky: number, now = new Date()): string {
   const { hour } = getSeoulDateParts(now);
   const isNight = hour < 6 || hour >= 18;
 
-  if (pty === 1) return "Rain";
-  if (pty === 2) return "Rain/Snow";
-  if (pty === 3) return "Snow";
-  if (pty === 4) return "Shower";
-  if (sky === 1) return isNight ? "Clear" : "Sunny";
-  if (sky === 3) return "Mostly Cloudy";
-  if (sky === 4) return "Cloudy";
-  return "Clear";
+  if (pty === 1) return "비";
+  if (pty === 2) return "비/눈";
+  if (pty === 3) return "눈";
+  if (pty === 4) return "소나기";
+  if (sky === 1) return isNight ? "맑음" : "맑음";
+  if (sky === 3) return "구름 많음";
+  if (sky === 4) return "흐림";
+  return "맑음";
 }
 
 function precipitationTypeLabel(pty: number): string {
-  if (pty === 1) return "Rain";
-  if (pty === 2) return "Rain / Snow";
-  if (pty === 3) return "Snow";
-  if (pty === 4) return "Shower";
-  return "None";
+  if (pty === 1) return "비";
+  if (pty === 2) return "비/눈";
+  if (pty === 3) return "눈";
+  if (pty === 4) return "소나기";
+  return "없음";
 }
 
 function precipitationAmountLabel(value: unknown): string {

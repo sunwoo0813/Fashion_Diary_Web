@@ -15,6 +15,7 @@ export type DiaryLinkedItem = {
   id: number;
   name: string;
   category: string | null;
+  image_path: string | null;
 };
 
 export type DiaryOutfit = {
@@ -22,6 +23,7 @@ export type DiaryOutfit = {
   user_id: number;
   date: string;
   note: string | null;
+  city: string | null;
   t_min: number | null;
   t_max: number | null;
   humidity: number | null;
@@ -46,6 +48,7 @@ export type DiaryFeedPost = {
   outfit_id: number;
   date: string;
   note: string | null;
+  city: string | null;
   t_min: number | null;
   t_max: number | null;
   humidity: number | null;
@@ -77,6 +80,7 @@ function mapOutfitRow(row: Record<string, unknown>): Omit<DiaryOutfit, "photos">
     user_id: Number(row.user_id),
     date: String(row.date),
     note: typeof row.note === "string" ? row.note : null,
+    city: typeof row.city === "string" ? row.city : null,
     t_min: typeof row.t_min === "number" ? row.t_min : row.t_min == null ? null : Number(row.t_min),
     t_max: typeof row.t_max === "number" ? row.t_max : row.t_max == null ? null : Number(row.t_max),
     humidity:
@@ -112,7 +116,7 @@ async function fetchLinkedItemsByOutfitIds(appUserId: number, outfitIds: number[
   if (itemIds.length > 0) {
     const { data: itemRows, error: itemError } = await admin
       .from("item")
-      .select("id,brand,product_name,category,user_id")
+      .select("id,brand,product_name,category,image_path,user_id")
       .eq("user_id", appUserId)
       .in("id", itemIds);
     if (itemError) {
@@ -121,10 +125,12 @@ async function fetchLinkedItemsByOutfitIds(appUserId: number, outfitIds: number[
 
     (itemRows || []).forEach((row) => {
       const id = Number(row.id);
+      const rawImagePath = row.image_path ? String(row.image_path) : null;
       itemsById[id] = {
         id,
         name: makeDisplayNameFromFields(row.brand, row.product_name),
         category: row.category ? String(row.category) : null,
+        image_path: rawImagePath ? normalizePublicImagePath(rawImagePath) : null,
       };
     });
   }
@@ -175,7 +181,7 @@ export async function getUserWardrobeItems(appUserId: number): Promise<WardrobeI
   const admin = createServiceRoleSupabaseClient();
   const { data, error } = await admin
     .from("item")
-    .select("id,user_id,brand,product_name,category,detail_category,season,thickness,size,size_detail,image_path,created_at")
+    .select("id,user_id,brand,product_name,category,detail_category,color,season,thickness,size,size_detail,image_path,created_at")
     .eq("user_id", appUserId)
     .order("created_at", { ascending: false });
   if (error) {
@@ -185,9 +191,12 @@ export async function getUserWardrobeItems(appUserId: number): Promise<WardrobeI
   return (data || []).map((row) => ({
     id: Number(row.id),
     user_id: Number(row.user_id),
+    brand: row.brand ? String(row.brand) : null,
+    product_name: row.product_name ? String(row.product_name) : null,
     name: makeDisplayNameFromFields(row.brand, row.product_name),
     category: row.category ? String(row.category) : null,
     detail_category: row.detail_category ? String(row.detail_category) : null,
+    color: row.color ? String(row.color) : null,
     season: Array.isArray(row.season) ? row.season.map((value) => String(value)).filter(Boolean) : [],
     thickness: row.thickness ? String(row.thickness) : null,
     size: row.size ? String(row.size) : null,
@@ -321,7 +330,7 @@ export async function getDiaryFeedData(appUserId: number, maxPosts = 120): Promi
   const admin = createServiceRoleSupabaseClient();
   const { data: outfitRows, error: outfitError } = await admin
     .from("outfit")
-    .select("id,user_id,date,note,t_min,t_max,humidity,rain,created_at")
+    .select("id,user_id,date,note,city,t_min,t_max,humidity,rain,created_at")
     .eq("user_id", appUserId)
     .order("date", { ascending: false })
     .order("created_at", { ascending: false })
@@ -369,6 +378,7 @@ export async function getDiaryFeedData(appUserId: number, maxPosts = 120): Promi
       outfit_id: outfit.id,
       date: outfit.date,
       note: outfit.note,
+      city: outfit.city ?? null,
       t_min: outfit.t_min,
       t_max: outfit.t_max,
       humidity: outfit.humidity,

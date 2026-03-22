@@ -252,6 +252,7 @@ export function SmartCombobox({
                     onMouseDown={(event) => event.preventDefault()}
                     onClick={() => toggleOption(option)}
                   >
+                    {option.icon ? <div className="smart-combobox-option-icon">{option.icon}</div> : null}
                     <div className="smart-combobox-option-copy">
                       <span>{option.label}</span>
                       {option.meta ? <small>{option.meta}</small> : null}

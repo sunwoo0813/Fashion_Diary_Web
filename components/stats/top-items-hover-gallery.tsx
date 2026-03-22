@@ -1,7 +1,3 @@
-"use client";
-
-import { useMemo, useState } from "react";
-
 import type { StatsTopItem } from "@/lib/queries/stats";
 
 type TopItemsHoverGalleryProps = {
@@ -20,42 +16,29 @@ function getCategoryLabel(category: string | null): string {
 }
 
 export default function TopItemsHoverGallery({ items }: TopItemsHoverGalleryProps) {
-  const initialIndex = useMemo(() => items.findIndex((item) => Boolean(item.image_path)), [items]);
-  const [expandedIndex, setExpandedIndex] = useState(initialIndex >= 0 ? initialIndex : 0);
-
   return (
-    <div className="stats-top-gallery" aria-label="최근 30일 자주 입은 옷">
-      {items.map((item, index) => {
-        const expanded = index === expandedIndex;
-
-        return (
-          <button
-            key={item.id}
-            type="button"
-            className={`stats-top-gallery-card${expanded ? " is-expanded" : ""}`}
-            onMouseEnter={() => setExpandedIndex(index)}
-            onFocus={() => setExpandedIndex(index)}
-            aria-pressed={expanded}
-          >
+    <div className="stats-top-grid" aria-label="최근 30일 자주 입은 옷">
+      {items.map((item, index) => (
+        <div key={item.id} className="stats-top-card">
+          <div className="stats-top-card-media">
             {item.image_path ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={item.image_path} alt={item.name} className="stats-top-gallery-image" />
+              <img src={item.image_path} alt={item.name} className="stats-top-card-image" />
             ) : (
-              <div className="stats-top-gallery-fallback">이미지 없음</div>
+              <div className="stats-top-card-fallback">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor" opacity="0.25"/>
+                </svg>
+              </div>
             )}
-
-            <div className="stats-top-gallery-overlay" />
-
-            <div className="stats-top-gallery-copy">
-              <span className="stats-top-gallery-rank">#{index + 1}</span>
-              <strong>{item.name}</strong>
-              <small>
-                {getCategoryLabel(item.category)} · {item.count}회 착용
-              </small>
-            </div>
-          </button>
-        );
-      })}
+            <span className="stats-top-card-rank">#{index + 1}</span>
+          </div>
+          <div className="stats-top-card-info">
+            <p className="stats-top-card-name">{item.name}</p>
+            <small>{getCategoryLabel(item.category)} · {item.count}회</small>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

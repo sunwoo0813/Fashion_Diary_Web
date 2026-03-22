@@ -110,6 +110,7 @@ export async function POST(request: Request) {
 
     const dateValue = toIsoDate(toText(formData.get("date"))) ?? new Date().toISOString().slice(0, 10);
     const note = toText(formData.get("note")) || null;
+    const city = toText(formData.get("city")) || null;
     const tMin = toNumber(toText(formData.get("t_min")), 0);
     const tMax = toNumber(toText(formData.get("t_max")), 0);
     const humidity = Math.trunc(toNumber(toText(formData.get("humidity")), 0));
@@ -121,6 +122,7 @@ export async function POST(request: Request) {
         user_id: appUserId,
         date: dateValue,
         note,
+        city,
         t_min: tMin,
         t_max: tMax,
         humidity,

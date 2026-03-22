@@ -6,13 +6,11 @@ export default async function MainLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const user = await requireUser();
-  const displayName = (user.email || "사용자").split("@")[0];
-  const initials = (displayName.slice(0, 2) || "사").toUpperCase();
+  await requireUser();
 
   return (
     <div className="app-shell">
-      <AppRail displayName={displayName} email={user.email ?? "-"} initials={initials} />
+      <AppRail />
       <main className="app-main">{children}</main>
     </div>
   );

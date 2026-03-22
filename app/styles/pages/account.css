@@ -1,29 +1,77 @@
 /* Account page */
 
 .account-page {
-  border: 1px solid var(--line);
-  border-radius: 24px;
-  background: rgba(var(--surface-rgb), 0.86);
-  padding: 1.2rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 1.8rem;
   min-height: calc(100vh - 2.8rem);
 }
 
 .account-page h1 {
   margin: 0;
   font-family: var(--font-serif);
-  font-size: 1.8rem;
 }
 
-.account-subtitle {
-  margin: 0.45rem 0 0;
+.account-sections {
+  margin-top: 1.8rem;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+}
+
+.account-section {
+  padding: 1.4rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.account-section:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.account-section-title {
+  margin: 0 0 0.9rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
   color: var(--muted-foreground);
+  font-family: inherit;
 }
 
-.account-grid {
-  margin-top: 1rem;
-  display: grid;
-  gap: 0.8rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.account-section.is-danger .account-section-title {
+  color: var(--destructive);
+}
+
+.account-section-desc {
+  margin: 0 0 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+}
+
+/* PreferredRegionForm 카드 스타일 제거 */
+.account-section > .account-card {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.account-section > .account-card h2 {
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  margin: 0 0 0.5rem;
+}
+
+.account-section > .account-card .account-card-copy {
+  font-size: 0.84rem;
+  color: var(--muted-foreground);
+  margin: 0 0 0.75rem;
 }
 
 .account-logout {
@@ -40,16 +88,6 @@
   margin-top: 0.8rem;
 }
 
-.account-theme-toggle .theme-toggle-card {
-  width: auto;
-  justify-items: start;
-}
-
-.account-theme-toggle .theme-toggle-label {
-  font-size: 0.62rem;
-  letter-spacing: 0.08em;
-}
-
 .account-logout-button .rail-logout-wrap {
   margin-top: 0;
   width: auto;
@@ -62,7 +100,7 @@
 
 .account-card {
   border: 1px solid var(--line);
-  border-radius: 16px;
+  border-radius: var(--radius-xl);
   background: var(--surface);
   padding: 1rem;
 }
@@ -105,7 +143,7 @@
   border-radius: 50%;
   display: grid;
   place-items: center;
-  color: white;
+  color: var(--primary-foreground);
   background: linear-gradient(150deg, var(--primary), var(--accent-deep));
   font-size: 1rem;
   font-weight: 800;
@@ -155,7 +193,7 @@
   margin-top: 0.85rem;
   display: grid;
   gap: 0.7rem;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: 1fr;
 }
 
 .account-region-field {
@@ -172,7 +210,7 @@
   width: 100%;
   min-width: 0;
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   padding: 0.56rem 0.65rem;
   font: inherit;
@@ -196,16 +234,16 @@
 }
 
 .account-card.danger {
-  border-color: #f2d2c4;
-  background: #fff8f4;
+  border-color: var(--status-error-border);
+  background: var(--status-error-bg);
 }
 
 .account-success {
   margin: 0.7rem 0 0;
-  border: 1px solid #c8e3cf;
-  border-radius: 12px;
-  background: #effaf2;
-  color: #17693c;
+  border: 1px solid var(--status-success-border);
+  border-radius: var(--radius-md);
+  background: var(--status-success-bg);
+  color: var(--status-success-text);
   padding: 0.62rem 0.72rem;
   font-size: 0.85rem;
 }
@@ -224,7 +262,7 @@
 
 .account-danger-form input {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   background: var(--surface);
   padding: 0.56rem 0.65rem;
   font: inherit;
@@ -239,14 +277,6 @@
 @media (max-width: 900px) {
   .account-page {
     min-height: auto;
-  }
-
-  .account-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .account-region-grid {
-    grid-template-columns: 1fr;
   }
 
   .account-logout {
@@ -264,7 +294,7 @@
 @media (max-width: 640px) {
   .account-page {
     padding: 0.9rem;
-    border-radius: 18px;
+    border-radius: var(--radius-lg);
   }
 }
 

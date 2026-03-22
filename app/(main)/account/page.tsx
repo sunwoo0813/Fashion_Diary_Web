@@ -17,29 +17,19 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
   const user = await requireUser();
   const email = user.email ?? "";
   const displayName = (email || "사용자").split("@")[0];
-  const initials = (displayName.slice(0, 1) || "U").toUpperCase();
   const error = readParam(searchParams?.error).trim();
   const message = readParam(searchParams?.message).trim();
 
   return (
     <section className="account-page">
-      <h1>계정</h1>
-      <p className="account-subtitle">프로필과 보안 설정을 관리해요.</p>
+      <h1>설정</h1>
 
       {error ? <p className="form-error">{error}</p> : null}
       {!error && message ? <p className="account-success">{message}</p> : null}
 
-      <div className="account-grid">
-        <article className="account-card profile">
-          <div className="account-avatar">{initials}</div>
-          <div>
-            <p className="account-label">로그인 계정</p>
-            <p className="account-value">{email || "-"}</p>
-          </div>
-        </article>
-
-        <article className="account-card">
-          <h2>프로필</h2>
+      <div className="account-sections">
+        <div className="account-section">
+          <h2 className="account-section-title">계정</h2>
           <div className="account-row">
             <span>이메일</span>
             <strong>{email || "-"}</strong>
@@ -48,21 +38,21 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
             <span>표시 이름</span>
             <strong>{displayName}</strong>
           </div>
-        </article>
+        </div>
 
-        <article className="account-card">
-          <h2>로그아웃</h2>
-          <p className="account-card-copy">현재 세션을 종료하고 로그인 화면으로 돌아갑니다.</p>
-          <div className="account-logout-inline">
-            <LogoutImageButton />
-          </div>
-        </article>
+        <div className="account-section">
+          <PreferredRegionForm />
+        </div>
 
-        <PreferredRegionForm />
+        <div className="account-section">
+          <h2 className="account-section-title">로그아웃</h2>
+          <p className="account-section-desc">현재 세션을 종료하고 로그인 화면으로 돌아갑니다.</p>
+          <LogoutImageButton />
+        </div>
 
-        <article className="account-card danger">
-          <h2>계정 삭제</h2>
-          <p>
+        <div className="account-section is-danger">
+          <h2 className="account-section-title">계정 삭제</h2>
+          <p className="account-section-desc">
             옷장 아이템, 코디 사진, 기록 데이터, 계정 정보가 모두 영구 삭제됩니다. 확인을 위해{" "}
             <strong>DELETE</strong>를 입력해 주세요.
           </p>
@@ -82,7 +72,7 @@ export default async function AccountPage({ searchParams }: AccountPageProps) {
               계정 삭제
             </ConfirmSubmitButton>
           </form>
-        </article>
+        </div>
       </div>
     </section>
   );
