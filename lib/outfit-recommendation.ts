@@ -1,4 +1,5 @@
 import { makeDisplayNameFromFields, normalizePublicImagePath, toText } from "@/lib/wardrobe";
+import { deriveColorTone } from "@/lib/ai/recommend-color";
 
 export type RecommendationWeatherInput = {
   regionLabel?: string;
@@ -88,6 +89,8 @@ type RecommendationContext = {
   wantsAccessories: boolean;
   isRainy: boolean;
   tempRange: number; // 일교차 (t_max - t_min)
+  humidity: number; // 습도 (0-100)
+  precipProbability: number; // 강수확률 (0-100)
   regionLabel: string;
 };
 
@@ -126,6 +129,13 @@ const GOOD_COLOR_PAIRS = new Map<string, number>([
   ["black_denim|charcoal", 12],
   ["burgundy|black", 12],
   ["burgundy|gray", 10],
+  ["khaki|white", 10],
+  ["brown|khaki", 10],
+  ["gray|navy", 10],
+  ["beige|gray", 10],
+  ["light_blue|white", 10],
+  ["black|khaki", 8],
+  ["charcoal|white", 12],
 ]);
 
 const BAD_COLOR_PAIRS = new Map<string, number>([
@@ -201,18 +211,21 @@ function buildContext(weather: RecommendationWeatherInput): RecommendationContex
   const fallbackAverage = tMin != null && tMax != null ? (tMin + tMax) / 2 : current ?? 20;
   const effectiveTemp = feelsLike ?? current ?? fallbackAverage;
   const tempRange = tMin != null && tMax != null ? Math.max(0, tMax - tMin) : 0;
+  const humidity = toFiniteNumber(weather.humidity) ?? 50;
+  const precipProbability = toFiniteNumber(weather.precipitation_probability) ?? 0;
   const precipType = toText(weather.precipitation_type).toLowerCase();
   const isRainy =
     Boolean(weather.rain) ||
-    ["rain", "shower", "snow", "drizzle"].some((token) => precipType.includes(token));
+    ["rain", "shower", "snow", "drizzle"].some((token) => precipType.includes(token)) ||
+    precipProbability >= 60;
+  const regionLabel = toText(weather.regionLabel) || "선택 지역";
   if (effectiveTemp <= 4) {
     return {
       effectiveTemp, tempBand: "freezing",
       expectedSeasons: ["winter"],
       preferredThicknesses: ["heavy", "medium"],
       wantsOuter: true, wantsAccessories: true,
-      isRainy, tempRange,
-      regionLabel: toText(weather.regionLabel) || "선택 지역",
+      isRainy, tempRange, humidity, precipProbability, regionLabel,
     };
   }
   if (effectiveTemp <= 12) {
@@ -221,8 +234,7 @@ function buildContext(weather: RecommendationWeatherInput): RecommendationContex
       expectedSeasons: ["winter", "fall"],
       preferredThicknesses: ["medium", "heavy"],
       wantsOuter: true, wantsAccessories: isRainy,
-      isRainy, tempRange,
-      regionLabel: toText(weather.regionLabel) || "선택 지역",
+      isRainy, tempRange, humidity, precipProbability, regionLabel,
     };
   }
   if (effectiveTemp <= 22) {
@@ -230,10 +242,9 @@ function buildContext(weather: RecommendationWeatherInput): RecommendationContex
       effectiveTemp, tempBand: "mild",
       expectedSeasons: ["spring", "fall"],
       preferredThicknesses: ["medium", "light"],
-      wantsOuter: isRainy || tempRange >= 10,
+      wantsOuter: isRainy || tempRange >= 10 || precipProbability >= 40,
       wantsAccessories: false,
-      isRainy, tempRange,
-      regionLabel: toText(weather.regionLabel) || "선택 지역",
+      isRainy, tempRange, humidity, precipProbability, regionLabel,
     };
   }
   if (effectiveTemp <= 28) {
@@ -241,10 +252,9 @@ function buildContext(weather: RecommendationWeatherInput): RecommendationContex
       effectiveTemp, tempBand: "warm",
       expectedSeasons: ["summer", "spring"],
       preferredThicknesses: ["light", "medium"],
-      wantsOuter: isRainy || tempRange >= 12,
+      wantsOuter: isRainy || tempRange >= 12 || precipProbability >= 50,
       wantsAccessories: false,
-      isRainy, tempRange,
-      regionLabel: toText(weather.regionLabel) || "선택 지역",
+      isRainy, tempRange, humidity, precipProbability, regionLabel,
     };
   }
   return {
@@ -253,8 +263,7 @@ function buildContext(weather: RecommendationWeatherInput): RecommendationContex
     preferredThicknesses: ["light"],
     wantsOuter: isRainy,
     wantsAccessories: false,
-    isRainy, tempRange,
-    regionLabel: toText(weather.regionLabel) || "선택 지역",
+    isRainy, tempRange, humidity, precipProbability, regionLabel,
   };
 }
 
@@ -300,6 +309,11 @@ function scoreDetail(item: NormalizedItem, slot: Slot, context: RecommendationCo
       pushReason(reasons, "보온감이 좋아요");
       score += 14;
     }
+    // 극추위 (-10°C 이하): 패딩/코트에 추가 보너스
+    if (context.effectiveTemp <= -10 && ["padding", "coat"].includes(detail)) {
+      pushReason(reasons, "혹한 대비에 최적이에요");
+      score += 8;
+    }
     // 일교차가 크면 가벼운 아우터 보너스
     if (context.tempRange >= 10 && ["jacket", "windbreaker", "hood_zipup", "cardigan", "blazer"].includes(detail)) {
       pushReason(reasons, "일교차가 커서 레이어링하기 좋아요");
@@ -315,6 +329,11 @@ function scoreDetail(item: NormalizedItem, slot: Slot, context: RecommendationCo
       pushReason(reasons, "가볍게 입기 좋아요");
       score += 16;
     }
+    // 폭염 (33°C 이상): 민소매에 추가 보너스
+    if (context.effectiveTemp >= 33 && detail === "sleeveless") {
+      pushReason(reasons, "폭염 대비에 좋아요");
+      score += 8;
+    }
     if ((context.tempBand === "freezing" || context.tempBand === "cold") && ["knit", "hoodie", "sweatshirt", "long_sleeve_tshirt"].includes(detail)) {
       pushReason(reasons, "추운 날에 잘 맞아요");
       score += 14;
@@ -328,6 +347,11 @@ function scoreDetail(item: NormalizedItem, slot: Slot, context: RecommendationCo
     if ((context.tempBand === "warm" || context.tempBand === "hot") && ["shorts", "skirt"].includes(detail)) {
       pushReason(reasons, "가볍게 입기 좋아요");
       score += 14;
+    }
+    // 폭염 (33°C 이상): 반바지에 추가 보너스
+    if (context.effectiveTemp >= 33 && detail === "shorts") {
+      pushReason(reasons, "폭염 대비에 좋아요");
+      score += 8;
     }
     if ((context.tempBand === "freezing" || context.tempBand === "cold") && ["leggings", "jeans", "slacks", "cotton_pants", "cargo_pants"].includes(detail)) {
       pushReason(reasons, "기온에 잘 맞아요");
@@ -356,6 +380,11 @@ function scoreColor(item: NormalizedItem, context: RecommendationContext, reason
   if (context.isRainy && ["black", "navy", "gray", "charcoal", "brown", "khaki", "black_denim"].includes(item.color)) {
     pushReason(reasons, "비 오는 날에 무난해요");
     return 8;
+  }
+  // 습도 75% 이상이고 비가 내리지 않는 경우: 어두운 계열 소폭 우대
+  if (!context.isRainy && context.humidity >= 75 && ["black", "navy", "gray", "charcoal", "brown", "khaki"].includes(item.color)) {
+    pushReason(reasons, "습한 날에 무난한 색이에요");
+    return 4;
   }
   if ((context.tempBand === "warm" || context.tempBand === "hot") && ["white", "ivory", "beige", "light_blue_denim"].includes(item.color)) {
     pushReason(reasons, "가벼운 색 조합이에요");
@@ -456,7 +485,28 @@ function scoreColorPair(a: NormalizedItem | undefined, b: NormalizedItem | undef
   }
 
   if (VIVID_COLORS.has(a.color) && VIVID_COLORS.has(b.color)) {
+    // 같은 톤의 vivid 2개: 더 강한 페널티
+    const toneA = deriveColorTone(a.color);
+    const toneB = deriveColorTone(b.color);
+    if (toneA === "medium" && toneB === "medium") {
+      return { score: -6, reason: "비슷한 분위기의 포인트 색이에요" };
+    }
     return { score: -8, reason: "포인트 색이 겹쳐 보여요" };
+  }
+
+  // Neutral + Point 조합 보너스
+  if (
+    (NEUTRAL_COLORS.has(a.color) && VIVID_COLORS.has(b.color)) ||
+    (VIVID_COLORS.has(a.color) && NEUTRAL_COLORS.has(b.color))
+  ) {
+    return { score: 6, reason: "포인트 색이 잘 살아있어요" };
+  }
+
+  // 톤 대비 보너스 (light + dark)
+  const toneA = deriveColorTone(a.color);
+  const toneB = deriveColorTone(b.color);
+  if ((toneA === "light" && toneB === "dark") || (toneA === "dark" && toneB === "light")) {
+    return { score: 8, reason: "밝고 어두운 대비가 좋아요" };
   }
 
   return { score: 0, reason: null as string | null };
@@ -583,9 +633,9 @@ function profileLookBonus(selected: Candidate[], profile: Profile, stableIds: Se
   const overlapCount = Array.from(ids).filter((id) => stableIds.has(id)).length;
 
   if (profile === "stable") return neutralCount * 6 - vividCount * 4;
-  if (profile === "variation") return vividCount * 10 - overlapCount * 8;
+  if (profile === "variation") return vividCount * 13 - overlapCount * 12;
   // underused: stable과 겹치는 아이템 패널티만 적용 (신선도는 scoreWearHistory에서 이미 반영됨)
-  return -overlapCount * 6;
+  return -overlapCount * 9;
 }
 
 function scoreLook(selected: Candidate[], parts: RecommendationPart[], context: RecommendationContext, profile: Profile, stableIds: Set<number>) {
@@ -613,20 +663,20 @@ function profileAdjustment(item: NormalizedItem, profile: Profile, stableIds: Se
 
   if (profile === "variation") {
     let score = 0;
-    if (isBold) score += 10;
-    if (!isNeutral) score += 6;
-    if (stableIds.has(item.id)) score -= 12;
+    if (isBold) score += 14;
+    if (!isNeutral) score += 9;
+    if (stableIds.has(item.id)) score -= 18;
     if (item.detailCategory.includes("cargo") || item.detailCategory.includes("leather") || item.detailCategory.includes("blazer")) {
-      score += 8;
+      score += 10;
     }
     return score;
   }
 
   let score = 0;
-  if (item.wearCount === 0) score += 18;
-  else if (days >= 30) score += 16;
-  else if (days >= 14) score += 10;
-  if (stableIds.has(item.id)) score -= 12;
+  if (item.wearCount === 0) score += 22;
+  else if (days >= 30) score += 20;
+  else if (days >= 14) score += 13;
+  if (stableIds.has(item.id)) score -= 16;
   return score;
 }
 

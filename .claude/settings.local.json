@@ -37,7 +37,19 @@
       "mcp__supabase__list_projects",
       "Bash(git rebase:*)",
       "Bash(GIT_EDITOR=\"true\" git rebase --continue)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git push:*)",
+      "Skill(keybindings-help)",
+      "WebFetch(domain:www.musinsa.com)",
+      "WebFetch(domain:wconceptkorea.com)",
+      "WebFetch(domain:raganbone.com)",
+      "WebFetch(domain:www.apc-us.com)",
+      "WebFetch(domain:www.jacquemus.com)",
+      "WebFetch(domain:www.net-a-porter.com)",
+      "WebFetch(domain:balaan.co.kr)",
+      "WebFetch(domain:www.balaan.cc)",
+      "WebFetch(domain:aderror.com)",
+      "Bash(npm run:*)"
     ]
   }
 }
