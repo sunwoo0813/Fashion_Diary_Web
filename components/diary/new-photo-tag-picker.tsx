@@ -792,6 +792,7 @@ export function NewPhotoTagPicker({
                 onPointerUp={handleCropPointerUp}
                 onPointerCancel={handleCropPointerUp}
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={cropDraft.objectUrl}
                   alt="크롭할 코디 사진"

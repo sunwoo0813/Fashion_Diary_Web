@@ -1,10 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-<<<<<<< HEAD
-=======
 import { createPortal } from "react-dom";
->>>>>>> ba39760731b40921cf98362c6de283d45fb95674
 
 import { KebabVerticalIcon } from "@/components/common/icons";
 import { OutfitItemSelector } from "@/components/diary/outfit-item-selector";
@@ -68,7 +65,6 @@ type DiaryFeedGridProps = {
   wardrobeItems: WardrobeItem[];
 };
 
-<<<<<<< HEAD
 function clearPostQueryParam() {
   if (typeof window === "undefined") return;
   const url = new URL(window.location.href);
@@ -79,14 +75,56 @@ function clearPostQueryParam() {
   window.history.replaceState({}, "", nextUrl);
 }
 
-export function DiaryFeedGrid({ initialSelectedPostId = null, posts, wardrobeItems }: DiaryFeedGridProps) {
+export function DiaryFeedGrid({
+  initialSelectedPostId = null,
+  posts,
+  wardrobeItems,
+}: DiaryFeedGridProps) {
+  const [localPosts, setLocalPosts] = useState(posts);
   const [selectedPost, setSelectedPost] = useState<DiaryFeedPost | null>(null);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
   const [photoDragOffset, setPhotoDragOffset] = useState(0);
   const [isPhotoDragging, setIsPhotoDragging] = useState(false);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [editNote, setEditNote] = useState("");
+  const [isMounted, setIsMounted] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
   const photoFrameRef = useRef<HTMLDivElement | null>(null);
   const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const menuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const formRef = useRef<HTMLFormElement | null>(null);
+
+  useEffect(() => {
+    setLocalPosts(posts);
+  }, [posts]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  function resetPhotoInteraction() {
+    setActivePhotoIndex(0);
+    setPhotoDragOffset(0);
+    setIsPhotoDragging(false);
+  }
+
+  function closeModal() {
+    setSelectedPost(null);
+    resetPhotoInteraction();
+    setMenuOpen(false);
+    setIsEditing(false);
+    clearPostQueryParam();
+  }
+
+  function openPost(post: DiaryFeedPost) {
+    setSelectedPost(post);
+    resetPhotoInteraction();
+    setMenuOpen(false);
+    setIsEditing(false);
+    clearPostQueryParam();
+  }
 
   function showPreviousPhoto() {
     if (!selectedPost || selectedPost.photos.length <= 1) return;
@@ -149,82 +187,56 @@ export function DiaryFeedGrid({ initialSelectedPostId = null, posts, wardrobeIte
       return;
     }
 
+    setPhotoDragOffset(0);
     if (deltaX < 0) {
-      setPhotoDragOffset(0);
       showNextPhoto();
       return;
     }
-
-    setPhotoDragOffset(0);
     showPreviousPhoto();
   }
 
   useEffect(() => {
     if (initialSelectedPostId == null) return;
 
-    const initialPost = posts.find((post) => post.outfit_id === initialSelectedPostId) ?? null;
+    const initialPost = localPosts.find((post) => post.outfit_id === initialSelectedPostId) ?? null;
     if (!initialPost) {
       clearPostQueryParam();
       return;
     }
 
     setSelectedPost(initialPost);
-    setActivePhotoIndex(0);
-    setPhotoDragOffset(0);
-    setIsPhotoDragging(false);
-    setIsEditModalOpen(false);
-  }, [initialSelectedPostId, posts]);
-=======
-export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
-  const [localPosts, setLocalPosts] = useState(posts);
-  const [selectedPost, setSelectedPost] = useState<DiaryFeedPost | null>(null);
-  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [editNote, setEditNote] = useState("");
-  const [isMounted, setIsMounted] = useState(false);
-  const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
-  const menuButtonRef = useRef<HTMLButtonElement>(null);
-  const formRef = useRef<HTMLFormElement>(null);
-
-  useEffect(() => { setIsMounted(true); }, []);
->>>>>>> ba39760731b40921cf98362c6de283d45fb95674
+    resetPhotoInteraction();
+    setMenuOpen(false);
+    setIsEditing(false);
+  }, [initialSelectedPostId, localPosts]);
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
       if (event.key !== "Escape") return;
-      if (isEditing) { setIsEditing(false); return; }
-      if (menuOpen) { setMenuOpen(false); return; }
+      if (isEditing) {
+        setIsEditing(false);
+        return;
+      }
+      if (menuOpen) {
+        setMenuOpen(false);
+        return;
+      }
       setSelectedPost(null);
-      setActivePhotoIndex(0);
-      setPhotoDragOffset(0);
-      setIsPhotoDragging(false);
+      resetPhotoInteraction();
+      setMenuOpen(false);
+      setIsEditing(false);
       clearPostQueryParam();
     }
+
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isEditing, menuOpen]);
-
-  function openPost(post: DiaryFeedPost) {
-    setSelectedPost(post);
-    setActivePhotoIndex(0);
-    setMenuOpen(false);
-    setIsEditing(false);
-  }
-
-  function closeModal() {
-    setSelectedPost(null);
-    setActivePhotoIndex(0);
-    setMenuOpen(false);
-    setIsEditing(false);
-  }
 
   function handleMenuOpen() {
     if (!menuButtonRef.current) return;
     const rect = menuButtonRef.current.getBoundingClientRect();
     setMenuPos({ top: rect.bottom + 6, right: window.innerWidth - rect.right });
-    setMenuOpen((v) => !v);
+    setMenuOpen((value) => !value);
   }
 
   function enterEditMode() {
@@ -237,11 +249,18 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
   async function handleDelete() {
     if (!selectedPost) return;
     if (!confirm("이 코디를 삭제할까요?")) return;
+
     setIsSubmitting(true);
     try {
-      await fetch(`/api/outfits/${selectedPost.outfit_id}`, { method: "DELETE" });
-      setLocalPosts((prev) => prev.filter((p) => p.outfit_id !== selectedPost.outfit_id));
-      closeModal();
+      const targetPostId = selectedPost.outfit_id;
+      const response = await fetch(`/api/outfits/${targetPostId}`, { method: "DELETE" });
+      if (!response.ok) return;
+
+      setLocalPosts((prev) => prev.filter((post) => post.outfit_id !== targetPostId));
+      setSelectedPost(null);
+      resetPhotoInteraction();
+      setMenuOpen(false);
+      setIsEditing(false);
     } finally {
       setIsSubmitting(false);
     }
@@ -249,6 +268,7 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
 
   async function handleSave() {
     if (!selectedPost || !formRef.current) return;
+
     setIsSubmitting(true);
     try {
       const formData = new FormData(formRef.current);
@@ -269,13 +289,13 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
       if (!response.ok) return;
 
       const updatedItems = itemIds
-        .map((id) => wardrobeItems.find((w) => w.id === id))
-        .filter(Boolean)
-        .map((w) => ({
-          id: w!.id,
-          name: w!.name,
-          category: w!.category,
-          image_path: w!.image_path ?? null,
+        .map((id) => wardrobeItems.find((item) => item.id === id))
+        .filter((item): item is WardrobeItem => Boolean(item))
+        .map((item) => ({
+          id: item.id,
+          name: item.name,
+          category: item.category,
+          image_path: item.image_path ?? null,
         }));
 
       const updatedPost: DiaryFeedPost = {
@@ -286,7 +306,7 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
 
       setSelectedPost(updatedPost);
       setLocalPosts((prev) =>
-        prev.map((p) => (p.outfit_id === selectedPost.outfit_id ? updatedPost : p)),
+        prev.map((post) => (post.outfit_id === selectedPost.outfit_id ? updatedPost : post)),
       );
       setIsEditing(false);
     } finally {
@@ -312,31 +332,11 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
             className="diary-post-card"
             role="button"
             tabIndex={0}
-<<<<<<< HEAD
-            onClick={() => {
-              setSelectedPost(post);
-              setActivePhotoIndex(0);
-              setPhotoDragOffset(0);
-              setIsPhotoDragging(false);
-              setIsEditModalOpen(false);
-              clearPostQueryParam();
-            }}
-            onKeyDown={(event) => {
-              if (event.key !== "Enter" && event.key !== " ") return;
-              event.preventDefault();
-              setSelectedPost(post);
-              setActivePhotoIndex(0);
-              setPhotoDragOffset(0);
-              setIsPhotoDragging(false);
-              setIsEditModalOpen(false);
-              clearPostQueryParam();
-=======
             onClick={() => openPost(post)}
             onKeyDown={(event) => {
               if (event.key !== "Enter" && event.key !== " ") return;
               event.preventDefault();
               openPost(post);
->>>>>>> ba39760731b40921cf98362c6de283d45fb95674
             }}
           >
             <div className="diary-post-shell">
@@ -344,13 +344,26 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
                 <div className="diary-post-media">
                   {post.photos[0]?.photo_path ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={post.photos[0].photo_path} alt={`코디 게시물 ${post.outfit_id}`} className="diary-post-image" />
+                    <img
+                      src={post.photos[0].photo_path}
+                      alt={`코디 게시물 ${post.outfit_id}`}
+                      className="diary-post-image"
+                    />
                   ) : (
                     <div className="diary-post-placeholder">
                       <svg width="28" height="28" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z" stroke="currentColor" strokeWidth="1.4"/>
-                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.4"/>
-                        <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+                        <path
+                          d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                        />
+                        <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.4" />
+                        <path
+                          d="M21 15l-5-5L5 21"
+                          stroke="currentColor"
+                          strokeWidth="1.4"
+                          strokeLinejoin="round"
+                        />
                       </svg>
                     </div>
                   )}
@@ -366,48 +379,8 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
       </div>
 
       {selectedPost ? (
-        <div
-          className="diary-modal-backdrop"
-<<<<<<< HEAD
-          onClick={() => {
-            setSelectedPost(null);
-            setActivePhotoIndex(0);
-            setPhotoDragOffset(0);
-            setIsPhotoDragging(false);
-            clearPostQueryParam();
-          }}
-        >
+        <div className="diary-modal-backdrop" onClick={closeModal}>
           <article className="diary-modal" onClick={(event) => event.stopPropagation()}>
-            <button
-              type="button"
-              className="diary-modal-back-button"
-              aria-label="뒤로가기"
-              onClick={() => {
-                setSelectedPost(null);
-                setActivePhotoIndex(0);
-                setPhotoDragOffset(0);
-                setIsPhotoDragging(false);
-                clearPostQueryParam();
-              }}
-            >
-              <ChevronBackIcon />
-            </button>
-            <button
-              type="button"
-              className="diary-modal-menu-button diary-modal-menu-button-floating"
-              aria-label="코디 수정"
-              onClick={(event) => {
-                event.preventDefault();
-                setIsEditModalOpen(true);
-              }}
-            >
-              <KebabVerticalIcon size={16} />
-            </button>
-=======
-          onClick={closeModal}
-        >
-          <article className="diary-modal" onClick={(event) => event.stopPropagation()}>
->>>>>>> ba39760731b40921cf98362c6de283d45fb95674
             <div className="diary-modal-media">
               {selectedPost.photos.length > 1 ? (
                 <button
@@ -419,7 +392,7 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
                   ‹
                 </button>
               ) : null}
-<<<<<<< HEAD
+
               <div
                 ref={photoFrameRef}
                 className="diary-modal-photo-frame"
@@ -444,13 +417,7 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
                   ))}
                 </div>
               </div>
-=======
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={selectedPost.photos[activePhotoIndex]?.photo_path || ""}
-                alt={`코디 게시물 ${selectedPost.outfit_id} 사진 ${activePhotoIndex + 1}`}
-              />
->>>>>>> ba39760731b40921cf98362c6de283d45fb95674
+
               {selectedPost.photos.length > 1 ? (
                 <button
                   type="button"
@@ -461,6 +428,7 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
                   ›
                 </button>
               ) : null}
+
               {selectedPost.photos.length > 1 ? (
                 <p className="diary-modal-photo-counter">
                   {activePhotoIndex + 1} / {selectedPost.photos.length}
@@ -477,17 +445,23 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
                   </p>
                   {selectedPost.t_min != null || selectedPost.t_max != null ? (
                     <p className="diary-modal-weather">
-                      최저 {selectedPost.t_min ?? "?"}° · 최고 {selectedPost.t_max ?? "?"}°
+                      최저 {selectedPost.t_min ?? "?"}° / 최고 {selectedPost.t_max ?? "?"}°
                     </p>
                   ) : null}
                 </div>
+
                 <div className="diary-modal-menu-wrap">
                   {isEditing ? (
                     <div className="diary-modal-edit-actions">
                       <button type="button" className="ghost-button" onClick={() => setIsEditing(false)}>
                         취소
                       </button>
-                      <button type="button" className="solid-button" onClick={handleSave} disabled={isSubmitting}>
+                      <button
+                        type="button"
+                        className="solid-button"
+                        onClick={handleSave}
+                        disabled={isSubmitting}
+                      >
                         저장
                       </button>
                     </div>
@@ -496,7 +470,7 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
                       ref={menuButtonRef}
                       type="button"
                       className="diary-modal-menu-button"
-                      aria-label="더보기"
+                      aria-label="메뉴 열기"
                       onClick={handleMenuOpen}
                     >
                       <KebabVerticalIcon size={16} />
@@ -509,87 +483,95 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
                 <textarea
                   className="diary-modal-note-input"
                   value={editNote}
-                  onChange={(e) => setEditNote(e.target.value)}
-                  placeholder="코디를 기록해 보세요..."
+                  onChange={(event) => setEditNote(event.target.value)}
+                  placeholder="코디를 기록해보세요."
                   rows={3}
                 />
-              ) : (
-                selectedPost.note ? <p className="diary-modal-note">{selectedPost.note}</p> : null
-              )}
+              ) : selectedPost.note ? (
+                <p className="diary-modal-note">{selectedPost.note}</p>
+              ) : null}
 
               {isEditing ? (
                 <form ref={formRef}>
                   <OutfitItemSelector
                     items={selectorItems}
-                    defaultSelectedIds={selectedPost.outfit_items.map((i) => i.id)}
+                    defaultSelectedIds={selectedPost.outfit_items.map((item) => item.id)}
                   />
                 </form>
-              ) : (
-                selectedPost.outfit_items.length > 0 ? (
-                  <div className="diary-modal-items-section">
-                    <p className="diary-modal-items-label">착용 아이템</p>
-                    <div className="diary-modal-items-list">
-                      {selectedPost.outfit_items.map((item) => {
-                        const { brand, product } = splitItemName(item.name);
-                        return (
-                          <div key={`${selectedPost.outfit_id}-${item.id}`} className="diary-modal-item-row">
-                            <div className="diary-modal-item-thumb">
-                              {item.image_path ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img src={item.image_path} alt={item.name} />
-                              ) : (
-                                <div className="diary-modal-item-placeholder">
-                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                                    <path d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z" stroke="currentColor" strokeWidth="1.4"/>
-                                    <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.4"/>
-                                    <path d="M21 15l-5-5L5 21" stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
-                                  </svg>
-                                </div>
-                              )}
-                            </div>
-                            <div className="diary-modal-item-info">
-                              {brand && product !== brand ? <small className="diary-modal-item-brand">{brand}</small> : null}
-                              <span className="diary-modal-item-name">{product}</span>
-                            </div>
+              ) : selectedPost.outfit_items.length > 0 ? (
+                <div className="diary-modal-items-section">
+                  <p className="diary-modal-items-label">착용 아이템</p>
+                  <div className="diary-modal-items-list">
+                    {selectedPost.outfit_items.map((item) => {
+                      const { brand, product } = splitItemName(item.name);
+                      return (
+                        <div key={`${selectedPost.outfit_id}-${item.id}`} className="diary-modal-item-row">
+                          <div className="diary-modal-item-thumb">
+                            {item.image_path ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img src={item.image_path} alt={item.name} />
+                            ) : (
+                              <div className="diary-modal-item-placeholder">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                  <path
+                                    d="M21 19V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2z"
+                                    stroke="currentColor"
+                                    strokeWidth="1.4"
+                                  />
+                                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor" opacity="0.4" />
+                                  <path
+                                    d="M21 15l-5-5L5 21"
+                                    stroke="currentColor"
+                                    strokeWidth="1.4"
+                                    strokeLinejoin="round"
+                                  />
+                                </svg>
+                              </div>
+                            )}
                           </div>
-                        );
-                      })}
-                    </div>
+                          <div className="diary-modal-item-info">
+                            {brand && product !== brand ? (
+                              <small className="diary-modal-item-brand">{brand}</small>
+                            ) : null}
+                            <span className="diary-modal-item-name">{product}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ) : (
-                  <p className="diary-modal-muted">연결한 아이템 없음</p>
-                )
+                </div>
+              ) : (
+                <p className="diary-modal-muted">연결된 아이템이 없습니다.</p>
               )}
             </div>
           </article>
         </div>
       ) : null}
 
-      {isMounted && menuOpen && menuPos ? createPortal(
-        <>
-          <div
-            style={{ position: "fixed", inset: 0, zIndex: 200 }}
-            onClick={() => setMenuOpen(false)}
-          />
-          <div
-            className="diary-modal-menu"
-            style={{ position: "fixed", top: menuPos.top, right: menuPos.right, zIndex: 201 }}
-          >
-            <button type="button" className="diary-modal-menu-item" onClick={enterEditMode}>
-              수정
-            </button>
-            <button
-              type="button"
-              className="diary-modal-menu-item is-danger"
-              onClick={handleDelete}
-              disabled={isSubmitting}
-            >
-              삭제
-            </button>
-          </div>
-        </>,
-        document.body,
-      ) : null}
+      {isMounted && menuOpen && menuPos
+        ? createPortal(
+            <>
+              <div style={{ position: "fixed", inset: 0, zIndex: 200 }} onClick={() => setMenuOpen(false)} />
+              <div
+                className="diary-modal-menu"
+                style={{ position: "fixed", top: menuPos.top, right: menuPos.right, zIndex: 201 }}
+              >
+                <button type="button" className="diary-modal-menu-item" onClick={enterEditMode}>
+                  수정
+                </button>
+                <button
+                  type="button"
+                  className="diary-modal-menu-item is-danger"
+                  onClick={handleDelete}
+                  disabled={isSubmitting}
+                >
+                  삭제
+                </button>
+              </div>
+            </>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

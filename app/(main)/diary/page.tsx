@@ -56,19 +56,11 @@ export default async function DiaryRootPage({
         </div>
       ) : (
         <div className="diary-feed-scroll">
-<<<<<<< HEAD
           <DiaryFeedGrid
             initialSelectedPostId={initialSelectedPostId}
             posts={sortedPosts}
-            wardrobeItems={wardrobeItems.map((item) => ({
-              id: item.id,
-              name: item.name,
-              category: item.category,
-            }))}
+            wardrobeItems={wardrobeItems}
           />
-=======
-          <DiaryFeedGrid posts={sortedPosts} wardrobeItems={wardrobeItems} />
->>>>>>> ba39760731b40921cf98362c6de283d45fb95674
         </div>
       )}
     </section>

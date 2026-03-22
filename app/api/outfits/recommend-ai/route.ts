@@ -142,7 +142,9 @@ function scoreWeatherFit(item: WardrobeItem, weather: RecommendationWeatherInput
     toFiniteNumber(weather.current_temp) ??
     ((toFiniteNumber(weather.t_min) ?? 20) + (toFiniteNumber(weather.t_max) ?? 20)) / 2;
   const isRainy = Boolean(weather.rain);
-  const seasons = Array.isArray(item.season) ? item.season.map((value) => toText(value).toLowerCase()) : [];
+  const seasons = Array.isArray(item.season)
+    ? item.season.map((value: string) => toText(value).toLowerCase())
+    : [];
   const thickness = toText(item.thickness).toLowerCase();
   const category = normalizeCategory(item.category);
   const detail = toText(item.detail_category).toLowerCase();
@@ -151,20 +153,20 @@ function scoreWeatherFit(item: WardrobeItem, weather: RecommendationWeatherInput
   let score = 50;
 
   if (effectiveTemp <= 4) {
-    if (seasons.some((season) => ["winter", "fall"].includes(season))) score += 18;
+    if (seasons.some((season: string) => ["winter", "fall"].includes(season))) score += 18;
     if (["heavy", "medium"].includes(thickness)) score += 16;
     if (thickness === "light") score -= 18;
     if (category === "Outer") score += 12;
   } else if (effectiveTemp <= 12) {
-    if (seasons.some((season) => ["winter", "fall", "spring"].includes(season))) score += 14;
+    if (seasons.some((season: string) => ["winter", "fall", "spring"].includes(season))) score += 14;
     if (["medium", "heavy"].includes(thickness)) score += 12;
     if (thickness === "light" && category !== "ACC") score -= 10;
     if (category === "Outer") score += 8;
   } else if (effectiveTemp <= 22) {
-    if (seasons.some((season) => ["spring", "fall"].includes(season))) score += 12;
+    if (seasons.some((season: string) => ["spring", "fall"].includes(season))) score += 12;
     if (["light", "medium"].includes(thickness)) score += 10;
   } else {
-    if (seasons.some((season) => ["summer", "spring"].includes(season))) score += 14;
+    if (seasons.some((season: string) => ["summer", "spring"].includes(season))) score += 14;
     if (thickness === "light") score += 14;
     if (thickness === "heavy") score -= 24;
     if (category === "Outer") score -= 14;
