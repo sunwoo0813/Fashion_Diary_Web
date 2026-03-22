@@ -19,22 +19,28 @@ export function WardrobeDesktopActions() {
           type="button"
           className={`ghost-button diary-icon-button${deleteMode ? " is-delete-active" : ""}`}
           onClick={handleDeleteButton}
-          aria-label={!deleteMode ? "삭제 모드" : "삭제 취소"}
+          aria-label="삭제 모드"
           aria-pressed={deleteMode}
         >
           <TrashIcon size={16} />
         </button>
       ) : (
         <ConfirmSubmitButton
-          className="ghost-button"
+          className="ghost-button diary-icon-button is-delete-active"
           formId="wardrobeDeleteForm"
           title={`${selectedIds.length}개 아이템을 삭제할까요?`}
           message="삭제한 아이템은 되돌릴 수 없고, 관련 착용 기록 연결도 함께 정리됩니다."
           confirmLabel="삭제"
+          cancelLabel="취소"
         >
-          선택 삭제 ({selectedIds.length})
+          <TrashIcon size={16} />
         </ConfirmSubmitButton>
       )}
+      {deleteMode ? (
+        <p className="wardrobe-desktop-delete-status">
+          {selectedIds.length > 0 ? `${selectedIds.length}개 선택됨` : "삭제할 아이템을 선택하세요."}
+        </p>
+      ) : null}
     </>
   );
 }

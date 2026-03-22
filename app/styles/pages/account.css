@@ -13,16 +13,65 @@
   font-family: var(--font-serif);
 }
 
-.account-subtitle {
-  margin: 0.45rem 0 0;
-  color: var(--muted-foreground);
+.account-sections {
+  margin-top: 1.8rem;
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
 }
 
-.account-grid {
-  margin-top: 1rem;
-  display: grid;
-  gap: 0.8rem;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+.account-section {
+  padding: 1.4rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.account-section:first-child {
+  padding-top: 0;
+  border-top: none;
+}
+
+.account-section-title {
+  margin: 0 0 0.9rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted-foreground);
+  font-family: inherit;
+}
+
+.account-section.is-danger .account-section-title {
+  color: var(--destructive);
+}
+
+.account-section-desc {
+  margin: 0 0 0.75rem;
+  color: var(--muted-foreground);
+  font-size: 0.88rem;
+}
+
+/* PreferredRegionForm 카드 스타일 제거 */
+.account-section > .account-card {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.account-section > .account-card h2 {
+  font-size: 0.76rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--muted-foreground);
+  font-family: inherit;
+  margin: 0 0 0.5rem;
+}
+
+.account-section > .account-card .account-card-copy {
+  font-size: 0.84rem;
+  color: var(--muted-foreground);
+  margin: 0 0 0.75rem;
 }
 
 .account-logout {
@@ -228,10 +277,6 @@
 @media (max-width: 900px) {
   .account-page {
     min-height: auto;
-  }
-
-  .account-grid {
-    grid-template-columns: 1fr;
   }
 
   .account-logout {

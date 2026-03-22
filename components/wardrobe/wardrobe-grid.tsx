@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState, type MouseEvent } from "react";
 
+import { ConfirmSubmitButton } from "@/components/common/confirm-submit-button";
 import { KebabVerticalIcon, PlusIcon, TrashIcon } from "@/components/common/icons";
 import { WardrobeCategoryFilter } from "@/components/wardrobe/wardrobe-category-filter";
 import { useWardrobeDelete } from "@/components/wardrobe/wardrobe-delete-context";
@@ -318,19 +319,6 @@ export function WardrobeGrid({
     }
   }
 
-  function handleMobileDeleteAction() {
-    if (!deleteMode || selectedIds.length === 0) {
-      handleDeleteButton();
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `${selectedIds.length}개 아이템을 삭제할까요?\n삭제한 아이템은 되돌릴 수 없고, 관련 착용 기록 연결도 함께 정리됩니다.`,
-    );
-    if (!confirmed) return;
-    formRef.current?.requestSubmit();
-  }
-
   if (localItems.length === 0) {
     return (
       <div className="wardrobe-empty">
@@ -349,15 +337,28 @@ export function WardrobeGrid({
           <Link href="/wardrobe/new" className="solid-button diary-icon-button" aria-label="새 아이템 추가">
             <PlusIcon size={18} />
           </Link>
-          <button
-            type="button"
-            className={`ghost-button wardrobe-mobile-delete${deleteMode ? " is-delete-active" : ""}`}
-            onClick={handleMobileDeleteAction}
-            aria-label={!deleteMode ? "삭제 모드" : selectedIds.length > 0 ? "선택 삭제" : "삭제 취소"}
-            aria-pressed={deleteMode}
-          >
-            <TrashIcon size={16} />
-          </button>
+          {!deleteMode || selectedIds.length === 0 ? (
+            <button
+              type="button"
+              className={`ghost-button wardrobe-mobile-delete${deleteMode ? " is-delete-active" : ""}`}
+              onClick={handleDeleteButton}
+              aria-label="삭제 모드"
+              aria-pressed={deleteMode}
+            >
+              <TrashIcon size={16} />
+            </button>
+          ) : (
+            <ConfirmSubmitButton
+              className="ghost-button wardrobe-mobile-delete is-delete-active"
+              formId="wardrobeDeleteForm"
+              title={`${selectedIds.length}개 아이템을 삭제할까요?`}
+              message="삭제한 아이템은 되돌릴 수 없고, 관련 착용 기록 연결도 함께 정리됩니다."
+              confirmLabel="삭제"
+              cancelLabel="취소"
+            >
+              <TrashIcon size={16} />
+            </ConfirmSubmitButton>
+          )}
         </div>
         {deleteMode ? (
           <p className="wardrobe-mobile-delete-status">
