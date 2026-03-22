@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { ConfirmSubmitButton } from "@/components/common/confirm-submit-button";
 import { KebabVerticalIcon } from "@/components/common/icons";
@@ -48,6 +48,7 @@ function BookmarkIcon() {
 }
 
 type DiaryFeedGridProps = {
+  initialSelectedPostId?: number | null;
   posts: DiaryFeedPost[];
   wardrobeItems: Array<{
     id: number;
@@ -56,10 +57,111 @@ type DiaryFeedGridProps = {
   }>;
 };
 
-export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
+function clearPostQueryParam() {
+  if (typeof window === "undefined") return;
+  const url = new URL(window.location.href);
+  if (!url.searchParams.has("post")) return;
+  url.searchParams.delete("post");
+  const search = url.searchParams.toString();
+  const nextUrl = `${url.pathname}${search ? `?${search}` : ""}${url.hash}`;
+  window.history.replaceState({}, "", nextUrl);
+}
+
+export function DiaryFeedGrid({ initialSelectedPostId = null, posts, wardrobeItems }: DiaryFeedGridProps) {
   const [selectedPost, setSelectedPost] = useState<DiaryFeedPost | null>(null);
   const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const [photoDragOffset, setPhotoDragOffset] = useState(0);
+  const [isPhotoDragging, setIsPhotoDragging] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const photoFrameRef = useRef<HTMLDivElement | null>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+
+  function showPreviousPhoto() {
+    if (!selectedPost || selectedPost.photos.length <= 1) return;
+    setIsPhotoDragging(false);
+    setPhotoDragOffset(0);
+    setActivePhotoIndex((prev) => Math.max(prev - 1, 0));
+  }
+
+  function showNextPhoto() {
+    if (!selectedPost || selectedPost.photos.length <= 1) return;
+    setIsPhotoDragging(false);
+    setPhotoDragOffset(0);
+    setActivePhotoIndex((prev) => Math.min(prev + 1, selectedPost.photos.length - 1));
+  }
+
+  function handlePhotoTouchStart(event: React.TouchEvent<HTMLDivElement>) {
+    if (!selectedPost || selectedPost.photos.length <= 1) return;
+    const touch = event.touches[0];
+    if (!touch) return;
+    setIsPhotoDragging(true);
+    setPhotoDragOffset(0);
+    touchStartRef.current = { x: touch.clientX, y: touch.clientY };
+  }
+
+  function handlePhotoTouchMove(event: React.TouchEvent<HTMLDivElement>) {
+    if (!selectedPost || selectedPost.photos.length <= 1 || !touchStartRef.current) return;
+
+    const touch = event.touches[0];
+    if (!touch) return;
+
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    if (Math.abs(deltaX) <= Math.abs(deltaY)) return;
+
+    const frameWidth = photoFrameRef.current?.clientWidth ?? 1;
+    const maxOffset = frameWidth * 0.35;
+    const atFirstPhoto = activePhotoIndex === 0 && deltaX > 0;
+    const atLastPhoto = activePhotoIndex === selectedPost.photos.length - 1 && deltaX < 0;
+    const resistance = atFirstPhoto || atLastPhoto ? 0.35 : 1;
+
+    setPhotoDragOffset(Math.max(Math.min(deltaX * resistance, maxOffset), -maxOffset));
+  }
+
+  function handlePhotoTouchEnd(event: React.TouchEvent<HTMLDivElement>) {
+    if (!selectedPost || selectedPost.photos.length <= 1 || !touchStartRef.current) return;
+
+    const touch = event.changedTouches[0];
+    if (!touch) return;
+
+    const deltaX = touch.clientX - touchStartRef.current.x;
+    const deltaY = touch.clientY - touchStartRef.current.y;
+    touchStartRef.current = null;
+    setIsPhotoDragging(false);
+
+    const frameWidth = photoFrameRef.current?.clientWidth ?? 1;
+    const swipeThreshold = Math.min(Math.max(frameWidth * 0.18, 48), 120);
+
+    if (Math.abs(deltaX) < swipeThreshold || Math.abs(deltaX) <= Math.abs(deltaY)) {
+      setPhotoDragOffset(0);
+      return;
+    }
+
+    if (deltaX < 0) {
+      setPhotoDragOffset(0);
+      showNextPhoto();
+      return;
+    }
+
+    setPhotoDragOffset(0);
+    showPreviousPhoto();
+  }
+
+  useEffect(() => {
+    if (initialSelectedPostId == null) return;
+
+    const initialPost = posts.find((post) => post.outfit_id === initialSelectedPostId) ?? null;
+    if (!initialPost) {
+      clearPostQueryParam();
+      return;
+    }
+
+    setSelectedPost(initialPost);
+    setActivePhotoIndex(0);
+    setPhotoDragOffset(0);
+    setIsPhotoDragging(false);
+    setIsEditModalOpen(false);
+  }, [initialSelectedPostId, posts]);
 
   useEffect(() => {
     function handleEscape(event: KeyboardEvent) {
@@ -70,6 +172,9 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
       }
       setSelectedPost(null);
       setActivePhotoIndex(0);
+      setPhotoDragOffset(0);
+      setIsPhotoDragging(false);
+      clearPostQueryParam();
     }
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
@@ -87,14 +192,20 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
             onClick={() => {
               setSelectedPost(post);
               setActivePhotoIndex(0);
+              setPhotoDragOffset(0);
+              setIsPhotoDragging(false);
               setIsEditModalOpen(false);
+              clearPostQueryParam();
             }}
             onKeyDown={(event) => {
               if (event.key !== "Enter" && event.key !== " ") return;
               event.preventDefault();
               setSelectedPost(post);
               setActivePhotoIndex(0);
+              setPhotoDragOffset(0);
+              setIsPhotoDragging(false);
               setIsEditModalOpen(false);
+              clearPostQueryParam();
             }}
           >
             <div className="diary-post-shell">
@@ -119,6 +230,9 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
           onClick={() => {
             setSelectedPost(null);
             setActivePhotoIndex(0);
+            setPhotoDragOffset(0);
+            setIsPhotoDragging(false);
+            clearPostQueryParam();
           }}
         >
           <article className="diary-modal" onClick={(event) => event.stopPropagation()}>
@@ -129,6 +243,9 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
               onClick={() => {
                 setSelectedPost(null);
                 setActivePhotoIndex(0);
+                setPhotoDragOffset(0);
+                setIsPhotoDragging(false);
+                clearPostQueryParam();
               }}
             >
               <ChevronBackIcon />
@@ -150,26 +267,41 @@ export function DiaryFeedGrid({ posts, wardrobeItems }: DiaryFeedGridProps) {
                   type="button"
                   className="diary-modal-photo-nav is-prev"
                   aria-label="이전 사진"
-                  onClick={() =>
-                    setActivePhotoIndex((prev) => (prev - 1 + selectedPost.photos.length) % selectedPost.photos.length)
-                  }
+                  onClick={showPreviousPhoto}
                 >
                   ‹
                 </button>
               ) : null}
-              <div className="diary-modal-photo-frame">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={selectedPost.photos[activePhotoIndex]?.photo_path || ""}
-                  alt={`코디 게시물 ${selectedPost.outfit_id} 사진 ${activePhotoIndex + 1}`}
-                />
+              <div
+                ref={photoFrameRef}
+                className="diary-modal-photo-frame"
+                onTouchStart={handlePhotoTouchStart}
+                onTouchMove={handlePhotoTouchMove}
+                onTouchEnd={handlePhotoTouchEnd}
+              >
+                <div
+                  className={`diary-modal-photo-track${isPhotoDragging ? " is-dragging" : ""}`}
+                  style={{
+                    transform: `translate3d(calc(${activePhotoIndex} * (-100% - var(--diary-modal-photo-gap)) + ${photoDragOffset}px), 0, 0)`,
+                  }}
+                >
+                  {selectedPost.photos.map((photo, index) => (
+                    <div key={photo.id} className="diary-modal-photo-slide">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={photo.photo_path || ""}
+                        alt={`코디 게시물 ${selectedPost.outfit_id} 사진 ${index + 1}`}
+                      />
+                    </div>
+                  ))}
+                </div>
               </div>
               {selectedPost.photos.length > 1 ? (
                 <button
                   type="button"
                   className="diary-modal-photo-nav is-next"
                   aria-label="다음 사진"
-                  onClick={() => setActivePhotoIndex((prev) => (prev + 1) % selectedPost.photos.length)}
+                  onClick={showNextPhoto}
                 >
                   ›
                 </button>

@@ -5,7 +5,17 @@ import { DiaryFeedGrid } from "@/components/diary/diary-feed-grid";
 import { requireAppUserContext } from "@/lib/app-user";
 import { getDiaryFeedData, getUserWardrobeItems } from "@/lib/queries/diary";
 
-export default async function DiaryRootPage() {
+function readPostId(value: string | string[] | undefined): number | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  const parsed = Number(raw);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : null;
+}
+
+export default async function DiaryRootPage({
+  searchParams,
+}: {
+  searchParams?: Record<string, string | string[] | undefined>;
+}) {
   const { appUserId } = await requireAppUserContext();
   const [posts, wardrobeItems] = await Promise.all([getDiaryFeedData(appUserId, 120), getUserWardrobeItems(appUserId)]);
   const sortedPosts = [...posts].sort((a, b) => {
@@ -16,6 +26,7 @@ export default async function DiaryRootPage() {
     return b.outfit_id - a.outfit_id;
   });
   const todayIso = new Date().toISOString().slice(0, 10);
+  const initialSelectedPostId = readPostId(searchParams?.post);
 
   return (
     <section className="diary-feed-page">
@@ -42,6 +53,7 @@ export default async function DiaryRootPage() {
       ) : (
         <div className="diary-feed-scroll">
           <DiaryFeedGrid
+            initialSelectedPostId={initialSelectedPostId}
             posts={sortedPosts}
             wardrobeItems={wardrobeItems.map((item) => ({
               id: item.id,

@@ -149,7 +149,7 @@ async function deleteOutfit(request: Request, params: { id: string }) {
     await removePublicUrl(toText(photo.photo_path));
   }
 
-  return NextResponse.redirect(new URL("/diary", request.url), { status: 303 });
+  return NextResponse.redirect(new URL(`/diary?post=${outfitId}`, request.url), { status: 303 });
 }
 
 async function updateOutfit(request: Request, params: { id: string }, formData: FormData) {
