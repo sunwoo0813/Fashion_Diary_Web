@@ -53,7 +53,6 @@ export async function POST(request: Request) {
     }
 
     await admin.from("outfit_item").delete().in("item_id", ownedIds);
-    await admin.from("outfit_photo_item").delete().in("item_id", ownedIds);
 
     for (const row of ownedItems || []) {
       const objectPath = extractStorageObjectPath(toText(row.image_path), bucket);

@@ -143,49 +143,22 @@ async function fetchPhotosByOutfitIds(outfitIds: number[]): Promise<OutfitPhotoR
   return photos;
 }
 
-async function fetchWearLinks(outfitIds: number[], photos: OutfitPhotoRow[]): Promise<WearLink[]> {
+async function fetchWearLinks(outfitIds: number[]): Promise<WearLink[]> {
   const admin = createServiceRoleSupabaseClient();
   const links: WearLink[] = [];
 
-  if (outfitIds.length > 0) {
-    for (const chunkIds of chunks(outfitIds, CHUNK_SIZE)) {
-      const { data, error } = await admin.from("outfit_item").select("item_id,outfit_id").in("outfit_id", chunkIds);
-      if (error) {
-        throw new Error(`Outfit wear query failed: ${error.message}`);
-      }
-
-      (data || []).forEach((row) => {
-        const itemId = toInt(row.item_id);
-        const outfitId = toInt(row.outfit_id);
-        if (!itemId || !outfitId) return;
-        links.push({ itemId, outfitId });
-      });
+  for (const chunkIds of chunks(outfitIds, CHUNK_SIZE)) {
+    const { data, error } = await admin.from("outfit_item").select("item_id,outfit_id").in("outfit_id", chunkIds);
+    if (error) {
+      throw new Error(`Outfit wear query failed: ${error.message}`);
     }
-  }
 
-  if (photos.length > 0) {
-    const outfitIdByPhotoId = new Map<number, number>();
-    photos.forEach((photo) => {
-      outfitIdByPhotoId.set(photo.id, photo.outfitId);
+    (data || []).forEach((row) => {
+      const itemId = toInt(row.item_id);
+      const outfitId = toInt(row.outfit_id);
+      if (!itemId || !outfitId) return;
+      links.push({ itemId, outfitId });
     });
-
-    for (const photoChunk of chunks(
-      photos.map((photo) => photo.id),
-      CHUNK_SIZE,
-    )) {
-      const { data, error } = await admin.from("outfit_photo_item").select("item_id,photo_id").in("photo_id", photoChunk);
-      if (error) {
-        throw new Error(`Outfit photo wear query failed: ${error.message}`);
-      }
-
-      (data || []).forEach((row) => {
-        const itemId = toInt(row.item_id);
-        const photoId = toInt(row.photo_id);
-        const outfitId = photoId ? outfitIdByPhotoId.get(photoId) : null;
-        if (!itemId || !outfitId) return;
-        links.push({ itemId, outfitId });
-      });
-    }
   }
 
   return links;
@@ -242,7 +215,7 @@ export async function getStatsPageData(appUserId: number): Promise<StatsPageData
   const outfitIds = outfits.map((row) => row.id);
   const photos = await fetchPhotosByOutfitIds(outfitIds);
   const totalPhotos = photos.length;
-  const wearLinks = await fetchWearLinks(outfitIds, photos);
+  const wearLinks = await fetchWearLinks(outfitIds);
 
   const outfitDateById = new Map<number, string>();
   outfits.forEach((outfit) => {

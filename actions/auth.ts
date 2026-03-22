@@ -32,14 +32,14 @@ export async function loginAction(formData: FormData) {
   const password = normalizeField(formData.get("password"));
 
   if (!email || !password) {
-    buildRedirect("/login", "error", "Email and password are required.");
+    return buildRedirect("/login", "error", "Email and password are required.");
   }
 
   const supabase = createServerSupabaseClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
-    buildRedirect("/login", "error", error.message || "Login failed.");
+    return buildRedirect("/login", "error", error.message || "Login failed.");
   }
 
   redirect("/dashboard");
@@ -52,10 +52,10 @@ export async function signupAction(formData: FormData) {
   const signupPath = withQuery("/login", { mode: "signup" });
 
   if (!email || !password) {
-    buildRedirect(signupPath, "error", "Email and password are required.");
+    return buildRedirect(signupPath, "error", "Email and password are required.");
   }
   if (confirmPassword && password !== confirmPassword) {
-    buildRedirect(signupPath, "error", "Password confirmation does not match.");
+    return buildRedirect(signupPath, "error", "Password confirmation does not match.");
   }
 
   const supabase = createServerSupabaseClient();
@@ -69,12 +69,12 @@ export async function signupAction(formData: FormData) {
     });
 
     if (createError && !/already|exists|registered/i.test(createError.message || "")) {
-      buildRedirect(signupPath, "error", createError.message || "Signup failed.");
+      return buildRedirect(signupPath, "error", createError.message || "Signup failed.");
     }
 
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
     if (signInError) {
-      buildRedirect(signupPath, "error", signInError.message || "Signup failed.");
+      return buildRedirect(signupPath, "error", signInError.message || "Signup failed.");
     }
 
     redirect("/dashboard");
@@ -87,14 +87,14 @@ export async function signupAction(formData: FormData) {
   });
 
   if (error) {
-    buildRedirect(signupPath, "error", error.message || "Signup failed.");
+    return buildRedirect(signupPath, "error", error.message || "Signup failed.");
   }
 
   if (data.session) {
     redirect("/dashboard");
   }
 
-  buildRedirect("/login", "message", "Signup complete. Verify your email then log in.");
+  return buildRedirect("/login", "message", "Signup complete. Verify your email then log in.");
 }
 
 export async function logoutAction() {

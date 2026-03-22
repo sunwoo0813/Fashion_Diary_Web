@@ -62,17 +62,13 @@ export async function POST(request: Request) {
     if (itemIds.length > 0) {
       const [
         { data: outfitItems, error: outfitItemError },
-        { data: photoItems, error: photoItemError },
         { data: outfits, error: outfitError },
-        { data: outfitPhotos, error: outfitPhotoError },
       ] = await Promise.all([
         admin.from("outfit_item").select("item_id,outfit_id").in("item_id", itemIds),
-        admin.from("outfit_photo_item").select("item_id,photo_id").in("item_id", itemIds),
         admin.from("outfit").select("id,date").eq("user_id", appUserId),
-        admin.from("outfit_photo").select("id,outfit_id"),
       ]);
 
-      if (outfitItemError || photoItemError || outfitError || outfitPhotoError) {
+      if (outfitItemError || outfitError) {
         return NextResponse.json({ ok: false, error: "착용 기록을 불러오지 못했어요." }, { status: 500 });
       }
 
@@ -85,15 +81,6 @@ export async function POST(request: Request) {
         }
       });
 
-      const outfitIdByPhotoId = new Map<number, number>();
-      (outfitPhotos || []).forEach((row) => {
-        const photoId = Number(row.id);
-        const outfitId = Number(row.outfit_id);
-        if (Number.isFinite(photoId) && Number.isFinite(outfitId)) {
-          outfitIdByPhotoId.set(photoId, outfitId);
-        }
-      });
-
       const assignRecentWearDate = (itemId: number, nextDate: string) => {
         if (!nextDate) return;
         const current = recentWearDates[itemId] || "";
@@ -102,22 +89,10 @@ export async function POST(request: Request) {
         }
       };
 
-      // outfit_item과 outfit_photo_item 모두 동일 outfit을 가리킬 수 있으므로
-      // 고유 outfit ID 기준으로 착용 횟수를 집계
       (outfitItems || []).forEach((row) => {
         const itemId = Number(row.item_id);
         const outfitId = Number(row.outfit_id);
         if (!Number.isFinite(itemId) || !Number.isFinite(outfitId)) return;
-        (wearOutfitIds[itemId] ??= new Set()).add(outfitId);
-        assignRecentWearDate(itemId, outfitDateById.get(outfitId) || "");
-      });
-
-      (photoItems || []).forEach((row) => {
-        const itemId = Number(row.item_id);
-        const photoId = Number(row.photo_id);
-        if (!Number.isFinite(itemId) || !Number.isFinite(photoId)) return;
-        const outfitId = outfitIdByPhotoId.get(photoId);
-        if (!outfitId) return;
         (wearOutfitIds[itemId] ??= new Set()).add(outfitId);
         assignRecentWearDate(itemId, outfitDateById.get(outfitId) || "");
       });

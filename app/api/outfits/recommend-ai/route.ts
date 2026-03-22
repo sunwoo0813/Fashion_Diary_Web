@@ -215,44 +215,27 @@ function buildRecommendationHint(item: WardrobeItem, weather: RecommendationWeat
 }
 
 async function buildWearMetadata(admin: ReturnType<typeof createServiceRoleSupabaseClient>, itemIds: number[]) {
-  const [outfitItemsResult, photoItemsResult, outfitsResult, photosResult] = await Promise.all([
+  const [outfitItemsResult, outfitsResult] = await Promise.all([
     admin.from("outfit_item").select("item_id,outfit_id").in("item_id", itemIds),
-    admin.from("outfit_photo_item").select("item_id,photo_id").in("item_id", itemIds),
     admin.from("outfit").select("id,date"),
-    admin.from("outfit_photo").select("id,outfit_id"),
   ]);
 
   if (outfitItemsResult.error) {
     throw new Error(`Failed to load outfit_item metadata: ${outfitItemsResult.error.message}`);
   }
-  if (photoItemsResult.error) {
-    throw new Error(`Failed to load outfit_photo_item metadata: ${photoItemsResult.error.message}`);
-  }
   if (outfitsResult.error) {
     throw new Error(`Failed to load outfit metadata: ${outfitsResult.error.message}`);
-  }
-  if (photosResult.error) {
-    throw new Error(`Failed to load outfit_photo metadata: ${photosResult.error.message}`);
   }
 
   const wearCounts: Record<number, number> = {};
   const recentWearDates: Record<number, string> = {};
   const outfitDateById = new Map<number, string>();
-  const outfitIdByPhotoId = new Map<number, number>();
 
   (outfitsResult.data || []).forEach((row) => {
     const outfitId = Number(row.id);
     const date = toDateOnly(row.date);
     if (Number.isFinite(outfitId) && date) {
       outfitDateById.set(outfitId, date);
-    }
-  });
-
-  (photosResult.data || []).forEach((row) => {
-    const photoId = Number(row.id);
-    const outfitId = Number(row.outfit_id);
-    if (Number.isFinite(photoId) && Number.isFinite(outfitId)) {
-      outfitIdByPhotoId.set(photoId, outfitId);
     }
   });
 
@@ -270,14 +253,6 @@ async function buildWearMetadata(admin: ReturnType<typeof createServiceRoleSupab
     const outfitId = Number(row.outfit_id);
     if (!Number.isFinite(itemId) || !Number.isFinite(outfitId)) return;
     bump(itemId, outfitDateById.get(outfitId) || null);
-  });
-
-  (photoItemsResult.data || []).forEach((row) => {
-    const itemId = Number(row.item_id);
-    const photoId = Number(row.photo_id);
-    if (!Number.isFinite(itemId) || !Number.isFinite(photoId)) return;
-    const outfitId = outfitIdByPhotoId.get(photoId);
-    bump(itemId, outfitId ? outfitDateById.get(outfitId) || null : null);
   });
 
   return { wearCounts, recentWearDates };

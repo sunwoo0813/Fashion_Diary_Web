@@ -8,7 +8,6 @@ export type DiaryPhoto = {
   outfit_id: number;
   photo_path: string;
   created_at: string | null;
-  tag_items: Array<{ id: number; name: string; category: string | null }>;
 };
 
 export type DiaryLinkedItem = {
@@ -246,66 +245,11 @@ export async function getDiaryDayData(appUserId: number, isoDate: string): Promi
         outfit_id: Number(row.outfit_id),
         photo_path: String(row.photo_path || ""),
         created_at: row.created_at ? String(row.created_at) : null,
-        tag_items: [],
       };
       if (!photosByOutfitId[photo.outfit_id]) photosByOutfitId[photo.outfit_id] = [];
       photosByOutfitId[photo.outfit_id].push(photo);
       photoIdToOutfitId[photo.id] = photo.outfit_id;
     });
-
-    const photoIds = Object.keys(photoIdToOutfitId).map((id) => Number(id));
-    if (photoIds.length > 0) {
-      const { data: tagRows, error: tagError } = await admin
-        .from("outfit_photo_item")
-        .select("photo_id,item_id")
-        .in("photo_id", photoIds);
-      if (tagError) {
-        throw new Error(`Outfit photo tag query failed: ${tagError.message}`);
-      }
-
-      const itemIds = Array.from(
-        new Set((tagRows || []).map((row) => Number(row.item_id)).filter((id) => Number.isInteger(id) && id > 0)),
-      );
-      let itemsById: Record<number, { id: number; name: string; category: string | null }> = {};
-      if (itemIds.length > 0) {
-        const { data: itemRows, error: itemError } = await admin
-          .from("item")
-          .select("id,brand,product_name,category,user_id")
-          .eq("user_id", appUserId)
-          .in("id", itemIds);
-        if (itemError) {
-          throw new Error(`Outfit tag item query failed: ${itemError.message}`);
-        }
-        itemsById = (itemRows || []).reduce<Record<number, { id: number; name: string; category: string | null }>>(
-          (acc, row) => {
-            const id = Number(row.id);
-            acc[id] = {
-              id,
-              name: makeDisplayNameFromFields(row.brand, row.product_name),
-              category: row.category ? String(row.category) : null,
-            };
-            return acc;
-          },
-          {},
-        );
-      }
-
-      const photoMap: Record<number, DiaryPhoto> = {};
-      Object.values(photosByOutfitId).forEach((photos) => {
-        photos.forEach((photo) => {
-          photoMap[photo.id] = photo;
-        });
-      });
-
-      (tagRows || []).forEach((row) => {
-        const photoId = Number(row.photo_id);
-        const itemId = Number(row.item_id);
-        const photo = photoMap[photoId];
-        const item = itemsById[itemId];
-        if (!photo || !item) return;
-        photo.tag_items.push(item);
-      });
-    }
   }
 
   const outfits: DiaryOutfit[] = outfitsBase.map((base) => ({
@@ -354,22 +298,15 @@ export async function getDiaryFeedData(appUserId: number, maxPosts = 120): Promi
     throw new Error(`Diary feed photo query failed: ${photoError.message}`);
   }
 
-  const photos = (photoRows || []).map((row) => ({
-    id: Number(row.id),
-    outfit_id: Number(row.outfit_id),
-    photo_path: String(row.photo_path || ""),
-    created_at: row.created_at ? String(row.created_at) : null,
-  }));
-  const photosByOutfitId = photos.reduce<Record<number, DiaryPhoto[]>>((acc, photo) => {
-    const entry: DiaryPhoto = {
-      id: photo.id,
-      outfit_id: photo.outfit_id,
-      photo_path: photo.photo_path,
-      created_at: photo.created_at,
-      tag_items: [],
+  const photosByOutfitId = (photoRows || []).reduce<Record<number, DiaryPhoto[]>>((acc, row) => {
+    const photo: DiaryPhoto = {
+      id: Number(row.id),
+      outfit_id: Number(row.outfit_id),
+      photo_path: String(row.photo_path || ""),
+      created_at: row.created_at ? String(row.created_at) : null,
     };
     if (!acc[photo.outfit_id]) acc[photo.outfit_id] = [];
-    acc[photo.outfit_id].push(entry);
+    acc[photo.outfit_id].push(photo);
     return acc;
   }, {});
 
@@ -428,68 +365,12 @@ export async function getOutfitEditData(appUserId: number, outfitId: number) {
     throw new Error(`Outfit photo lookup failed: ${photoError.message}`);
   }
 
-  const photos: DiaryPhoto[] = (photoRows || []).map((row) => ({
+  outfit.photos = (photoRows || []).map((row) => ({
     id: Number(row.id),
     outfit_id: Number(row.outfit_id),
     photo_path: String(row.photo_path || ""),
     created_at: row.created_at ? String(row.created_at) : null,
-    tag_items: [],
   }));
-
-  if (photos.length > 0) {
-    const photoIds = photos.map((photo) => photo.id);
-    const { data: tagRows, error: tagError } = await admin
-      .from("outfit_photo_item")
-      .select("photo_id,item_id")
-      .in("photo_id", photoIds);
-    if (tagError) {
-      throw new Error(`Outfit photo tag query failed: ${tagError.message}`);
-    }
-
-    const itemIds = Array.from(
-      new Set((tagRows || []).map((row) => Number(row.item_id)).filter((id) => Number.isInteger(id) && id > 0)),
-    );
-    let itemsById: Record<number, { id: number; name: string; category: string | null }> = {};
-    if (itemIds.length > 0) {
-      const { data: tagItemRows, error: tagItemError } = await admin
-        .from("item")
-        .select("id,brand,product_name,category,user_id")
-        .eq("user_id", appUserId)
-        .in("id", itemIds);
-      if (tagItemError) {
-        throw new Error(`Outfit tag item query failed: ${tagItemError.message}`);
-      }
-
-      itemsById = (tagItemRows || []).reduce<Record<number, { id: number; name: string; category: string | null }>>(
-        (acc, row) => {
-          const id = Number(row.id);
-          acc[id] = {
-            id,
-            name: makeDisplayNameFromFields(row.brand, row.product_name),
-            category: row.category ? String(row.category) : null,
-          };
-          return acc;
-        },
-        {},
-      );
-    }
-
-    const photoMap = photos.reduce<Record<number, DiaryPhoto>>((acc, photo) => {
-      acc[photo.id] = photo;
-      return acc;
-    }, {});
-
-    (tagRows || []).forEach((row) => {
-      const photoId = Number(row.photo_id);
-      const itemId = Number(row.item_id);
-      const photo = photoMap[photoId];
-      const item = itemsById[itemId];
-      if (!photo || !item) return;
-      photo.tag_items.push(item);
-    });
-  }
-
-  outfit.photos = photos;
 
   const items = await itemsPromise;
   return { outfit, items };

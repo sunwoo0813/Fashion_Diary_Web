@@ -88,6 +88,7 @@ export function DiaryFeedGrid({
   const [menuOpen, setMenuOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
   const [editNote, setEditNote] = useState("");
   const [isMounted, setIsMounted] = useState(false);
   const [menuPos, setMenuPos] = useState<{ top: number; right: number } | null>(null);
@@ -116,6 +117,7 @@ export function DiaryFeedGrid({
     setMenuOpen(false);
     setIsEditing(false);
     clearPostQueryParam();
+    setActionError(null);
   }
 
   function openPost(post: DiaryFeedPost) {
@@ -244,6 +246,7 @@ export function DiaryFeedGrid({
     setEditNote(selectedPost.note || "");
     setIsEditing(true);
     setMenuOpen(false);
+    setActionError(null);
   }
 
   async function handleDelete() {
@@ -251,16 +254,16 @@ export function DiaryFeedGrid({
     if (!confirm("이 코디를 삭제할까요?")) return;
 
     setIsSubmitting(true);
+    setActionError(null);
     try {
       const targetPostId = selectedPost.outfit_id;
       const response = await fetch(`/api/outfits/${targetPostId}`, { method: "DELETE" });
-      if (!response.ok) return;
-
-      setLocalPosts((prev) => prev.filter((post) => post.outfit_id !== targetPostId));
-      setSelectedPost(null);
-      resetPhotoInteraction();
-      setMenuOpen(false);
-      setIsEditing(false);
+      if (!response.ok) {
+        setActionError("삭제에 실패했습니다. 다시 시도해 주세요.");
+        return;
+      }
+      setLocalPosts((prev) => prev.filter((p) => p.outfit_id !== targetPostId));
+      closeModal();
     } finally {
       setIsSubmitting(false);
     }
@@ -270,6 +273,7 @@ export function DiaryFeedGrid({
     if (!selectedPost || !formRef.current) return;
 
     setIsSubmitting(true);
+    setActionError(null);
     try {
       const formData = new FormData(formRef.current);
       const itemIds = formData.getAll("outfit_item_ids").map(Number).filter(Boolean);
@@ -286,7 +290,10 @@ export function DiaryFeedGrid({
           rain: selectedPost.rain ?? false,
         }),
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        setActionError("저장에 실패했습니다. 다시 시도해 주세요.");
+        return;
+      }
 
       const updatedItems = itemIds
         .map((id) => wardrobeItems.find((item) => item.id === id))
@@ -478,6 +485,8 @@ export function DiaryFeedGrid({
                   )}
                 </div>
               </div>
+
+              {actionError ? <p className="form-error">{actionError}</p> : null}
 
               {isEditing ? (
                 <textarea

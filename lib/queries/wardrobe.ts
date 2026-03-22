@@ -91,7 +91,7 @@ export async function getWardrobePageData({
   itemId,
 }: GetWardrobePageDataInput): Promise<WardrobePageData> {
   const admin = createServiceRoleSupabaseClient();
-  const normalizedQuery = query.trim();
+  const normalizedQuery = query.trim().slice(0, 100);
   const normalizedCategory = category.trim();
   const now = Date.now();
   cleanupWardrobeCache(now);
@@ -172,26 +172,16 @@ export async function getWardrobePageData({
   if (itemIds.length > 0) {
     const [
       { data: outfitItems, error: outfitItemError },
-      { data: photoItems, error: photoItemError },
       { data: outfitRows, error: outfitError },
-      { data: outfitPhotoRows, error: outfitPhotoError },
     ] = await Promise.all([
       admin.from("outfit_item").select("item_id,outfit_id").in("item_id", itemIds),
-      admin.from("outfit_photo_item").select("item_id,photo_id").in("item_id", itemIds),
       admin.from("outfit").select("id,date"),
-      admin.from("outfit_photo").select("id,outfit_id"),
     ]);
     if (outfitItemError) {
       throw new Error(`Outfit item lookup failed: ${outfitItemError.message}`);
     }
-    if (photoItemError) {
-      throw new Error(`Outfit photo item lookup failed: ${photoItemError.message}`);
-    }
     if (outfitError) {
       throw new Error(`Outfit lookup failed: ${outfitError.message}`);
-    }
-    if (outfitPhotoError) {
-      throw new Error(`Outfit photo lookup failed: ${outfitPhotoError.message}`);
     }
 
     const outfitItemCounts = countById(
@@ -199,26 +189,12 @@ export async function getWardrobePageData({
     );
     mergeCounts(wearCounts, outfitItemCounts);
 
-    const photoItemCounts = countById(
-      (photoItems || []).map((row) => Number(row.item_id)).filter((id) => Number.isFinite(id)),
-    );
-    mergeCounts(wearCounts, photoItemCounts);
-
     const outfitDateById = new Map<number, string>();
     (outfitRows || []).forEach((row) => {
       const id = Number(row.id);
       const date = row.date ? String(row.date).slice(0, 10) : "";
       if (Number.isFinite(id) && date) {
         outfitDateById.set(id, date);
-      }
-    });
-
-    const outfitIdByPhotoId = new Map<number, number>();
-    (outfitPhotoRows || []).forEach((row) => {
-      const photoId = Number(row.id);
-      const outfitId = Number(row.outfit_id);
-      if (Number.isFinite(photoId) && Number.isFinite(outfitId)) {
-        outfitIdByPhotoId.set(photoId, outfitId);
       }
     });
 
@@ -234,15 +210,6 @@ export async function getWardrobePageData({
       const itemId = Number(row.item_id);
       const outfitId = Number(row.outfit_id);
       if (!Number.isFinite(itemId) || !Number.isFinite(outfitId)) return;
-      assignRecentWearDate(itemId, outfitDateById.get(outfitId) || "");
-    });
-
-    (photoItems || []).forEach((row) => {
-      const itemId = Number(row.item_id);
-      const photoId = Number(row.photo_id);
-      if (!Number.isFinite(itemId) || !Number.isFinite(photoId)) return;
-      const outfitId = outfitIdByPhotoId.get(photoId);
-      if (!outfitId) return;
       assignRecentWearDate(itemId, outfitDateById.get(outfitId) || "");
     });
   }

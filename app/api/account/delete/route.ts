@@ -98,16 +98,9 @@ async function deleteAppDomainData(appUserId: number) {
     });
   }
 
-  const photoIds = uniqueIds(photoRows.map((row) => row.id));
   objectPathsSource.push(...photoRows.map((row) => row.photo_path));
 
   await removeStorageFiles(objectPathsSource);
-
-  for (const photoChunk of chunk(photoIds, CHUNK_SIZE)) {
-    if (photoChunk.length === 0) continue;
-    const { error } = await admin.from("outfit_photo_item").delete().in("photo_id", photoChunk);
-    assertNoError(error, "Outfit photo tag delete failed");
-  }
 
   for (const itemChunk of chunk(itemIds, CHUNK_SIZE)) {
     if (itemChunk.length === 0) continue;

@@ -4,92 +4,16 @@ import { getCurrentUser } from "@/lib/auth";
 import { getOrCreateAppUserId } from "@/lib/app-user";
 import { getSupabaseBucket } from "@/lib/env";
 import { createServiceRoleSupabaseClient } from "@/lib/supabase/server";
-import { extractStorageObjectPath, toText } from "@/lib/wardrobe";
-
-function toIsoDate(raw: string): string | null {
-  const value = raw.trim();
-  if (!value) return null;
-  const date = new Date(`${value}T00:00:00Z`);
-  if (Number.isNaN(date.getTime())) return null;
-  return date.toISOString().slice(0, 10);
-}
-
-function toNumber(raw: string, fallback = 0): number {
-  const value = raw.trim();
-  if (!value) return fallback;
-  const num = Number(value);
-  return Number.isFinite(num) ? num : fallback;
-}
-
-function parseIdList(values: FormDataEntryValue[]): number[] {
-  return values
-    .map((value) => Number(toText(value)))
-    .filter((id, index, arr) => Number.isInteger(id) && id > 0 && arr.indexOf(id) === index);
-}
-
-function parseTagsJson(raw: string): number[][] {
-  const value = raw.trim();
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed.map((entry) => {
-      if (!Array.isArray(entry)) return [];
-      return entry
-        .map((v) => Number(v))
-        .filter((id) => Number.isInteger(id) && id > 0);
-    });
-  } catch {
-    return [];
-  }
-}
-
-function parsePhotoUrlsJson(raw: string, bucketName: string): string[] {
-  const value = raw.trim();
-  if (!value) return [];
-  try {
-    const parsed = JSON.parse(value) as unknown;
-    if (!Array.isArray(parsed)) return [];
-    return parsed
-      .map((entry) => toText(entry))
-      .filter((url) => Boolean(extractStorageObjectPath(url, bucketName)));
-  } catch {
-    return [];
-  }
-}
-
-function normalizePathSegment(value: string): string {
-  const raw = value.trim();
-  if (!raw) return "anonymous";
-  const cleaned = raw.replace(/[^a-zA-Z0-9_-]/g, "");
-  return cleaned || "anonymous";
-}
-
-async function uploadOutfitPhoto(file: File, appUserId: number) {
-  const admin = createServiceRoleSupabaseClient();
-  const bucket = getSupabaseBucket();
-  const extension = file.name.includes(".") ? file.name.slice(file.name.lastIndexOf(".")) : "";
-  const userPath = normalizePathSegment(String(appUserId));
-  const objectPath = `outfits/${userPath}/${crypto.randomUUID().replace(/-/g, "")}${extension}`;
-  const buffer = Buffer.from(await file.arrayBuffer());
-
-  const { error } = await admin.storage.from(bucket).upload(objectPath, buffer, {
-    contentType: toText(file.type) || "application/octet-stream",
-    upsert: false,
-  });
-  if (error) throw new Error(`Photo upload failed: ${error.message}`);
-
-  const { data } = admin.storage.from(bucket).getPublicUrl(objectPath);
-  return toText(data.publicUrl);
-}
-
-async function removePublicUrl(url: string) {
-  const admin = createServiceRoleSupabaseClient();
-  const bucket = getSupabaseBucket();
-  const objectPath = extractStorageObjectPath(url, bucket);
-  if (!objectPath) return;
-  await admin.storage.from(bucket).remove([objectPath]);
-}
+import { toText } from "@/lib/wardrobe";
+import {
+  toIsoDate,
+  toNumber,
+  parseIdList,
+  parseTagsJson,
+  parsePhotoUrlsJson,
+  uploadOutfitPhoto,
+  removePublicUrl,
+} from "../outfit-utils";
 
 async function resolveContext(request: Request, outfitIdRaw: string) {
   const authUser = await getCurrentUser();
@@ -136,11 +60,7 @@ async function deleteOutfit(request: Request, params: { id: string }) {
   }
 
   const { data: photos } = await admin.from("outfit_photo").select("id,photo_path").eq("outfit_id", outfitId);
-  const photoIds = (photos || []).map((row) => Number(row.id));
 
-  if (photoIds.length > 0) {
-    await admin.from("outfit_photo_item").delete().in("photo_id", photoIds);
-  }
   await admin.from("outfit_item").delete().eq("outfit_id", outfitId);
   await admin.from("outfit_photo").delete().eq("outfit_id", outfitId);
   await admin.from("outfit").delete().eq("id", outfitId).eq("user_id", appUserId);
@@ -170,12 +90,12 @@ async function updateOutfit(request: Request, params: { id: string }, formData: 
     return NextResponse.redirect(new URL("/diary", request.url), { status: 303 });
   }
 
-  const dateValue = toIsoDate(toText(formData.get("date"))) ?? String(outfitRow.date);
+  const dateValue = toIsoDate(toText(formData.get("date"))) ?? String(outfitRow.date ?? "");
   const note = toText(formData.get("note")) || null;
   const city = toText(formData.get("city")) || null;
   const tMin = toNumber(toText(formData.get("t_min")), 0);
   const tMax = toNumber(toText(formData.get("t_max")), 0);
-  const humidity = Math.trunc(toNumber(toText(formData.get("humidity")), 0));
+  const humidity = Math.min(100, Math.max(0, Math.trunc(toNumber(toText(formData.get("humidity")), 0))));
   const rain = toText(formData.get("rain")) === "1";
 
   const { error: updateError } = await admin
@@ -210,7 +130,6 @@ async function updateOutfit(request: Request, params: { id: string }, formData: 
 
   const deletePhotoIds = parseIdList(formData.getAll("delete_photo_ids")).filter((id) => Boolean(photosById[id]));
   if (deletePhotoIds.length > 0) {
-    await admin.from("outfit_photo_item").delete().in("photo_id", deletePhotoIds);
     await admin.from("outfit_photo").delete().in("id", deletePhotoIds);
     for (const photoId of deletePhotoIds) {
       await removePublicUrl(photosById[photoId].photo_path);
@@ -259,12 +178,6 @@ async function updateOutfit(request: Request, params: { id: string }, formData: 
       continue;
     }
 
-    const photoId = Number(photoRow.id);
-    const tagIds = (newTagsList[index] || []).filter((id) => allowedItemIds.has(id));
-    if (tagIds.length > 0) {
-      const rows = tagIds.map((itemId) => ({ photo_id: photoId, item_id: itemId }));
-      await admin.from("outfit_photo_item").insert(rows);
-    }
   }
 
   return NextResponse.redirect(new URL("/diary", request.url), { status: 303 });

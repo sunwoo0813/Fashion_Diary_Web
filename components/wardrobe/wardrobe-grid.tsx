@@ -7,6 +7,8 @@ import { ConfirmSubmitButton } from "@/components/common/confirm-submit-button";
 import { KebabVerticalIcon, PlusIcon, TrashIcon } from "@/components/common/icons";
 import { WardrobeCategoryFilter } from "@/components/wardrobe/wardrobe-category-filter";
 import { useWardrobeDelete } from "@/components/wardrobe/wardrobe-delete-context";
+import { WardrobeEditModal, type EditFormState } from "@/components/wardrobe/wardrobe-edit-modal";
+import { WardrobeItemModal } from "@/components/wardrobe/wardrobe-item-modal";
 import { WardrobeSearchBar } from "@/components/wardrobe/wardrobe-search-bar";
 import type { WardrobeItem } from "@/lib/queries/wardrobe";
 
@@ -25,46 +27,6 @@ type ModalPosition = {
   left: number;
 };
 
-type SizeGrid = {
-  headers: string[];
-  rows: string[][];
-};
-
-type EditFormState = {
-  brand: string;
-  product: string;
-  category: string;
-  color: string;
-  size: string;
-  sizeDetail: unknown;
-};
-
-const EDIT_CATEGORY_OPTIONS = [
-  { value: "Top", label: "상의" },
-  { value: "Outer", label: "아우터" },
-  { value: "Bottom", label: "하의" },
-  { value: "Shoes", label: "신발" },
-  { value: "ACC", label: "액세서리" },
-] as const;
-
-function itemCountText(count: number) {
-  if (count <= 0) return "아직 착용하지 않았어요";
-  if (count === 1) return "1회 착용";
-  return `${count}회 착용`;
-}
-
-function formatRecentWearDate(value: string | null | undefined): string {
-  const date = String(value || "").trim();
-  if (!date) return "-";
-
-  const parsed = new Date(`${date}T00:00:00`);
-  if (Number.isNaN(parsed.getTime())) return date;
-  return parsed.toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "short",
-    day: "numeric",
-  });
-}
 
 const MULTI_WORD_BRANDS = [
   "surface edition",
@@ -119,46 +81,6 @@ function getItemProductName(item: WardrobeItem): string {
   return splitName(item.name).product;
 }
 
-function parseSizeGrid(detail: unknown): SizeGrid | null {
-  if (!detail || typeof detail !== "object") return null;
-  const source = detail as Record<string, unknown>;
-
-  const headers = Array.isArray(source.headers)
-    ? source.headers.map((value) => String(value ?? "").trim()).filter(Boolean)
-    : [];
-
-  const rowsFromRows = Array.isArray(source.rows)
-    ? source.rows.map((row) => (Array.isArray(row) ? row : [row]).map((value) => String(value ?? "").trim()))
-    : [];
-  if (headers.length > 0 && rowsFromRows.length > 0) {
-    return { headers, rows: rowsFromRows };
-  }
-
-  const values = Array.isArray(source.values)
-    ? source.values.map((value) => String(value ?? "").trim())
-    : [];
-  if (headers.length > 0 && values.length > 0) {
-    return { headers, rows: [values] };
-  }
-
-  const pairs = source.pairs && typeof source.pairs === "object" ? (source.pairs as Record<string, unknown>) : null;
-  if (pairs) {
-    const pairHeaders = Object.keys(pairs).map((key) => key.trim()).filter(Boolean);
-    if (pairHeaders.length > 0) {
-      const row = pairHeaders.map((key) => String(pairs[key] ?? "").trim());
-      return { headers: pairHeaders, rows: [row] };
-    }
-  }
-
-  return null;
-}
-
-function visibleSizeGridColumns(grid: SizeGrid): number[] {
-  return grid.headers
-    .map((header, index) => ({ header: header.trim().toLowerCase(), index }))
-    .filter(({ header, index }) => !(index === 0 && header === "사이즈"))
-    .map(({ index }) => index);
-}
 
 export function WardrobeGrid({
   query,
@@ -188,8 +110,6 @@ export function WardrobeGrid({
   const formRef = useRef<HTMLFormElement | null>(null);
 
   const selectedSet = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const activeSizeGrid = activeItem ? parseSizeGrid(activeItem.size_detail) : null;
-  const activeSizeGridColumns = activeSizeGrid ? visibleSizeGridColumns(activeSizeGrid) : [];
   const activeWearCount = activeItem ? wearCounts[activeItem.id] ?? 0 : 0;
   const activeRecentWearDate = activeItem ? recentWearDates[activeItem.id] || "" : "";
 
@@ -446,170 +366,30 @@ export function WardrobeGrid({
       </div>
 
       {activeItem && modalPosition ? (
-        <div
-          className="wardrobe-inline-modal-layer"
-          onClick={() => {
+        <WardrobeItemModal
+          item={activeItem}
+          position={modalPosition}
+          brandLabel={getItemBrand(activeItem)}
+          productLabel={getItemProductName(activeItem)}
+          wearCount={activeWearCount}
+          recentWearDate={activeRecentWearDate}
+          onClose={() => {
             setActiveItem(null);
             setModalPosition(null);
           }}
-        >
-          <aside
-            className="wardrobe-inline-modal"
-            style={{ top: `${modalPosition.top}px`, left: `${modalPosition.left}px` }}
-            onClick={(event) => event.stopPropagation()}
-          >
-            <div className="wardrobe-inline-modal-head">
-              <div className="wardrobe-inline-modal-title">
-                <strong>{getItemBrand(activeItem)}</strong>
-                <p>{getItemProductName(activeItem) || "이름 없음"}</p>
-              </div>
-              <button
-                type="button"
-                className="wardrobe-inline-close"
-                aria-label="아이템 상세 닫기"
-                onClick={() => {
-                  setActiveItem(null);
-                  setModalPosition(null);
-                }}
-              >
-                ×
-              </button>
-            </div>
-            <div className="wardrobe-inline-body">
-              <p><span>사이즈</span><strong>{activeItem.size || "-"}</strong></p>
-              <p><span>착용 횟수</span><strong>{itemCountText(activeWearCount)}</strong></p>
-              <p><span>최근 착용일</span><strong>{formatRecentWearDate(activeRecentWearDate)}</strong></p>
-
-              <div className="wardrobe-inline-size">
-                <span>사이즈 표</span>
-                {activeSizeGrid ? (
-                  <div className="wardrobe-inline-size-wrap">
-                    <table className="wardrobe-inline-size-table">
-                      <thead>
-                        <tr>
-                          {activeSizeGridColumns.map((index) => (
-                            <th key={`${activeSizeGrid.headers[index]}-${index}`}>
-                              {activeSizeGrid.headers[index] || `열 ${index + 1}`}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeSizeGrid.rows.map((row, rowIndex) => (
-                          <tr key={`size-row-${rowIndex}`}>
-                            {activeSizeGridColumns.map((colIndex) => (
-                              <td key={`size-cell-${rowIndex}-${colIndex}`}>{row[colIndex] || "-"}</td>
-                            ))}
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                ) : (
-                  <strong>-</strong>
-                )}
-              </div>
-            </div>
-          </aside>
-        </div>
+        />
       ) : null}
 
       {editItem ? (
-        <div
-          className="wardrobe-edit-modal-layer"
-          onClick={() => {
-            if (editSaving) return;
-            setEditItem(null);
-          }}
-        >
-          <section className="wardrobe-edit-modal" onClick={(event) => event.stopPropagation()}>
-            <header className="wardrobe-edit-head">
-              <div className="wardrobe-edit-head-left">
-                <div className="wardrobe-edit-thumb">
-                  {editItem.image_path ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={editItem.image_path} alt={editItem.name} />
-                  ) : (
-                    <div className="wardrobe-edit-thumb-fallback">
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                        <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" fill="currentColor" opacity="0.3" />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <h3>아이템 수정</h3>
-                  <p className="wardrobe-edit-item-name">{editItem.name}</p>
-                </div>
-              </div>
-              <button
-                type="button"
-                className="wardrobe-inline-close"
-                onClick={() => {
-                  if (editSaving) return;
-                  setEditItem(null);
-                }}
-              >
-                ×
-              </button>
-            </header>
-
-            <div className="wardrobe-edit-form">
-              <label>
-                브랜드
-                <input value={editForm.brand} onChange={(event) => setEditForm((prev) => ({ ...prev, brand: event.target.value }))} />
-              </label>
-              <label>
-                아이템명
-                <input value={editForm.product} onChange={(event) => setEditForm((prev) => ({ ...prev, product: event.target.value }))} />
-              </label>
-              <label>
-                카테고리
-                <select
-                  value={editForm.category}
-                  onChange={(event) => setEditForm((prev) => ({ ...prev, category: event.target.value }))}
-                >
-                  <option value="">카테고리를 선택해 주세요</option>
-                  {EDIT_CATEGORY_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <div className="wardrobe-edit-row">
-                <label>
-                  색상
-                  <input
-                    value={editForm.color}
-                    placeholder="예) 블랙, 화이트"
-                    onChange={(event) => setEditForm((prev) => ({ ...prev, color: event.target.value }))}
-                  />
-                </label>
-                <label>
-                  사이즈
-                  <input
-                    value={editForm.size}
-                    onChange={(event) =>
-                      setEditForm((prev) => ({ ...prev, size: event.target.value, sizeDetail: prev.sizeDetail }))
-                    }
-                  />
-                </label>
-              </div>
-            </div>
-
-            {editError ? <p className="form-error">{editError}</p> : null}
-
-            <div className="wardrobe-edit-actions">
-              <button type="button" className="ghost-button" onClick={() => setEditItem(null)} disabled={editSaving}>
-                취소
-              </button>
-              <button type="button" className="solid-button" onClick={saveEdit} disabled={editSaving}>
-                {editSaving ? "저장 중..." : "저장"}
-              </button>
-            </div>
-          </section>
-        </div>
+        <WardrobeEditModal
+          item={editItem}
+          form={editForm}
+          onChange={(updates) => setEditForm((prev) => ({ ...prev, ...updates }))}
+          onSave={saveEdit}
+          onCancel={() => setEditItem(null)}
+          isSaving={editSaving}
+          error={editError}
+        />
       ) : null}
     </div>
   );

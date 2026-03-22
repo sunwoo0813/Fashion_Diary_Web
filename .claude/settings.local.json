@@ -24,7 +24,20 @@
       "WebFetch(domain:www.daangn.com)",
       "WebFetch(domain:toss.im)",
       "WebFetch(domain:www.29cm.co.kr)",
-      "WebFetch(domain:about.daangn.com)"
+      "WebFetch(domain:about.daangn.com)",
+      "Bash(find /c/Users/Administrator/Desktop/Fashion_Diary_Web/app -name *.ts -o -name *.tsx)",
+      "mcp__supabase__list_tables",
+      "mcp__supabase__list_migrations",
+      "mcp__supabase__get_advisors",
+      "mcp__supabase__execute_sql",
+      "mcp__supabase__apply_migration",
+      "Bash(gh pr:*)",
+      "Bash(git diff:*)",
+      "mcp__ide__getDiagnostics",
+      "mcp__supabase__list_projects",
+      "Bash(git rebase:*)",
+      "Bash(GIT_EDITOR=\"true\" git rebase --continue)",
+      "Bash(grep:*)"
     ]
   }
 }
